@@ -58,6 +58,8 @@ def bevisstatus(post, entry, leverans):
         return 'kvittohash: KVITTO.sha256 stämmer inte med KVITTO.json'
     if post.get('runtime_kvitto_sha256') != hashlib.sha256((Path(run)/'KVITTO.json').read_bytes()).hexdigest():
         return 'oavgjord: Runtime-kvittots hash saknas/avviker i körningens bindning'
+    if not post.get('profil') or post['profil'] != entry['kvitto'].get('profile'):
+        return 'ogiltig bindning: profil skiljer från Runtime-kvittots profile'
     ladd = (post.get('laddning') or {})
     fil = ladd.get('fil')
     if fil and Path(fil).is_file():
@@ -172,7 +174,7 @@ def rendera(rows, ej_observerat, leverans=None):
         out.append('- `%s` — %s %s: %s' % (r['fil'], r.get('profil') or '?', r.get('etikett') or '?', r['status']))
     aktuella = [r for r in rows if r['status'] == 'ok']
     brister = [r for r in rows if r['status'] != 'ok']
-    out += ['', 'Aktuella leveransbevis: %d. Historik eller brist: %d.' % (len(aktuella), len(brister)), '']
+    out += ['', 'Aktuella leveransbevis: %d. Historik eller utanför kvalitetsgrinden: %d.' % (len(aktuella), len(brister)), '']
     out += ['## Täckning (aktuella körningar per profil)', '']
     for profil in ('matning', 'kritik', 'provare'):
         n = sum(1 for r in aktuella if r['profil'] == profil)

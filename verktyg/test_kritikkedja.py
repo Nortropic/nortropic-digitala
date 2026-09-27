@@ -17,8 +17,8 @@ class Kedja(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.k=self.root/'kund';self.d=bildfixture(self.k);(self.k/'PROJECT-BRIEF.md').write_text('syntetisk brief')
         self.l=self.root/'laddning';ladda_steg.ladda(ROT,'kritik',self.l,kund=self.k);self.lp=self.l/'LADDNING.json';self.binding,self.d=kb.ur_laddning(self.lp)
         self.run=self.root/'run';self.run.mkdir();(self.run/'strom.jsonl').write_text('{"syntetiskt":true}\n');(self.run/'start.json').write_text('{"syntetiskt":true}')
-        self.answer={'kriterieversion':kb.VERSION,'bedomningsbindning':self.binding,'verdict':'approved','blocking_findings':[],'could_not_review':[],'seen_files':[b['plats'] for b in self.d['bilder']],'referensjamforelser':[{'kandidatbild':'VYER/kandidat.png','referensbild':'REFERENSER/referens.png','kalla':'syntetisk testbild','tid':'2026-09-27T00:00:00Z','vy':'1x1','drag':'kontraktsprov','observation':'syntetisk','konsekvens':'ingen produktdom','beslut_och_skal':'syntetiskt'}]}
-        self.receipt={'outcome':'svar_giltigt','parameters':{'executor':'claude'},'images':{'complete':True,'delivered_or_opened':self.answer['seen_files'],'how':'opened with Read (from the stream)'},'underlag':[{'place':b['plats'],'source_sha256':b['sha256'],'copy_sha256':b['sha256']} for b in self.d['bilder']]}
+        self.answer={'kriterieversion':kb.VERSION,'bedomningsbindning':self.binding,'verdict':'approved','blocking_findings':[],'could_not_review':[],'seen_files':[b['plats'] for b in self.d['bilder']],'referensjamforelser':[{'kandidatbild':'VYER/kandidat.png','referensbild':'REFERENSER/referens.png','kalla':'syntetisk testbild','tid':'2026-09-27T00:00:00Z','vy':'1x1','drag':'kontraktsprov','observation':'syntetisk','konsekvens':'ingen produktdom','beslut_och_skal':'syntetiskt'}],'dagensjamforelser':[]}
+        self.receipt={'profile':'kritik','outcome':'svar_giltigt','parameters':{'executor':'claude'},'images':{'complete':True,'delivered_or_opened':self.answer['seen_files'],'how':'opened with Read (from the stream)'},'underlag':[{'place':b['plats'],'source_sha256':b['sha256'],'copy_sha256':b['sha256']} for b in self.d['bilder']]}
         self.post={'profil':'kritik','mall':'renderingslasning','bedomningsbindning':copy.deepcopy(self.binding),'bildbedomningsunderlag':copy.deepcopy(self.d),'laddning':{'fil':str(self.lp),'sha256':kb.stegbevis.sha(self.lp)},'bindning':{}}
         self.save()
     def tearDown(self):self.tmp.cleanup()
@@ -38,6 +38,35 @@ class Kedja(unittest.TestCase):
     def test_laddad_bildrad_maste_finnas_och_ha_samma_hash(self):
         r=json.loads(self.lp.read_text());r['underlag']=[row for row in r['underlag'] if row['fil']!='referens.png'];self.lp.write_text(json.dumps(r));self.post['laddning']['sha256']=kb.stegbevis.sha(self.lp)
         self.assertIn('bild saknas/avviker',self.status())
+    def test_profil_kan_inte_etiketteras_om(self):
+        self.assertEqual(self.status(),'ok')
+        self.post['profil']='matning'
+        self.assertIn('profil skiljer',self.status())
+        self.post['profil']='kritik';self.receipt.pop('profile');self.save()
+        self.assertIn('profil skiljer',self.status())
+
+    def test_dagens_obligatorisk_laddning_och_proveniensbunden_dom(self):
+        dagens={'tackning':[{'id':'fore-390','beskrivning':'Föregående första mobilvy'}, {'id':'fore-1440','beskrivning':'Föregående första datorvy'}],'na_skal':''}
+        self.d['dagens']=dagens
+        req=self.k/'BEVISKRAV.json';r=json.loads(req.read_text());r['bildbedomning']['dagens']=dagens;req.write_text(json.dumps(r));self.d['krav_sha256']=kb.stegbevis.sha(req)
+        with self.assertRaisesRegex(kb.Vagrad,'DAGENS-bilder saknas'):kb.manifest(self.d,self.k)
+        for width in ('390','1440'):
+            b=copy.deepcopy(self.d['bilder'][0]);b.update(fil='fore-'+width+'.png',plats='DAGENS/fore-'+width+'.png',roll='dagens',vy=width+' px, syntetisk formatfixture',tacker=['fore-'+width]);(self.k/b['fil']).write_bytes((self.k/'kandidat.png').read_bytes());self.d['bilder'].append(b)
+        kb.manifest(self.d,self.k)
+        (self.k/kb.BILDFIL).write_text(json.dumps(self.d));lp=self.root/'laddning-dagens';ladda_steg.ladda(ROT,'kritik',lp,kund=self.k);self.lp=lp/'LADDNING.json';self.binding,self.d=kb.ur_laddning(self.lp)
+        self.post.update(laddning={'fil':str(self.lp),'sha256':kb.stegbevis.sha(self.lp)},bedomningsbindning=self.binding,bildbedomningsunderlag=self.d)
+        self.answer.update(bedomningsbindning=self.binding,seen_files=[b['plats'] for b in self.d['bilder']]);self.receipt['images']['delivered_or_opened']=self.answer['seen_files'];self.receipt['underlag']=[{'place':b['plats'],'source_sha256':b['sha256'],'copy_sha256':b['sha256']} for b in self.d['bilder']];self.save()
+        self.assertIn('DAGENS-jämförelse saknas',self.status())
+        for b in self.d['bilder'][2:]:
+            c={k:b[k] for k in ('kalla','tid','vy','drag')};c.update(dagensbild=b['plats'],kandidatbild='VYER/kandidat.png',observation='syntetisk',konsekvens='ingen visuell produktdom',beslut_och_skal='formatprov')
+            self.answer['dagensjamforelser'].append(c)
+        self.save();self.assertEqual(self.status(),'ok')
+        saved=copy.deepcopy(self.answer['dagensjamforelser']);self.answer['dagensjamforelser'].pop();self.save();self.assertIn('DAGENS-jämförelse saknas',self.status())
+        self.answer['dagensjamforelser']=copy.deepcopy(saved);self.answer['dagensjamforelser'][0]['kalla']='påhittad';self.save();self.assertIn('proveniens',self.status())
+        self.answer['dagensjamforelser']=copy.deepcopy(saved);self.answer['dagensjamforelser'][0]['dagensbild']='REFERENSER/referens.png';self.save();self.assertIn('ogiltig DAGENS-jämförelse',self.status())
+        bad=copy.deepcopy(self.d);bad['dagens']={'tackning':[],'na_skal':'ingen tid'}
+        with self.assertRaisesRegex(kb.Vagrad,'DAGENS-beslut skiljer'):kb.manifest(bad,self.k)
+
     def test_femsekunder_ar_inte_kvalitetsdom(self):
         self.post['mall']='femsekunderstest';self.assertTrue(self.status().startswith('begriplighetsprov'))
     def test_rejected_och_ej_bedombart_redovisas_som_verkliga_domar(self):

@@ -18,9 +18,9 @@ nödvändiga bilder eller referenser redovisas i could_not_review och hindrar he
 Svara med ett enda JSON-objekt enligt det givna schemat. verdict är approved endast när både blocking_findings och could_not_review är tomma. Ej bedömbart
 redovisas som avgränsad underlagsbrist, inte som bevisat produktfel.
 
-Läs KUND/BEDOMNINGSUNDERLAG.json och UNDERLAG/BEDOMNINGSBINDNING.json. Kopiera den senares sex fält
-exakt till bedomningsbindning; de anger den prövade kandidaten, miljön, konfigurationen, räckvidden och
-kriteriehashen. Täck varje obligatorisk rad i manifestets tackning; ange saknat underlag i could_not_review.
+Läs KUND/BEDOMNINGSUNDERLAG.json och UNDERLAG/BEDOMNINGSBINDNING.json. Kopiera filens samtliga åtta fält
+oförändrade till bedomningsbindning: underlag_sha256 (manifestet), kriterier_sha256 (kriterietexten),
+krav_sha256 (förhandskraven), domkod_sha256 (den pinnade domlogiken), kandidat, miljo, konfiguration och rackvidd. Täck varje obligatorisk rad i manifestets tackning; ange saknat underlag i could_not_review.
 Approved kräver minst en faktisk referensjämförelse med bildplatser, källa, tidpunkt, vy, konkret drag,
 observation, konsekvens och vad som behålls/ändras med skäl. Referensens källa/tid/vy kopieras från manifestet.
 Runtime kontrollerar öppning/leverans av bilder separat; seen_files redovisar bara vad du faktiskt sett.
@@ -29,3 +29,10 @@ redovisa begränsade observationer. Approved kräver tomma blocking_findings och
 Heuristiken är professionella frågor, inte mätvärden eller summerbar stilpoäng. Svara okant när en komp inte
 visar beteendet och inte-tillampligt när det saknar betydelse med skäl i okant/sett_kontra_last. Den beställda
 yrkesnivån är målet; att bara vara bättre än föregående version räcker inte.
+
+Redovisa jämförelse mot föregående kandidat separat i dagensjamforelser, med kandidatbild och dagensbild
+samt källa, tid, vy, konkret drag, observation, konsekvens och beslut med skäl. Kopiera DAGENS-bildens
+kalla/tid/vy från manifestet. Täck varje rad i manifestets dagens.tackning. Saknade föreskrivna bilder
+eller jämförelser är could_not_review och hindrar approved. Tom lista är tillåten när det förhandsbestämda
+dagens.na_skal anger att föregående kandidat saknas; hitta aldrig på en jämförelse. DAGENS ersätter inte
+professionella referenser och en förbättring mot en svag föregångare räcker inte till yrkesmässig kvalitet.

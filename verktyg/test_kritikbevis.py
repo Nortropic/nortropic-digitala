@@ -24,7 +24,8 @@ def bildfixture(kund):
     d={'schema':'digitala-bildbedomning/2','kriterieversion':kb.VERSION,'kriterier_sha256':hashlib.sha256((ROT/kb.KONTRAKT).read_bytes()).hexdigest(),'rackvidd':'syntetiskt kontraktsprov, ingen visuell produktdom','sammanhang':{'kandidat':{'typ':'filer','filer':[{'fil':str(candidate.resolve()),'sha256':hashlib.sha256(candidate.read_bytes()).hexdigest()}]},'miljo':{'namn':'isolerat prov','typ':'dokument'},'konfiguration':{'filer':[],'ej_tillampligt':'endast schemaprov'}},'tackning':[{'id':'forsta','beskrivning':'syntetisk första vy'}],'bilder':[]}
     for role,fil,place in [('kandidat','kandidat.png','VYER/kandidat.png'),('referens','referens.png','REFERENSER/referens.png')]:
         d['bilder'].append({'fil':fil,'sha256':hashlib.sha256(png).hexdigest(),'plats':place,'roll':role,'kalla':'syntetisk testbild','tid':'2026-09-27T00:00:00Z','vy':'1x1','drag':'kontraktsprov','tacker':['forsta'] if role=='kandidat' else []})
-    req={'schema':'digitala-beviskrav/1','version':'syntetiskt-v1','bildbedomning':{'typ':'komp','faststalld_av':'syntetisk provledare','faststalld_tid':'2026-09-27T00:00:00Z','tackning':copy.deepcopy(d['tackning'])}}
+    d['dagens']={'tackning':[],'na_skal':'Ingen föregående kandidat i detta syntetiska nybygge.'}
+    req={'schema':'digitala-beviskrav/1','version':'syntetiskt-v1','bildbedomning':{'typ':'komp','faststalld_av':'syntetisk provledare','faststalld_tid':'2026-09-27T00:00:00Z','tackning':copy.deepcopy(d['tackning']),'dagens':copy.deepcopy(d['dagens'])}}
     kr=kund/'BEVISKRAV.json';kr.write_text(json.dumps(req));d['kravfil']='BEVISKRAV.json';d['krav_sha256']=hashlib.sha256(kr.read_bytes()).hexdigest()
     (kund/kb.BILDFIL).write_text(json.dumps(d,ensure_ascii=False))
     return d
@@ -56,7 +57,7 @@ class Kritik(unittest.TestCase):
     def test_dom_kraver_jamforelse_proveniens_bildkvitto_bindning_och_riktigt_verdict(self):
         binding=kb.bindning(self.d,'a'*64)
         c={'kandidatbild':'VYER/kandidat.png','referensbild':'REFERENSER/referens.png','kalla':'syntetisk testbild','tid':'2026-09-27T00:00:00Z','vy':'1x1','drag':'kontraktsprov','observation':'syntetisk','konsekvens':'ingen verklig dom','beslut_och_skal':'behåll för test'}
-        answer={'kriterieversion':kb.VERSION,'bedomningsbindning':binding,'verdict':'approved','blocking_findings':[],'could_not_review':[],'seen_files':[b['plats'] for b in self.d['bilder']],'referensjamforelser':[c]}
+        answer={'kriterieversion':kb.VERSION,'bedomningsbindning':binding,'verdict':'approved','blocking_findings':[],'could_not_review':[],'seen_files':[b['plats'] for b in self.d['bilder']],'referensjamforelser':[c],'dagensjamforelser':[]}
         receipt={'parameters':{'executor':'claude'},'images':{'complete':True,'delivered_or_opened':answer['seen_files'],'how':'opened with Read (from the stream)'}}
         self.assertEqual(kb.dom(answer,binding,self.d,receipt),'ok')
         self.assertEqual(kb.bildbelagg(receipt),'Read-spår för Claude')

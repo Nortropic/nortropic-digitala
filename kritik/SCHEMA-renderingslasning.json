@@ -13,7 +13,8 @@
     "summary",
     "kriterieversion",
     "referensjamforelser",
-    "bedomningsbindning"
+    "bedomningsbindning",
+    "dagensjamforelser"
   ],
   "properties": {
     "verdict": {
@@ -287,6 +288,63 @@
         },
         "domkod_sha256": {
           "type": "string"
+        }
+      }
+    },
+    "dagensjamforelser": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kandidatbild",
+          "dagensbild",
+          "observation",
+          "konsekvens",
+          "kalla",
+          "tid",
+          "vy",
+          "drag",
+          "beslut_och_skal"
+        ],
+        "properties": {
+          "kandidatbild": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "konsekvens": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "kalla": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "tid": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "vy": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "drag": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "beslut_och_skal": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "dagensbild": {
+            "type": "string",
+            "maxLength": 1000
+          }
         }
       }
     }

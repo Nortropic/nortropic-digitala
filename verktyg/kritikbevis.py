@@ -43,6 +43,16 @@ def krav(d,kund):
     categories={c for r in b['tackning'] for c in r.get('kategorier',[])}
     if b['typ']=='produkt' and not PRODUKTKATEGORIER<=categories:
         raise Vagrad('produktkraven saknar täckningskategorier: '+', '.join(sorted(PRODUKTKATEGORIER-categories)))
+    dagens=b.get('dagens')
+    if not isinstance(dagens,dict) or set(dagens)!={'tackning','na_skal'} or not isinstance(dagens['tackning'],list) or not isinstance(dagens['na_skal'],str):
+        raise Vagrad('fördefinierat DAGENS-beslut kräver tackning och na_skal')
+    if bool(dagens['tackning']) == bool(dagens['na_skal'].strip()):
+        raise Vagrad('DAGENS kräver antingen jämförelsevyer eller ett fastställt N/A-skäl')
+    ids=[r.get('id') for r in dagens['tackning']]
+    if any(not r.get('id') or not r.get('beskrivning') for r in dagens['tackning']) or len(ids)!=len(set(ids)):
+        raise Vagrad('DAGENS-rader kräver unika id och beskrivningar')
+    if d.get('dagens')!=dagens:
+        raise Vagrad('manifestets DAGENS-beslut skiljer från fördefinierade bildkrav')
     return b
 
 
@@ -61,7 +71,7 @@ def manifest(d, kund):
     bilder = d.get('bilder')
     if not isinstance(bilder, list) or not bilder or not {'kandidat', 'referens'} <= {b.get('roll') for b in bilder}:
         raise Vagrad('obligatoriska kandidat- och referensbilder saknas')
-    seen = set(); coverage = set()
+    seen = set(); coverage = set(); dagens_coverage = set()
     for b in bilder:
         for key in ('fil', 'sha256', 'plats', 'kalla', 'tid', 'vy', 'drag'):
             if not b.get(key):
@@ -82,11 +92,15 @@ def manifest(d, kund):
             raise Vagrad('bildfilens byteformat stöds inte: ' + b['fil'])
         if b['roll'] == 'kandidat':
             coverage.update(b.get('tacker', []))
+        elif b['roll'] == 'dagens':
+            dagens_coverage.update(b.get('tacker', []))
     for row in d['tackning']:
         if not row.get('id') or not row.get('beskrivning'):
             raise Vagrad('täckningsrad saknar id/beskrivning')
         if not row.get('na_skal') and row['id'] not in coverage:
             raise Vagrad('obligatorisk sid-/läges-/vybild saknas: ' + row['id'])
+    if not {r['id'] for r in d['dagens']['tackning']} <= dagens_coverage:
+        raise Vagrad('obligatoriska DAGENS-bilder saknas för fastställd jämförelse')
     return d
 
 
@@ -154,4 +168,17 @@ def dom(svar, expected, underlag, kvitto):
             return 'ogiltig jämförelse: bild saknas i bundet manifest'
         if any(c.get(k) != ref[k] for k in ('kalla', 'tid', 'vy')) or not all(c.get(k) for k in ('drag', 'observation', 'konsekvens', 'beslut_och_skal')):
             return 'ogiltig jämförelse: proveniens, drag eller motiverat beslut saknas/skiljer sig'
+    dagens = svar.get('dagensjamforelser')
+    if not isinstance(dagens,list):
+        return 'ej bedömbart: dagensjamforelser saknas'
+    compared=set()
+    for c in dagens:
+        old=by_place.get(c.get('dagensbild'));candidate=by_place.get(c.get('kandidatbild'))
+        if not old or old['roll']!='dagens' or not candidate or candidate['roll']!='kandidat':
+            return 'ogiltig DAGENS-jämförelse: bild saknas i bundet manifest'
+        if any(c.get(k)!=old[k] for k in ('kalla','tid','vy')) or not all(c.get(k) for k in ('drag','observation','konsekvens','beslut_och_skal')):
+            return 'ogiltig DAGENS-jämförelse: proveniens eller motiverat beslut saknas/skiljer sig'
+        compared.update(old.get('tacker',[]))
+    if not {r['id'] for r in underlag['dagens']['tackning']} <= compared:
+        return 'ej bedömbart: faktisk DAGENS-jämförelse saknas för fastställda vyer'
     return 'ok'

@@ -20,7 +20,7 @@ Manifestet innehåller:
   sådana finns, på mobil och dator. En komp anger vad den faktiskt visar; icke byggt beteende förblir ej bedömt.
   N/A kräver sakskäl per rad. Saknad tid, bild eller åtkomst är inte N/A.
 - `bilder`: både kandidat och professionella referenser. Varje post har `fil` (relativ kundmappen), `sha256`,
-  `plats` (exempel `VYER/kontakt-390.png` eller `REFERENSER/typografi-1440.png`), `roll: kandidat|referens`,
+  `plats` (exempel `VYER/kontakt-390.png` eller `REFERENSER/typografi-1440.png`), `roll: kandidat|referens|dagens`,
   `kalla` (ursprung), `tid` (fångsttid), `vy` (mått), `drag` (varför bilden behövs). Kandidatbilder har `tacker`:
   listan över täcknings-id som de faktiskt visar. Referensbilder återger faktisk rendering, inte en URL-lista.
 
@@ -59,3 +59,24 @@ manifest, dess obligatoriska bildrader och kriterier, Runtime-kvittot mot sin ob
 värdet som bokförts vid körningstillfället, samt råsvar/ström/start mot Runtime-kvittots output-hashar.
 Bildbeläggets metod visas: Claude Read-spår respektive Codex argv-bilagor. Bifogad bild betyder inte
 självständigt verifierad bildläsning. Femsekunderstest räknas separat, inte som kritikens kvalitetsgodkännande.
+
+## Förhandsbeslut för DAGENS och arkiv
+
+Både `BEVISKRAV.json` under `bildbedomning.dagens` och manifestets `dagens` har samma objekt:
+
+```json
+{"tackning":[{"id":"dagens-mobil","beskrivning":"Föregående kandidats första vy på mobil"},
+             {"id":"dagens-dator","beskrivning":"Föregående kandidats första vy på dator"}],"na_skal":""}
+```
+
+DAGENS-bildernas `tacker` hänvisar till dessa id. Båda dommallarna har `dagensjamforelser`, med
+`kandidatbild`, `dagensbild`, `kalla`, `tid`, `vy`, `drag`, `observation`, `konsekvens`, `beslut_och_skal`.
+Källa/tid/vy måste motsvara den hashbundna DAGENS-bilden. Alla fastställda DAGENS-id måste jämföras för approved;
+en bild med rollen referens kan inte ersätta föregångaren. Om föregångare saknas fastställs i stället
+`{"tackning":[],"na_skal":"Ingen föregående kandidat finns; första nybygget."}` före bedömningen.
+Saknad bild eller åtkomst är inte skäl för N/A. Beslutet tillförs som en ny kravversion med historiken kvar;
+produktens befintliga täckningsrader behöver inte ändras. Verktyget binder beslutet, granskningen bedömer dess saklighet.
+
+Laddningsarbetsytan och LADDNING.json är arkivmaterial. Bevara dem på bokförd plats med oförändrade bytes
+även efter körningen; de ska inte rensas som temporära filer. Kvalitetsbilden återläser dem och kräver även
+att KORNING-postens profil motsvarar Runtime-kvittots `profile`.

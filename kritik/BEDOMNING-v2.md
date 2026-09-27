@@ -74,7 +74,10 @@ Produktens fasta täckning ligger i BEVISKRAV.json:s `bildbedomning`, fastställ
 omfattar start, undersidor, språk, handlingsresa, fel, tomt läge, laddning, redaktör samt mobil och dator.
 Sakligt icke tillämpliga kategorier kräver fastställt skäl där; manifestet får inte lägga till undantag eller
 krympa listan. Kompar har egen uppdragstyp och får inget funktionsgodkännande från statiska bilder.
-DAGENS/ är en separat bildroll för faktisk jämförelse med föregående kandidat.
+DAGENS/ är en separat bildroll för faktisk jämförelse med föregående kandidat. BEVISKRAV fastställer vilka
+föregående vyer som ska jämföras eller ett sakligt N/A när föregångare saknas. Manifestet kopierar beslutet
+oförändrat. Båda dommallarna kräver separata dagensjamforelser som binds till DAGENS-bildernas proveniens och
+täcker de fastställda vyerna. Saknat underlag eller jämförelse hindrar approved.
 
 Rapporten återbinder manifest och bilder till LADDNING, modellen till Runtime-kvittots bildhashar och det
 faktiska svaret till kvittots output-hash. KVITTO.sha256 krävs och dess värde bokförs i KORNING vid utfallet.
@@ -82,3 +85,7 @@ Det är filintegritet och spårbarhet, ingen kryptografiskt oberoende attest mot
 Read-spår och argv-bilagor redovisas var för sig. Underkännande och ej bedömbart visas som genomförda domar med
 sina fynd/begränsningar även när de inte får användas som godkänt leveransbevis. Femsekunderstestet är ett
 avskärmat begriplighetsprov, aldrig en professionell kvalitetsdom.
+
+LADDNING.json och dess arbetsyta är arkivmaterial för beviskedjan, inte tillfälliga byggfiler. Bevara hela
+laddningen på den bokförda platsen; den får inte städas bort efter en körning. Utan oförändrad laddning kan
+domen inte återbindas och räknas inte som aktuellt leveransbevis.
