@@ -154,7 +154,9 @@ def las_bestallning(s, rot=ROT):
     if lm is not None and not ladda_steg.BESTALLNING.match(str(lm)):
         raise Vagrad('BESTALLNING.json: lanseringsmandat ska vara en beslutsposts namn eller null')
     v = Path(s['kund']) / 'VERKSAMHET.json'
+    kund_kontroll = 'väntar på VERKSAMHET.json (research-stegets produkt); beställningssteg efter research blockeras tills den finns'
     if v.is_file():
+        kund_kontroll = 'kund = VERKSAMHET.json:s namn'
         try:
             vd = json.loads(v.read_text(encoding='utf-8'))
         except ValueError:
@@ -165,7 +167,7 @@ def las_bestallning(s, rot=ROT):
             raise Vagrad('BESTALLNING.json: fiktiv verksamhet kräver en beställning märkt "testfall": true')
         if b.get('testfall') and not vd.get('fiktiv'):
             raise Vagrad('BESTALLNING.json: "testfall": true kräver att VERKSAMHET.json anger fiktiv')
-    return {'post': b['post'], 'kalla': b['kalla'], 'kund': b['kund'], 'omfattning': omf_steg, 'lanseringsmandat': lm, 'testfall': bool(b.get('testfall')),
+    return {'post': b['post'], 'kalla': b['kalla'], 'kund': b['kund'], 'omfattning': omf_steg, 'lanseringsmandat': lm, 'testfall': bool(b.get('testfall')), 'kund_kontroll': kund_kontroll,
             'fil': str(p.resolve()), 'sha256': hashlib.sha256(rå).hexdigest()}, None
 
 
@@ -177,6 +179,8 @@ def bind_bestallning(s, utforare, rot=ROT):
     gammal = s.get('bestallning')
     if not gammal:
         b['bunden'] = nu(); s['bestallning'] = b; logga(s, utforare, 'beställning bunden', None, '%s sha256 %s' % (b['post'], b['sha256'][:12]))
+    elif gammal.get('sha256') == b['sha256'] and gammal.get('kund_kontroll') != b['kund_kontroll']:
+        b['bunden'] = gammal.get('bunden'); s['bestallning'] = b; logga(s, utforare, 'beställning kundkontrollerad', None, b['kund_kontroll'])
     elif gammal.get('sha256') != b['sha256']:
         b['bunden'] = nu(); b['ersatte_sha256'] = gammal.get('sha256'); s['bestallning'] = b
         logga(s, utforare, 'beställning ombunden', None, 'BESTALLNING.json ändrad: sha256 %s → %s' % ((gammal.get('sha256') or '')[:12], b['sha256'][:12]))
@@ -192,7 +196,7 @@ def _ateroppna(s, n, utforare, skal):
     st['status'] = 'inte påbörjat'; st.pop('markering', None); _notera(st, '%s återöppnat: %s' % (nu(), skal)); logga(s, utforare, 'återöppnat', n, skal)
 
 
-def _tillamplighet(n, kb, best, defs):
+def _tillamplighet(n, kb, best, defs, kund):
     """Avgör ett stegs läge ur kanalbehov, beställning och lanseringsmandat: ('redo'|'markera'|'blockerad', skäl)."""
     if n in LANSERINGSSTEG:
         if not best:
@@ -211,6 +215,8 @@ def _tillamplighet(n, kb, best, defs):
             return 'blockerad', 'steget %s kräver en bunden beställning: BESTALLNING.json saknas i kundmappen (utdrag ur beslutsposten)' % n
         if n not in best['omfattning']:
             return 'markera', 'beställningen %s omfattar inte steget' % best['post']
+        if n != 'intervju' and not (Path(kund) / 'VERKSAMHET.json').is_file():
+            return 'blockerad', 'steget %s kräver kundens VERKSAMHET.json (research-stegets produkt) så att beställningen kan bindas till kunden' % n
     return 'redo', None
 
 
@@ -219,9 +225,12 @@ def nasta_steg(s, utforare='claude', rot=ROT):
     defs = ladda_steg.las_steg(rot)['steg']
     kb = kanalbehov(s)
     best = s.get('bestallning')
+    saknade = [n for n in s['ordning'] if n not in defs]
+    if saknade:
+        raise Vagrad('fallets stegordning har steg som inte längre finns i steg/steg.json: %s (ny version av steg.json; avgör fallet manuellt)' % ', '.join(saknade))
     for n in s['ordning']:
         st = s['steg'][n]
-        lage, skal = _tillamplighet(n, kb, best, defs)
+        lage, skal = _tillamplighet(n, kb, best, defs, s['kund'])
         if st['status'] == STATUS_VERKTYG and st.get('markering') == 'verktyg':
             if lage == 'markera':
                 _notera(st, skal); continue
