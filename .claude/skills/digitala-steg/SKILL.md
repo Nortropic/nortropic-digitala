@@ -1,6 +1,6 @@
 ---
 name: digitala-steg
-description: Ladda ett Digitala-stegs obligatoriska underlag med versionskontroll och kvitto innan steget utförs (uppstart, beredning, research, brief, koncept, bygge, redaktionellt-pass, seo, matning, kritik, granskning-d, provare, uppfoljning, annonsberedning, lokal-synlighet, prelaunch, leverans, lansering, sokkonsol, drift). Använd när ett Digitala-steg ska påbörjas i detta repo eller i ett kundrepo.
+description: Ladda ett Digitala-stegs obligatoriska underlag med versionskontroll och kvitto innan steget utförs (uppstart, beredning, intervju, research, brief, koncept, bygge, redaktionellt-pass, seo, matning, kritik, granskning-d, provare, uppfoljning, annonsberedning, lokal-synlighet, prelaunch, leverans, lansering, sokkonsol, drift). Använd när ett Digitala-steg ska påbörjas i detta repo eller i ett kundrepo.
 ---
 
 Detta är en leveransform för Claude Code. Bäraren är filerna i repot (`steg/steg.json`, `MANDAT.md`, `ARBETSSATT.md`);

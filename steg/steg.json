@@ -70,10 +70,53 @@
     }
    ]
   },
+  "intervju": {
+   "mandat": "bestallning",
+   "syfte": "Adaptiv, återupptagbar kundintervju i den kontaktkanal beställningen anger: frågeomgångar per område A–H ur luckor som påverkar lösningen, följdfrågor ur svaren, kundens svar ordagrant, fakta med status, motsägelser spårbara, avsnitt 19 till research.md. Normalväg för nytt eller väsentligt förändrat uppdrag; annars bara luckorna.",
+   "anvisning": "Följ kundintervju.md. Läs kundmappen först (VERKSAMHET.json, research.md, tidigare INTERVJU.json). Kör verktyg/intervju.py start --kund KUNDMAPP --kanal \"kanalen enligt beställningen\"; skicka INTERVJU/omgang-N.md genom kanalen; registrera svaren ordagrant med svar --omgang N --fil SVAR.md; tolka med fakta --fil FAKTA.json (status per uppgift); nasta tills inga luckor som påverkar lösningen kvarstår; research --ut research-intervju.md och ta in avsnittet i research.md. Fortsätt allt arbete som inte beror på svar; be aldrig ägaren om det kunden kan svara på; testdialoger med --testdialog och märkta som sådana.",
+   "underlag": [
+    {
+     "fil": "kunskap/kundintervju.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/research-underlag.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "Status per nyckeluppgift; sektion 19; Användbarhet"
+    },
+    {
+     "fil": "kunskap/integrationer.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "formulär och leads; bokning (för följdfrågornas leveranskrav)"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "hela (kända uppgifter frågas inte om)"
+    },
+    {
+     "fil": "research.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "hela, om den finns"
+    },
+    {
+     "fil": "INTERVJU.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "hela, om intervjun är påbörjad (återupptagning)"
+    }
+   ]
+  },
   "research": {
    "mandat": "staende",
    "syfte": "Faktaunderlag före brief: organisation, erbjudande, användare, uppgifter, räckvidd, förtroende, innehåll och bild, röst, transaktioner, integrationer, juridikobservationer, alternativ, designreferenser, framgångsmått, sökintention, kanalobservationer, öppna frågor och kontrollrad; referensjakten är en del.",
-   "anvisning": "Följ research-underlag.md (ryggradens 18 sektioner, faktadisciplinen, kontrollraden sist) och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv i kundmappens research.md; VERKSAMHET.json skrivs eller uppdateras ur sektion 1 och 5 (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig.",
+   "anvisning": "Följ research-underlag.md (ryggradens 19 sektioner, status per nyckeluppgift, faktadisciplinen, kontrollraden, användbarhetsfrågorna); intervjun (steget intervju) ger sektion 19 och research prövar och kompletterar den och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv i kundmappens research.md; VERKSAMHET.json skrivs eller uppdateras ur sektion 1 och 5 (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig.",
    "underlag": [
     {
      "fil": "kunskap/research-underlag.md",
@@ -92,6 +135,12 @@
      "klass": "kund",
      "obligatorisk": false,
      "delar": "hela, om den finns (steget skapar eller utökar den)"
+    },
+    {
+     "fil": "INTERVJU.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "svar och fakta, om intervjun är påbörjad"
     }
    ]
   },
@@ -117,6 +166,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "anspråk, val och licens, art direction (för §8)"
+    },
+    {
+     "fil": "kunskap/integrationer.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela (för §4 och §9)"
     },
     {
      "fil": "kunskap/externa/anthropic-frontend-design-SKILL.md",
@@ -189,7 +244,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§5 designriktning och konfliktraden"
+     "delar": "§7 designriktning och konfliktraden"
     },
     {
      "fil": "kunskap/referenser-professionella.md",
@@ -215,6 +270,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "beskärning, storlekar, optimering och verktygen"
+    },
+    {
+     "fil": "kunskap/integrationer.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "formulär och leads; bokning; kundregister; redaktörsupplevelse"
     },
     {
      "fil": "kunskap/externa/anthropic-frontend-design-SKILL.md",
@@ -343,7 +404,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": false,
-     "delar": "§5 för handlingens text (--handling-text)"
+     "delar": "§4 för handlingens text (--handling-text)"
     }
    ]
   },
@@ -398,7 +459,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§5 designriktning (läggs i bedömarens underlag som utdrag)"
+     "delar": "§7 designriktning (läggs i bedömarens underlag som utdrag)"
     },
     {
      "fil": "kunskap/externa/hallmark-SKILL-13ac0ec7.md",
@@ -510,7 +571,7 @@
   "annonsberedning": {
    "mandat": "bestallning",
    "syfte": "Kanal- och kampanjberedning för Google Ads och Meta Ads: mål, målgrupp, budskap, kreativa tillgångar, landningssidans överensstämmelse, spårning, konverteringsdefinitioner, budgetvillkor, utkast/pausade objekt och resultatläsning; aldrig start eller spendering utan uttryckligt mandat.",
-   "anvisning": "Följ annonser.md. Skriv KANALPLAN.json ur beredningen och briefen §5; kör verktyg/annonsberedning.py bygg --bygge BYGGE; rätta fynden (textlängder, landningssida, budskap). Utkasten är PAUSED; överföring kräver plattformsåtkomst (namngivet externt beroende) och mandat med budget. Resultat läses med rapport --export.",
+   "anvisning": "Följ annonser.md. Skriv KANALPLAN.json ur beredningen och briefen §5; kör verktyg/annonsberedning.py bygg --kanalplan KANALPLAN.json --verksamhet VERKSAMHET.json --bygge BYGGE --ut FALL/ANNONSER; rätta fynden (textlängder, landningssida, budskap). Utkasten är PAUSED; överföring kräver plattformsåtkomst (namngivet externt beroende) och mandat med budget. Resultat läses med rapport --export FIL --ut FALL/ANNONSRAPPORT.json; overfor --verksamhet VERKSAMHET.json --ut FALL/OVERFORING.json kör spärren och vägrar tills en överföringsväg med åtkomst finns.",
    "underlag": [
     {
      "fil": "kunskap/annonser.md",
@@ -541,7 +602,7 @@
   "lokal-synlighet": {
    "mandat": "bestallning",
    "syfte": "Google-företagsprofil och citationer: tillämplighet, behörig åtkomstväg, korrekta verksamhetsuppgifter, kategorier, öppettider, serviceområde, bilder, länkar och uppföljning; NAP-kontroll mot sajten.",
-   "anvisning": "Följ lokal-synlighet.md. Kör verktyg/lokal_synlighet.py datablad (ur VERKSAMHET.json; beskrivning ur briefen) och kontrollera --bygge. Profilen skapas och verifieras av behörig människa; skapa aldrig en profil för en fiktiv verksamhet; tvinga inte lokala krav på icke-lokala uppdrag.",
+   "anvisning": "Följ lokal-synlighet.md. Kör verktyg/lokal_synlighet.py datablad --verksamhet VERKSAMHET.json [--beskrivning FIL ur briefen] --ut FALL/LOKAL-SYNLIGHET.md och kontrollera --verksamhet VERKSAMHET.json --bygge BYGGE --ut FALL/NAP-KONTROLL.json. Profilen skapas och verifieras av behörig människa; skapa aldrig en profil för en fiktiv verksamhet; tvinga inte lokala krav på icke-lokala uppdrag.",
    "underlag": [
     {
      "fil": "kunskap/lokal-synlighet.md",
@@ -579,6 +640,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "basen och tabellen"
+    },
+    {
+     "fil": "kunskap/integrationer.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "formulär och leads (grind 1: accepterad ≠ skickad ≠ bekräftad)"
     },
     {
      "fil": "kunskap/formularsakerhet.md",
@@ -659,7 +726,7 @@
   "sokkonsol": {
    "mandat": "bestallning",
    "syfte": "Sökkonsolens ägarskapsväg, egenskap, sitemap, URL-inspektion och sökdata, med tolkning till åtgärder; anropsplan utan åtkomst, kvitto per anrop med åtkomst.",
-   "anvisning": "Följ sokkonsol.md. Kör verktyg/sokkonsol.py plan (alltid) och token/verifiera/inspektera/sokdata --live bara med åtkomstfil (0600) för en skarp verksamhet efter att lansering.py kontrollera visat noll fynd; fiktiva verksamheter och förhandsvisningsdomäner vägras. Skriv tolkningen (observation → åtgärd) i fallets uppföljning; hitta aldrig på data för en oindexerad sajt.",
+   "anvisning": "Följ sokkonsol.md. Kör verktyg/sokkonsol.py plan --verksamhet VERKSAMHET.json --ut FALL/SOKKONSOL-plan.json (alltid) och token|verifiera|inspektera|sokdata --verksamhet VERKSAMHET.json --atkomst FIL --live --ut FALL/SOKKONSOL-<kommando>.json bara med åtkomstfil (0600) för en skarp verksamhet efter att lansering.py kontrollera visat noll fynd; fiktiva verksamheter och förhandsvisningsdomäner vägras. Skriv tolkningen (observation → åtgärd) i fallets uppföljning; hitta aldrig på data för en oindexerad sajt.",
    "underlag": [
     {
      "fil": "kunskap/sokkonsol.md",

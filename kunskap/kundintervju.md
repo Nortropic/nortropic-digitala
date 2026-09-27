@@ -1,0 +1,67 @@
+# Kundintervju — förstå innan lösningen bestäms
+
+Professionsfil (ägarens tillägg 2, 2026-09-27: "jag vill att digitala förstår detta genom att intervjua kunden samt egen
+research"). Laddas i steget `intervju`. Verktyg: `verktyg/intervju.py` (frågeomgångar, följdfrågor ur svaren,
+svar ordagrant, fakta med status, motsägelser, avsnitt 19 till research.md). Digitala leder intervjun; kontoret
+bidrar med problemformulering, metodstöd, mandat och proportion; ägaren är varken intervjuare eller översättare.
+
+## Vad intervjun är och inte är
+
+En intervju med verksamhetens representant ger kundens bild: mål, erbjudande, flöden, system, material, ramar. Den är
+inte ett användartest och inte bevis för vad alla besökare behöver; besökarnas beteende kommer ur observation, data
+och prov (uppfoljning.md, provare). Målet är inte ett ifyllt formulär utan en förståelse som styr research.md, brief,
+lösningsval, resurser, implementation, integrationer och leveransprov.
+
+## Arbetsväg med återkoppling
+
+Beställning och befintligt kundunderlag → inledande läsning och research → intervju ↔ riktad research och följdfrågor
+→ källbundet research.md → brief och leveranskrav → design, innehåll, bygge, integrationer → granskning, rättning,
+omprov → färdig privat sida och rapport → lansering och förvaltning enligt mandat. Research får börja före intervjun
+och fortsätta efter; ny information får ändra ett motiverat val utan omstart. Nytt eller väsentligt förändrat uppdrag:
+intervju är normalvägen. Finns relevant intervju och aktuellt underlag: bara luckorna kompletteras. En liten rättning
+utlöser ingen ny intervju.
+
+## Kanal och form
+
+Den kontaktväg beställningen anger (e-post, telefon med anteckningar, möte, kundens eget verktyg). Verktyget skriver
+omgången som en läsbar fil (`INTERVJU/omgang-N.md`) med begripliga, neutrala frågor i hanterbara omgångar (högst åtta);
+sessionen skickar den genom kanalen och registrerar svaren ordagrant (`svar`). Ingen ny kundportal; ingen fråga om
+ramverk, API, skill, typografisk skala eller arkitektur. Kundens språk; otydliga svar följs upp med exempel; viktiga
+tolkningar sammanfattas i dialogen så kunden kan rätta dem, utan något obligatoriskt godkännande av en separat brief.
+
+## Områdena (frågebanken i verktyget, id per fråga)
+
+| Område | Frågar efter | Påverkar |
+|---|---|---|
+| A. Verksamhet, mål och erbjudande | mål, nuläge, erbjudande med verkliga villkor, förfrågningar att undvika | verksamhetsmål, interventionsbeslut, sidor och innehåll |
+| B. Besökare och faktiska situationer | vilka som hör av sig, senaste förfrågan, vad besökaren måste förstå före handling, vad som är sett kontra känt | målgrupper, viktigaste uppgift, insiktskälla |
+| C. Hela verksamhetsflödet | vad som händer efter inskick eller bokning, vem tar emot, i vilket system, fördelning, fel | formulär- och bokningskedjans efterled, mottagande system, felvägar |
+| D. Befintliga system och åtkomster | mejl, kalender, bokning, kassa, kundregister, nyhetsbrev, CMS, analys- och annonskonton; vem äger kontona | integrationer, redigeringsväg, åtkomstberoenden — aldrig lösenord i svar |
+| E. Varumärke, innehåll och förtroende | ton, material med rättigheter, referenser och varför | röst, innehåll, bild, förtroende; preferens skild från fakta och beslutad gräns |
+| F. Synlighet och mätning | hur folk hittar kunden, data som finns, vad som är en bra förfrågan och hur den följs till utfall | kanalbehov, sökintention, konverteringsdefinition |
+| G. Förvaltning och redaktörsarbete | vem uppdaterar, hur ofta, vana; vem hanterar leads, drift, åtkomster; migrering | innehållsmodell, redigeringsväg, drift, omdirigeringar |
+| H. Ramar och osäkerheter | budget, tid, publicering, integritet, verksamhetsgränser; vad kunden inte vet och vem som kan svara | proportion, mandat, luckor med ägare |
+
+Följdfrågor härleds ur svaren med namngivna regler (bokning → tjänster, längder, resurser, tillgänglighet, bekräftelse,
+ombokning, befintligt system; betalning; kundregister; nyhetsbrev; språk; migrering; osäkerhet → vem kan svara;
+räckvidd; fysiskt besök). Varje följdfråga bär `utlost_av` (fråga och träff) och vad den påverkar. Ett bokningsbehov leder
+till verksamhetsfrågor och leveranskrav (integrationer.md), inte automatiskt till ett kontaktformulär.
+
+## Svar, fakta och status
+
+Kundens svar sparas ordagrant i kundmappen (`INTERVJU.json`), skilda från tolkningen. Tolkningen registreras som fakta
+med status: `kunden uppger`, `observerat`, `externt belagt`, `tolkning`, `hypotes`, `preferens`, `okänt`, med källa och
+datum där skillnaden påverkar lösningen. En ny uppgift som strider mot en befintlig blir en motsägelse (`MOTn`) med
+båda uppgifterna bevarade och en riktad följdfråga; den avgörs uttryckligen (`avgor`) med skäl, och den ersatta
+uppgiften märks. Saknad data fylls aldrig med påhitt; "okänt" är ett giltigt värde med en ägare.
+
+## Vad som sparas var
+
+Bara uppgifter som uppdraget behöver, i kundmappen (aldrig i detta repo, aldrig i professionsfiler). Svar som innehåller
+lösenord eller nycklar vägras och sparas inte. Testdialoger (`--testdialog`) märks i varje utdata och är varken
+kundresearch eller bevis för mänsklig användbarhet.
+
+## Återupptagning
+
+Allt tillstånd ligger i `INTERVJU.json`; `status` visar omgångar, svar, fakta, väntande följdfrågor, luckor och
+motsägelser; `nasta` fortsätter. En färsk utförare (Claude eller Codex) tar över utan att ägaren återberättar.

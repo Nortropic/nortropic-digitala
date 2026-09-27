@@ -45,13 +45,13 @@ kundens förvaltning och driftmiljön. Det som följer är krav på resultatet o
 
 Briefens §7 skrivs som `DESIGN.md` i kundrepot (formatet `@google/design.md`, README i `kunskap/externa/`), så att
 tokens, typografi, färg och komponentregler är läsbara för varje utförare; `npx -p @google/design.md@0.4.0 designmd lint
---format json DESIGN.md` hittar föräldralösa tokens och kontrastvarningar (etapp 4 fann två tokens och en varning).
+--format json DESIGN.md` hittar föräldralösa tokens och kontrastvarningar (i Norrgläntas etapp 4, DIGITALA-1-ETAPP4-RESULTAT-20260927, fann linten två föräldralösa tokens och en kontrastvarning).
 Formatet beskriver riktningen; det bestämmer den inte.
 
 ## Browsergranskning under bygget
 
 Rendera och interagera i riktig webbläsare medan du bygger, inte bara efteråt: första vyn i 390 och 1440,
-tangentbordsväg genom menyn och formuläret, felvägar, konsol och nätverk (`verktyg/webblasare/`, HELHET etapp 4).
+tangentbordsväg genom menyn och formuläret, felvägar, konsol och nätverk (`verktyg/webblasare/` byggs i HELHET etapp 4 och finns inte än; tills dess Runtimes mätprofil och provarprofil).
 Skärmbilder kompletterar interaktionen; ett textträd är inte bildseende.
 
 ## Arbetslogg

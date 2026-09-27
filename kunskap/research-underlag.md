@@ -1,8 +1,20 @@
 # Research — faktaunderlag före brief
 
-Professionsfil (HELHET-20260927, avsnitt 3–4), återvunnen och generaliserad ur det arkiverade repots
-forskningskontrakt (v3.1.0). Laddas i steget `research` tillsammans med `referensjakt.md` (referensjakten är en del av
-researchen, inte hela). Kundens research skrivs i kundmappens `research.md`.
+Professionsfil (HELHET-20260927, avsnitt 3–4; ägarens tillägg 2, avsnitt 4–5), återvunnen och generaliserad ur det
+arkiverade repots forskningskontrakt (v3.1.0). Laddas i steget `research` tillsammans med `referensjakt.md`
+(referensjakten är en del av researchen, inte hela) och i steget `intervju`. Kundens research skrivs i kundmappens
+`research.md`: den kundspecifika ingången för kvalificerat underlag — vad vi vet och behöver förstå; briefen
+motiverar vad vi väljer att göra. Ingen konkurrerande kundsanning: research.md hänvisar till intervjun (avsnitt 19),
+VERKSAMHET.json och källfilerna, och de pekar tillbaka.
+
+## Status per nyckeluppgift
+
+Där skillnaden påverkar lösningen bär en uppgift källa, datum och status: `kunden uppger`, `observerat` (egen
+observation), `externt belagt` (register, plattform, dokumentation), `tolkning` (vår läsning av en källa), `hypotes`,
+`preferens` (kundens önskemål, skilt från fakta och från en beslutad gräns) eller `okänt`. Inte varje mening
+registreras — bara det som styr val. Kundens aktuella uppgift ersätts aldrig tyst av gammal webbtext; ett önskemål blir
+inte ett externt belagt faktum. Motsägelser bevaras med båda uppgifterna, undersöks och följs upp med en riktad fråga
+(intervju.py `fakta`/`avgor`).
 
 ## Faktadisciplin
 
@@ -52,7 +64,7 @@ eller "inte undersökt").
 17. **Öppna frågor** — allt `[OSÄKER]` samt standardfrågorna: vilka omdömen eller referenser får publiceras och med
     vilken attribution; finns högupplösta original och godkännande; domänönskemål; bokningskanal; för nystartade:
     vilka löften vågar verksamheten stå för.
-18. **Kontrollrad** (maskinläsbar, sist i filen):
+18. **Kontrollrad** (maskinläsbar; blocket nedan):
 
 ```
 RESEARCH-KONTROLL v1 | org=<ja|nej> | kontaktvag=<ja|nej> | erbjudande=<ja|nej> | rackvidd=<ja|nej>
@@ -62,6 +74,21 @@ RESEARCH-KONTROLL v1 | org=<ja|nej> | kontaktvag=<ja|nej> | erbjudande=<ja|nej> 
 
 `status=KOMPLETT` kräver `ja` på org, kontaktvag, erbjudande och rackvidd; `osakra` och `konflikter` nollställs
 aldrig av sig själva; OFULLSTÄNDIG skrivs överst i filen; ett oundersökt fält är `OSÄKER`, aldrig `nej`.
+
+19. **Intervju och status per uppgift** (sist i filen) — skrivs av `verktyg/intervju.py research`: kanal, omgångar,
+    kundens svar ordagrant per område A–H, fakta med status och källa, motsägelser, luckor som påverkar lösningen
+    (även ställda frågor utan svar), följdregler som utlöstes, och svaren på de fyra användbarhetsfrågorna: vilken
+    uppgift är viktigast; vad måste formuläret åstadkomma efter inskick; vilket befintligt system ska ta emot; vad vet
+    vi ännu inte. Testdialoger märks.
+
+## Användbarhet, inte rubriker
+
+Research.md är klar för brief när den kan besvara: vilken uppgift är viktigast för besökaren och verksamheten; vad
+formuläret (eller bokningen) måste åstadkomma efter inskick och vilket system som tar emot; vilka kanaler som är
+relevanta för just denna kund; vad som är tillräckligt utrett, inte tillämpligt, motsägelsefullt eller ännu okänt.
+Geografisk räckvidd, kontaktkanaler och integrationer beskrivs för den aktuella kunden, inte efter ett tidigare
+falls modell. Nya kundsvar slår igenom i berörda slutsatser, brief, implementation och prov; tidigare versioner bevaras
+(`research-rN.md`), och ett uppdaterat research.md lämnar inga gamla antaganden styrande.
 
 ## Skärpningar när uppdraget är lokalt
 

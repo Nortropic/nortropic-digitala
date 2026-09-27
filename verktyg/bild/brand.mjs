@@ -25,7 +25,7 @@
  * binärer — vägen som bär de flesta kunder). Tokens saknas → AKROMATISK degradering
  * (ink→#000000, accent→#FFFFFF) med WARNING — en varumärkesfärg GISSAS aldrig.
  *
- * Gates (i rapporten, ALDRIG launch.js): favicon.ico >10 kB → WARN ·
+ * Gates (i rapporten, aldrig en lanseringsgrind): favicon.ico >10 kB → WARN ·
  * apple-icon ≠180×180 → FAIL · icon.svg utan viewBox → FAIL ·
  * källa <512 px längsta sidan och ingen SVG → WARN + fotouppdragsrad.
  *
@@ -226,7 +226,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     ],
   }, null, 2))
 
-  // Gates — i rapporten, ALDRIG launch.js
+  // Gates — i rapporten, aldrig en lanseringsgrind
   const icoKb = statSync(join(APP, 'favicon.ico')).size / 1024
   if (icoKb > 10) rad('gate', 'WARN', `favicon.ico ${icoKb.toFixed(1)} kB > 10 kB`)
   const am = await sharp(join(APP, 'apple-icon.png')).metadata()
