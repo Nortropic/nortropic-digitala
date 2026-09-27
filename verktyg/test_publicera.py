@@ -90,6 +90,8 @@ class Publicering(unittest.TestCase):
         self.assertEqual([c[:2] for c in kord if c[0] == 'gh' or (c[0] == 'git' and c[1] in ('push', 'checkout', 'pull', 'merge'))], [], 'torrläget får inte köra push, pr, merge, checkout eller pull')
         (self.g / 'underlag.json').write_text(json.dumps({'commit': '0123456789abcdef', 'filer': [['x', 'repo/a', 'fil (%s)' % self.head[:7]]]}))
         code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('annan version', r['vagrad'])
+        (self.g / 'underlag.json').write_text(json.dumps({'commit': 'HEAD', 'filer': [['x', 'repo/a', 'fil']]}))
+        code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('inte är en sha', r['vagrad'])
         (self.g / 'underlag.json').write_text(json.dumps({'filer': [['x', 'repo/a', 'fil (%s)' % self.head[:7]], ['y', 'repo/b', 'fil utan revision']]}))
         code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('inte varje post', r['vagrad'])
 

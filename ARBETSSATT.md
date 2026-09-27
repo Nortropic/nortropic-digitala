@@ -62,14 +62,16 @@ inom omfattningen; kanalstegen efter kundmappens `KANALBEHOV.json` ur beredninge
 med lanseringsmandat, annars slutar vägen vid leverans; verktygets egna markeringar omprövas varje körning, så ett
 lanseringsmandat eller ett kanalbehov som kommer senare återöppnar stegen automatiskt — en utvidgad beställning anger då
 `omfattning` `helhet` eller en steglista som tar med lansering, sokkonsol och drift, inte bara lanseringsmandatet),
-laddar stegets underlag i fallet (ett redan
-laddat steg återupptas utan ny laddning), skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
+laddar stegets underlag i fallet (ett redan laddat steg återupptas utan ny laddning),
+skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
 per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
 [--beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
 utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att allt annat fortsätter, och `omprova
 --steg S --not …` öppnar steget igen när beroendet finns. En färsk utförare kör `status` och `fortsatt` och tar över
-utan att ägaren återberättar.
+utan att ägaren återberättar. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
+Runtime/.runtime/bin/codex-<version>`, samma modell som Runtimes konfiguration anger), inte med den CLI som råkar ligga i
+PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körde (L27).
 
 ## Så används verktygen i varje steg
 

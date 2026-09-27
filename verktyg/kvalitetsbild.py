@@ -100,6 +100,33 @@ def samla(fall, leverans=None):
         entry['bindning'] = post.get('bindning')
         entry['status'] = bevisstatus(post, entry, leverans)
         rows.append(entry)
+    # Playwright-vägens besökarprov (verktyg/webblasare/besok.mjs): FALL/BESOK-*/BESOK.json med efterkontroll av
+    # nätverksloggen; kontrollantens bedömning i FALL/KONTROLL-<namn>.json/.md (fynd ur slutprovet HELHET-20260927:
+    # ett verkligt besök syntes inte i kvalitetsbilden eftersom det inte är en KORNING-post)
+    for d in sorted(fall.glob('BESOK-*')):
+        post = las_json(d / 'BESOK.json')
+        if not isinstance(post, dict):
+            continue
+        kontroller = []
+        for k in sorted(fall.glob('KONTROLL-*.json')):
+            kj = las_json(k)
+            if isinstance(kj, dict) and isinstance(kj.get('korning'), str) and str(d) in kj['korning']:
+                kontroller.append(k)
+        kontroll = las_json(kontroller[0]) if kontroller else None
+        kontroll_fil = kontroller[0].name if kontroller else None
+        if post.get('torr') or post.get('lage') == 'qa':
+            status = 'utanför leveransen: torrläge eller QA-konfiguration, inget besök'
+        elif leverans:
+            status = 'oavgjord: besöket bär ingen leveransbindning (adress %s); bind besöket till revisionen i kontrollantens kvitto innan det räknas som leveransbevis' % post.get('adress')
+        elif post.get('utforare_status') not in (0, None) or post.get('inom_gransen') is not True:
+            status = 'underkänd: utföraren slutade med status %s eller ursprung utanför gränsen' % post.get('utforare_status')
+        elif not kontroll:
+            status = 'oavgjord: KONTROLL SAKNAS — kontrollantens bedömning finns inte; provarens rapport räknas inte'
+        else:
+            status = 'ok' if str(kontroll.get('utfall', '')).lower().startswith(('godk', 'lyck')) else 'underkänd: kontrollanten bedömde %s' % kontroll.get('utfall')
+        rows.append({'fil': d.name + '/BESOK.json', 'profil': 'provare', 'vag': 'playwright', 'etikett': d.name, 'run': str(d), 'laddning': None, 'steg': 'provare',
+                     'exit': post.get('utforare_status'), 'kvitto': None, 'utfall': (post.get('besok') or {}).get('utfall') or 'okänt', 'kontroll': kontroll, 'kontroll_fil': kontroll_fil,
+                     'efterkontroll': post.get('efterkontroll'), 'utforare': '%s/%s' % (post.get('utforare'), post.get('modell')), 'bindning': {'adress': post.get('adress')}, 'status': status})
     return rows
 
 
@@ -144,8 +171,11 @@ def rendera(rows, ej_observerat, leverans=None):
                 out.append('- Lighthouse %s: %s' % (form, json.dumps(scores or value, ensure_ascii=False)[:300]))
         elif r['profil'] == 'matning':
             out.append('- sammanfattning saknas: ej prövat')
+        if r.get('vag') == 'playwright':
+            e = r.get('efterkontroll') or {}
+            out.append('- Playwright-vägen (besok.mjs, %s): besökarens utfall "%s"; efterkontroll: %s förfrågningar, %s blockerade, inom gränsen %s' % (r.get('utforare'), r.get('utfall'), e.get('antal_forfragningar'), e.get('blockerade'), e.get('inom_gransen')))
         if r['profil'] == 'provare':
-            out.append('- kontrollantens bedömning: ' + ('finns (KONTROLL-%s.md)' % r['etikett'] if r.get('kontroll') else 'KONTROLL SAKNAS — utfallet är inte avgjort; provarens rapport räknas inte'))
+            out.append('- kontrollantens bedömning: ' + ('finns (%s)' % (r.get('kontroll_fil') or 'KONTROLL-%s.md' % r['etikett']) if r.get('kontroll') else 'KONTROLL SAKNAS — utfallet är inte avgjort; provarens rapport räknas inte'))
         out.append('')
     out += ['## 2. Professionellt bedömt (modellbedömning, märkt som sådan)', '']
     bedomt = [r for r in rows if r['profil'] == 'kritik']

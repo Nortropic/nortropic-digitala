@@ -5,7 +5,7 @@ men aldrig utan (1) en godkänd separat granskning bunden till exakt den commit 
 oförändrade pinnar på samma commit, (3) rent arbetsträd. Verktyget vägrar annars. Ingen kandidat kan ändra sin egen
 granskning: granskningskatalogen ligger utanför repot och läses, aldrig skrivs.
 
-    python3 -B verktyg/publicera.py --gren helhet/x --granskning GRANSKNINGSKATALOG --titel "…" --kropp KROPP.md [--torr] [--rot DIR]
+    python3 -B verktyg/publicera.py --gren helhet/x --granskning GRANSKNINGSKATALOG --titel "…" --kropp KROPP.md [--torr] [--rot DIR] [--ingang DIR]
 
 Kontroller före push: git status rent; HEAD = grenens spets; granskningens review.json har verdict approved och dess
 underlag.json är bundet till HEAD (fältet commit, eller en commit med identiskt träd); sviten grön; pinnarna stämmer.
@@ -23,6 +23,7 @@ Kvittot anger vilken bindning som gällde.
 """
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -63,8 +64,10 @@ def kontrollera(rot, gren, granskning):
     except ValueError:
         raise Vagrad('underlag.json är inte giltig JSON')
     c = u.get('commit')
+    if c is not None and not (isinstance(c, str) and re.fullmatch(r'[0-9a-f]{7,40}', c)):
+        raise Vagrad('granskningens underlag har ett commit-fält som inte är en sha (minst 7 hexsiffror): %r' % str(c)[:40])
     if c:
-        if isinstance(c, str) and len(c) >= 7 and head.startswith(c):
+        if head.startswith(c):
             bindning = 'commit-fält'
         else:
             # samma innehåll efter rebase på en identisk bas: granskningen gäller trädet, inte commit-id:t

@@ -65,6 +65,10 @@ class Intervju(unittest.TestCase):
         self.assertIn('bokning', r['meddelande'])
         self.assertEqual([u['regel'] for u in iv.las(str(self.k))['foljdregler_utlosta']], ['bokning'])
 
+    def test_kalender_bojda_former_traffar_men_inte_sammansattningar(self):
+        for text, ska in (('Vi skriver upp besöken i kalendern.', True), ('Vi har tre kalendrar på kontoret.', True), ('Vi gör en redaktionskalender för Facebook.', False)):
+            self.assertEqual(bool(iv.FOLJDREGLER[0][1].search(text)), ska, text)
+
     def test_negerad_regel_ger_ingen_foljdfraga_men_bokfors(self):
         """Iakttagelse från Kundstart (peer 0a): ordbaserade regler såg inte negationer."""
         kor('start', '--kund', str(self.k), '--kanal', 'e-post', '--testdialog')
