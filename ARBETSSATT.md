@@ -8,7 +8,8 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | Steg | Mandat | Vad | Runtime | Var arbetet sker |
 |---|---|---|---|---|
 | uppstart | stående | lärdomar, mandat, arbetssätt | — | läsning |
-| research | stående | referensjakt, källtabell | — | kundmappen (research.md) |
+| beredning | stående | problemformulering, proportion, metodval efter problem, interventionsbeslut (kontorets beredning laddar steget) | — | kontorets beredning och kundmappen |
+| research | stående | faktaunderlag i 18 sektioner (referensjakten en del), sökintention, kanalobservationer, verksamhetsuppgifter | — | kundmappen (research.md, VERKSAMHET.json) |
 | brief | beställning | samlad brief, riktning, kedjekontroll på briefen | läsare för granskning | kundmappen (PROJECT-BRIEF.md); inget ägarstopp |
 | koncept | beställning | lösningsalternativ utreds internt, en motiverad riktning väljs utan ägarstopp (antal alternativ efter uppgiften; Design Read och namngivna axlar är metoder, inte universella värden) | kritikprofilen (designkritik-komp) | privat etappmapp |
 | bygge | beställning | bygget i kundrepot | — (dagens byggväg) | kundrepot |
@@ -20,7 +21,7 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | leverans | beställning | kvalitetsbild, överlämning, lärdomspost, användningsnoter, förslagsrad | — | kontorspost + privat fall |
 
 Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **brief, koncept, bygge,
-redaktionellt-pass, leverans**. Steg inom stående mandat: uppstart, research, matning, kritik, granskning-d, provare.
+redaktionellt-pass, leverans**. Steg inom stående mandat: uppstart, beredning, research, matning, kritik, granskning-d, provare.
 
 ## Proportion — tre storlekar
 
@@ -48,7 +49,11 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    skriver `KORNING-<tid>.json` i fallet med körkatalog, utfall och laddningskvittots hash.
 3. `python3 -B verktyg/kvalitetsbild.py --fall FALL --ut FALL/KVALITETSBILD.md` — samlar körningarnas kvitton till
    kvalitetsbilden (tekniskt prövat · professionellt bedömt · ej observerat hos verkliga användare).
-4. Bygget görs i kundrepot med dagens byggväg (Claude Code eller Codex, Vercel CLI); det ingår i kedjan genom att
+4. `python3 -B verktyg/verksamhetsuppgifter.py kontrollera|nap|krav VERKSAMHET.json` — kundens verksamhetsuppgifter (NAP, räckvidd,
+   öppettider; `fiktiv: true` spärrar verkliga externa åtgärder); `python3 -B verktyg/copy_kontroll.py --kalla … --ut RAPPORT.json`
+   — copykontrollens rapport (fraser, strukturer, platshållare, metalängder, obligatoriska element; ingen poäng);
+   `node verktyg/bild/treatment.mjs`, `brand.mjs` — bildbehandling och varumärkesfiler i kundrepot (kräver `sharp` där).
+5. Bygget görs i kundrepot med dagens byggväg (Claude Code eller Codex, Vercel CLI); det ingår i kedjan genom att
    laddningskvittot, mätningarna och kritiken binds till commit och driftsättning (L9).
 
 ## Lärande per fall (rytmen)

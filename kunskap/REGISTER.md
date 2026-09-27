@@ -57,6 +57,14 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `redaktionellt-pass.md` | copy-blocklistens strukturregler och content-designerns sidregler (webbgrunden @ `e4c8c52`), frontend-design "More on writing in design" (fil 1), Norrgläntas fynd | Redaktionellt pass (P2) och fråga i granskning D |
 | `formularsakerhet.md` | webbgrundens `skills/nortropic-prelaunch/references/security-checklist.md` @ `e4c8c52` §3 (rad 70–82), Norrgläntas brief §3 och den riktade kontrollens område 2 | Bygge av formulär; kodläsningsfrågor i granskning D |
 | `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | Uppstart av nästa fall (P4); klassning och uppföljning |
+| `beredning.md` | HELHET-20260927 avsnitt 3; det arkiverade repots interventionsbeslut (`agents/project-planner.md` @ `e4c8c52` process 0) och input gate; etablerad metodlitteratur namngiven i filen | Beredning: elva svar, proportion, metodval efter problem; laddas av kontorets beredning (AP-06 `forvaltning.problem`) |
+| `research-underlag.md` | det arkiverade repots forskningskontrakt v3.1.0 (`skills/nortropic-plan/references/research-kontrakt-v3.md` @ `e4c8c52`), generaliserat; sökintention och kanalobservationer nya | Research: ryggrad i 18 sektioner, faktadisciplin, kontrollrad |
+| `juridikflaggor.md` | det arkiverade repots `skills/nortropic-plan/references/juridikflaggor.md` och `nortropic-prelaunch/references/legal-requirements-se.md` @ `e4c8c52` | Brief §10 och prelaunch: rapportera, aldrig avgöra |
+| `brief-mall.md` | det arkiverade repots briefstruktur (`agents/project-planner.md` @ `e4c8c52` §1–§7 och kalibreringsprofilen), omgjord till §0–§13 utan fast primärhandling, fast sidmall eller assurance-rad | Brief: mall med bevisregel |
+| `bild.md` | det arkiverade repots `skills/nortropic-bild` (SKILL, behandling.md, slot-schema.md) @ `e4c8c52`; verktygen `verktyg/bild/*.mjs` kopierade därifrån | Brief §8 och bygge: anspråk, licens, art direction, beskärning, storlekar, optimering |
+| `bygge-referens.md` | det arkiverade repots `skills/nortropic-stack` (+references), `agents/stack-builder.md`, `nortropic-init` @ `e4c8c52`, generaliserat från fast stack till krav och mönster | Bygge: krav på resultatet, mönster med skäl, browsergranskning under bygget |
+| `copy-kontroll.md` | det arkiverade repots `skills/nortropic-antislop/references/copy-blocklist.md` och `agents/content-designer.md` @ `e4c8c52`, från lag till rapport; verktyget `verktyg/copy_kontroll.py` | Redaktionellt pass: rapport att rätta eller motivera |
+| `referenser-professionella.md` | det arkiverade repots `skills/nortropic-antislop/references/premium-checklist.md` och `premium-bevis.md` @ `e4c8c52` (exemplar verifierade 2026-07-27) | Koncept och kritik: jämförelse med motivering, inte kopiering |
 
 ## D. Koppling per underlag — steg och utförare · när det läses och vilka delar · uppgift eller kontroll · vid konflikt
 
@@ -75,6 +83,14 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `redaktionellt-pass.md` | Redaktionellt pass (kedjedrivaren); granskning D som fråga | Hela (en sida) | Redaktionell kvalitet och kedjans innebörd | Stöd för bedömning, inte förbud |
 | `formularsakerhet.md` | Bygge av formulär (kedjedrivaren); granskning D | Hela (kort) | Honeypot, en klocka, servervalidering, fel | ACCEPT:s demogränser vinner (ingen sändning) |
 | `LARDOMAR.md` | Uppstart av nästa fall (kedjedrivaren) | Hela | P4 | — |
+| `beredning.md` | Beredning (kontorets beredare och kedjedrivaren) | Hela | Elva svar, proportion, metodval efter problem | ägarens accepterade uppdrag vinner |
+| `research-underlag.md` | Research (kedjedrivaren) | Hela; referensjakt.md för sektion 13 och 7 | Ryggrad, faktadisciplin, kontrollrad | — |
+| `juridikflaggor.md` | Brief §10; prelaunch | Tabellen och reglerna | Flaggor sätts på observation; rapporteras, avgörs av människa | ingen konflikt möjlig: rapport |
+| `brief-mall.md` | Brief (kedjedrivaren) | Hela | Briefens §0–§13 med bevisregel | briefens konfliktrad |
+| `bild.md` | Brief §8; bygge | Anspråk, val och licens, art direction; vid bygget beskärning, storlekar, verktygen | Bildkompetensens sju delar | kundens rättighetsläge vinner |
+| `bygge-referens.md` | Bygge (kedjedrivaren eller Codex) | Hela | Krav på resultatet; mönster med skäl | briefens §9 vinner |
+| `copy-kontroll.md` | Redaktionellt pass | Hela | Rapporten rättas eller motiveras | kundens röst vinner med motivering |
+| `referenser-professionella.md` | Koncept; kritik | De åtta dragen och filtret | Jämförelse med motivering | ingen referens definierar kvalitet ensam |
 
 **Laddning per steg** (typisk last): research 1 fil (kort) · brief §5 fil 1 (9 KB) + ev. 7 (8 KB) · bygge 1, 6 (17 KB), ev. 5
 (27 KB) och `formularsakerhet.md` · redaktionellt pass `redaktionellt-pass.md` + fil 1:s skrivavsnitt · granskning D 2, 3,

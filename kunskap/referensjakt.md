@@ -45,3 +45,19 @@ tjänster utan prislista?"), med en rad per referens i briefens referensöversä
 Referensöversättningen i briefens §5 (rad per referens) plus sparade skärmbilder i fallets `referenser/`. Konflikter
 mellan referenser (återhållsamhet mot uttryck, rörelse mot budget) skrivs som en rad "kända konflikter och hur de
 avgjordes" i briefens §5.
+
+## Källtypsregler och bildinventering (HELHET-20260927, ur det arkiverade inspirationsprotokollet 5d)
+
+- Kundens egna referenser och egen jakt väger lika; varje referens öppnas och skärmbildas (`referenser/ref-N-<namn>.png`
+  för kundens, `jakt-N-<namn>.png` för egna). Skärmbild slår beskrivning; observationer fabriceras aldrig
+  ("kunde inte öppnas" är ett giltigt utfall). Read-only mot främmande sajter.
+- Verklig sajt: rendera dator och mobil 390 px; skärmbilda första vyn och en bärande sektion. Galleripost: följ till
+  den faktiska sajten. Koncept (t.ex. Dribbble): märk "koncept — ej verifierat byggbart". Omdömesprofiler: bara
+  förtroendemönster. Betyg som bara syns i sökresultat märks "ej verifierat på källan".
+- Per referens: paletthuvuddrag (uppskattade hex för bas, text, primär, accent), typografigenre, första vyns mönster
+  (foto-ledd, text-ledd, delad), förtroendeblockets struktur, ett till två element värda att ta. Sammanställs i briefens
+  referensöversättning (§7): tas · förkastas · varför.
+- Bildinventering i research §7: källor i ordning (kundens material, Google-företagsprofil, sociala kanaler, befintlig
+  sajt); en rad per kandidatbild (källa, kategori, upplösning, användbar i första vyn, rättigheter, anspråk); utfall
+  TILLRÄCKLIG, BRISTFÄLLIG eller SAKNAS med vad som saknas. Ingen bildlucka är ett stopp: den blir en faktafråga och ett
+  fotouppdrag (`bild.md`).

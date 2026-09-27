@@ -42,7 +42,7 @@ KRITIKMALLAR = ('designkritik-komp', 'renderingslasning', 'femsekunderstest')
 KONTEXT = {'designkritik-komp': {'kund': True, 'profession': True, 'avskarmad': False},
            'renderingslasning': {'kund': True, 'profession': True, 'avskarmad': False},
            'femsekunderstest': {'kund': False, 'profession': False, 'avskarmad': True}}
-AVSKARMAD_FORBJUDET = re.compile(r'(?i)brief|facit|kritik|svar|riktning|research|\.html?$|\.css$|\.jsx?$|\.tsx?$|\.md$|\.json$|\.txt$')
+AVSKARMAD_FORBJUDET = re.compile(r'(?i)(?<![a-zåäö])(brief|facit|kritik|svar|riktning|research)(?![a-zåäö])|\.html?$|\.css$|\.jsx?$|\.tsx?$|\.md$|\.json$|\.txt$')
 STEG_FOR_PROFIL = {'matning': 'matning', 'kritik': 'kritik', 'provare': 'provare'}
 
 

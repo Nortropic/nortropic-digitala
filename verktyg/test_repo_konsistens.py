@@ -71,6 +71,10 @@ class Konsistens(unittest.TestCase):
             path = ROT / row['fil']
             self.assertTrue(path.is_file(), row['fil'])
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), row['sha256'], row['fil'] + ' har ändrats sedan migreringen')
+        md = (ROT / 'PROVENIENS.md').read_text(encoding='utf-8')
+        for row in prov['filer']:
+            self.assertIn('`%s`' % row['fil'], md, row['fil'] + ' saknas i PROVENIENS.md')
+            self.assertIn('`%s…`' % row['sha256'][:16], md, row['fil'] + ': PROVENIENS.md bär inte den gällande hashens första 16 tecken')
 
     def test_inga_hemligheter_eller_skyddade_adresser_i_repot(self):
         bad = re.compile(r'vercel\.app|VERCEL_AUTOMATION_BYPASS_SECRET=|\.secret\b.*=|dpl_[A-Za-z0-9]{10,}')
