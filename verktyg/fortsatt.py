@@ -154,6 +154,8 @@ def las_bestallning(s, rot=ROT):
     if lm is not None and not ladda_steg.BESTALLNING.match(str(lm)):
         raise Vagrad('BESTALLNING.json: lanseringsmandat ska vara en beslutsposts namn eller null')
     v = Path(s['kund']) / 'VERKSAMHET.json'
+    if not v.is_file():
+        raise Vagrad('VERKSAMHET.json saknas i kundmappen: beställningen kan inte bindas till kunden (kund = VERKSAMHET.json:s namn)')
     if v.is_file():
         try:
             vd = json.loads(v.read_text(encoding='utf-8'))
@@ -219,6 +221,9 @@ def nasta_steg(s, utforare='claude', rot=ROT):
     defs = ladda_steg.las_steg(rot)['steg']
     kb = kanalbehov(s)
     best = s.get('bestallning')
+    saknade = [n for n in s['ordning'] if n not in defs]
+    if saknade:
+        raise Vagrad('fallets stegordning har steg som inte längre finns i steg/steg.json: %s (ny version av steg.json; avgör fallet manuellt)' % ', '.join(saknade))
     for n in s['ordning']:
         st = s['steg'][n]
         lage, skal = _tillamplighet(n, kb, best, defs)

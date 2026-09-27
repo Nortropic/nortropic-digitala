@@ -63,7 +63,7 @@ GRUND = [
 NEGATION = re.compile(r'(?i)\b(inga|ingen|inget|inte|ej|aldrig|utan|slipper)\b')
 
 FOLJDREGLER = [
-    ('bokning', re.compile(r'\bbok(a|ad|ade|at|ar|as|ning|ningar|ningen)\b|tidsbokning|boka tid|kalender', re.I), [
+    ('bokning', re.compile(r'\bbok(a|ad|ade|at|ar|as|ning|ningar|ningen)\b|tidsbokning|boka tid|\bkalender\b', re.I), [
         ('BOK1', 'C', 'bokning_tjanster', 'Vilka tjänster ska kunna bokas, hur långa är de, och behövs olika längder eller resurser (person, rum, utrustning)?'),
         ('BOK2', 'C', 'bokning_tillganglighet', 'Vilka tider är bokningsbara, hur många kan bokas samtidigt, och behövs buffertar mellan bokningar?'),
         ('BOK3', 'C', 'bokning_bekraftelse', 'Hur ska kunden få bekräftelse, och hur ska ombokning och avbokning gå till (regler, tidsgräns)?'),

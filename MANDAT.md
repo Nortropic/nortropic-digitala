@@ -39,7 +39,9 @@ Lansering, egen domän, DNS, annonsstart eller annonsbudget, delbar länk och ri
 uppdraget tills ett uttryckligt mandat ger dem.
 
 Steg i `steg/steg.json` bär mandatklassen (`staende` eller `bestallning`); `verktyg/ladda_steg.py` vägrar ett
-beställningssteg utan `--bestallning POST-ID`. Ett beställnings-id är namnet på beslutsposten i kontorets
+beställningssteg utan `--bestallning POST-ID`, och fortsättningsvägen (`verktyg/fortsatt.py`) binder beställningen som
+ett hashat utdrag ur beslutsposten i kundmappens `BESTALLNING.json` (post, källa, kund, omfattning, lanseringsmandat,
+ordagrant utdrag) och markerar steg utanför omfattningen som inte tillämpliga tills beställningen utvidgas. Ett beställnings-id är namnet på beslutsposten i kontorets
 `docs/decisions.md` som ger mandatet (till exempel `DIGITALA-1-AGARBESLUT-20260926`).
 
 ## 3. Namngivna saknade gränser (behörighetsfrågor för ägaren, inte uppfunna regler)

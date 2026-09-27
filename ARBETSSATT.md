@@ -60,7 +60,8 @@ verksamhet); vägen bokför filens sha256 och en ombindning när den ändras. `p
 --fall FALL [--bestallning POST-ID] --utforare claude|codex` avgör nästa steg i stegens ordning (beställningssteg bara
 inom omfattningen; kanalstegen efter kundmappens `KANALBEHOV.json` ur beredningen; lansering, sokkonsol och drift bara
 med lanseringsmandat, annars slutar vägen vid leverans — kommer mandatet eller ett kanalbehov senare återöppnas stegen
-automatiskt, eftersom verktygets egna markeringar omprövas varje körning), laddar stegets underlag i fallet (ett redan
+automatiskt — en utvidgad beställning anger då `omfattning` `helhet` eller en steglista som tar med lansering, sokkonsol
+och drift, inte bara lanseringsmandatet, eftersom verktygets egna markeringar omprövas varje körning), laddar stegets underlag i fallet (ett redan
 laddat steg återupptas utan ny laddning), skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
 per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]

@@ -57,6 +57,7 @@ class Vagen(unittest.TestCase):
         self.assertTrue(Path(r['arbetsyta']).joinpath('LADDNING.json').is_file()); self.assertTrue(Path(r['nasta_md']).is_file())
         self.assertIn('## Redan utfört i fallet', Path(r['nasta_md']).read_text())
         self.assertEqual(stat.S_IMODE(os.stat(Path(self.f) / 'LAGE.json').st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(os.stat(Path(self.f) / 'NASTA.md').st_mode), 0o600)
         self.klar('uppstart'); self.fram_till('beredning')
         code, r = kor('--fall', self.f)
         self.assertEqual((r['nasta'], r['lage']), ('intervju', 'blockerad')); self.assertIn('BESTALLNING.json saknas', r['meddelande'])
@@ -83,6 +84,10 @@ class Vagen(unittest.TestCase):
         (self.k / 'VERKSAMHET.json').write_text('{"schema": 1, "namn": "Provfirma AB", "fiktiv": true}\n')
         bestallning(self.k); code, r = kor('--fall', self.f); self.assertEqual(code, 2); self.assertIn('testfall', r['vagrad'])
         bestallning(self.k, testfall=True); code, r = kor('--fall', self.f); self.assertEqual((code, r['nasta'], r['lage']), (0, 'intervju', 'påbörjat'))
+        (self.k / 'VERKSAMHET.json').unlink(); code, r = kor('--fall', self.f); self.assertEqual(code, 2); self.assertIn('VERKSAMHET.json saknas', r['vagrad'])
+        (self.k / 'VERKSAMHET.json').write_text('{"schema": 1, "namn": "Provfirma AB", "fiktiv": true}\n')
+        s = fs.las(self.f); s['ordning'].append('finns-inte'); s['steg']['finns-inte'] = dict(s['steg']['uppstart']); fs.spara(self.f, s)
+        code, r = kor('--fall', self.f); self.assertEqual(code, 2); self.assertIn('inte längre finns', r['vagrad'])
         self.assertTrue(fs.las(self.f)['bestallning']['testfall'])
 
     def test_steg_utanfor_omfattningen_markeras_av_verktyget_och_ateroppnas_vid_utvidgad_bestallning(self):

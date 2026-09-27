@@ -49,7 +49,7 @@ class Publicering(unittest.TestCase):
         code, r = self.kor()
         self.assertEqual(code, 0, r); self.assertTrue(r['torr']); self.assertEqual(r['head'], self.head[:7]); self.assertIsNone(r['main'])
         k = json.loads(Path(r['kvitto']).read_text())
-        self.assertEqual(k['kontroller']['verdict'], 'approved'); self.assertTrue(any(l.startswith('OK') for l in k['kontroller']['prov'])); self.assertEqual(len(k['plan']), 5); self.assertIn('gh pr merge --squash', k['plan'][2])
+        self.assertEqual(k['kontroller']['verdict'], 'approved'); self.assertTrue(any(l.startswith('OK') for l in k['kontroller']['prov'])); self.assertEqual(len(k['plan']), 5); self.assertIn('gh pr merge kandidat --squash', k['plan'][2])
         self.assertFalse(Path(r['kvitto']).resolve().is_relative_to(self.rot.resolve()))
 
     def test_vagras_utan_godkand_granskning_annan_version_smutsigt_trad_eller_rott_prov(self):
@@ -92,6 +92,55 @@ class Publicering(unittest.TestCase):
         code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('annan version', r['vagrad'])
         (self.g / 'underlag.json').write_text(json.dumps({'filer': [['x', 'repo/a', 'fil (%s)' % self.head[:7]], ['y', 'repo/b', 'fil utan revision']]}))
         code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('inte varje post', r['vagrad'])
+
+    def test_tradbindning_efter_rebase_saknad_granskning_och_fel_gren_vagras(self):
+        env = dict(os.environ, GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@example.com', GIT_COMMITTER_NAME='t', GIT_COMMITTER_EMAIL='t@example.com')
+        # samma träd på en ny commit (t.ex. efter rebase på identisk bas): bindningen godtas och namnger ursprunget
+        subprocess.run(['git', 'commit', '-q', '--allow-empty', '-m', 'rebasad (samma träd)'], cwd=self.rot, check=True, env=env)
+        (self.g / 'underlag.json').write_text(json.dumps({'commit': self.head, 'filer': [['x', 'repo/a', 'fil']]}))
+        code, r = self.kor(); self.assertEqual(code, 0, r)
+        self.assertIn('samma träd', json.loads(Path(r['kvitto']).read_text())['kontroller']['bindning'])
+        # annat träd: vägras
+        (self.rot / 'kunskap' / 'a.md').write_text('a3\n'); subprocess.run([sys.executable, '-B', 'verktyg/pinna.py', '--skriv'], cwd=self.rot, capture_output=True, check=True)
+        subprocess.run(['git', 'commit', '-q', '-am', 'annat träd'], cwd=self.rot, check=True, env=env)
+        code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('träden skiljer sig', r['vagrad'])
+        # saknad review.json / underlag.json och fel gren
+        (self.g / 'review.json').unlink(); code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('review.json', r['vagrad'])
+        (self.g / 'review.json').write_text(json.dumps({'answer': {'verdict': 'approved'}}))
+        (self.g / 'underlag.json').unlink(); code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('underlag.json', r['vagrad'])
+        (self.g / 'underlag.json').write_text(json.dumps({'commit': self.head, 'filer': [['x', 'repo/a', 'fil']]}))
+        subprocess.run(['git', 'checkout', '-q', 'main'], cwd=self.rot, check=True, env=env)
+        code, r = self.kor(); self.assertEqual(code, 2); self.assertIn('utcheckad gren', r['vagrad'])
+
+    def test_befintlig_pr_och_worktreevanlig_plan(self):
+        """Planen ska varken checka ut main eller radera den lokala grenen (main kan vara utcheckad i en annan worktree);
+        mergeläget verifieras med gh pr view, inte gh:s exitkod; en redan skapad PR återanvänds."""
+        code, r = self.kor(); self.assertEqual(code, 0, r)
+        plan = json.loads(Path(r['kvitto']).read_text())['plan']
+        self.assertEqual([p.split(' ')[:3] for p in plan], [['git', 'push', '-u'], ['gh', 'pr', 'create'], ['gh', 'pr', 'merge'], ['gh', 'pr', 'view'], ['git', 'fetch', 'origin']])
+        self.assertNotIn('--delete-branch', ' '.join(plan))
+        # simulerad skarp körning: gh pr create svarar "already exists", merge 0, view MERGED
+        svar = {('gh', 'pr', 'create'): (1, '', 'a pull request for branch "kandidat" into branch "main" already exists: https://example.invalid/pr/7'),
+                ('gh', 'pr', 'merge'): (0, '', ''), ('gh', 'pr', 'view'): (0, json.dumps({'state': 'MERGED', 'mergeCommit': {'oid': 'f' * 40}, 'number': 7, 'url': 'https://example.invalid/pr/7'}), ''),
+                ('git', 'push', '-u'): (0, '', ''), ('git', 'fetch', 'origin'): (0, '', ''), ('git', 'push', 'origin'): (0, '', '')}
+        orig = pb.subprocess.run
+
+        class P:
+            def __init__(self, rc, out, err): self.returncode, self.stdout, self.stderr = rc, out, err
+
+        def falsk(cmd, *a_, **kw):
+            n = tuple(str(x) for x in cmd[:3])
+            if n in svar: return P(*svar[n])
+            return orig(cmd, *a_, **kw)
+        pb.subprocess.run = falsk
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = pb.main(['--rot', str(self.rot), '--gren', 'kandidat', '--granskning', str(self.g), '--titel', 'T', '--kropp', str(self.kropp)])
+        finally:
+            pb.subprocess.run = orig
+        r = json.loads(out.getvalue()); self.assertEqual(code, 0, r); self.assertTrue(str(r['main']).startswith('fffffff'))
+        k = json.loads(Path(r['kvitto']).read_text()); self.assertEqual(k['main'], 'f' * 40); self.assertEqual(k['pr']['nummer'], 7); self.assertTrue(k['fjarrgren_borttagen']); self.assertIn('fanns redan', k['utfall'][1]['not'])
 
 
 if __name__ == '__main__':
