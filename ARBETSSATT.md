@@ -90,6 +90,8 @@ PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körd
    `node verktyg/bild/treatment.mjs`, `brand.mjs` — bildbehandling och varumärkesfiler i kundrepot (kräver `sharp` där).
    `python3 -B verktyg/intervju.py start|svar|fakta|avgor|nasta|status|research --kund KUNDMAPP …` — kundintervjun (tillstånd i
    kundmappen; verktyget skickar inget, sessionen använder beställningens kanal).
+   `python3 -B verktyg/kundstart.py skapa|status|hamta|lank|aterkalla --kund KUNDMAPP …` — Kundstart-länken som kanal
+   (avsnittet Kanal och form i kundintervju.md; kräver KUNDSTART_BAS_URL och nyckelfil 0600; för in exporten i INTERVJU.json).
    `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
    pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
    regressionsprov, avskärmat besökarprov i egen session med efterkontroll av nätverksloggen (`natverk.jsonl`; ingen spårfil).
