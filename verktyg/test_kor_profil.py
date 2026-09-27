@@ -148,10 +148,6 @@ class Provare(Rig):
         self.assertIn('steg=kritik', bindningar)
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class HemligVag(unittest.TestCase):
     def test_bokford_argv_doljer_undantagsfilens_sokvag_men_andrar_inte_kommandot(self):
         cmd = ['python', '-m', 'runtime.web_measure', '--undantag-fil', '/privat/hemlig.txt', '--mal', 'https://exempel.test/']
@@ -159,3 +155,6 @@ class HemligVag(unittest.TestCase):
         self.assertEqual(cmd[4], '/privat/hemlig.txt')
         self.assertEqual(kor_profil.utan_hemlig_vag(['x', '--mal', 'y']), ['x', '--mal', 'y'])
 
+
+if __name__ == '__main__':
+    unittest.main()

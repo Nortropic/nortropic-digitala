@@ -78,7 +78,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 
 **Laddning per steg** (typisk last): research 1 fil (kort) · brief §5 fil 1 (9 KB) + ev. 7 (8 KB) · bygge 1, 6 (17 KB), ev. 5
 (27 KB) och `formularsakerhet.md` · redaktionellt pass `redaktionellt-pass.md` + fil 1:s skrivavsnitt · granskning D 2, 3,
-4, 6 som frågor (≈ 49 KB) · uppstart `LARDOMAR.md` · konceptsteg och komps 8 (§0–§1, §4.1–4.3, §4.7–4.8; ≈ 30 KB av 87). Aldrig allt i en
+4, 6 som frågor (≈ 49 KB) · uppstart `LARDOMAR.md`, `MANDAT.md`, `ARBETSSATT.md` och `KEDJA.md` (steg.json) · konceptsteg och komps 8 (§0–§1, §4.1–4.3, §4.7–4.8; ≈ 30 KB av 87). Aldrig allt i en
 session.
 
 ## E. Läge
