@@ -19,6 +19,9 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | provare | stående | scenario i riktig webbläsare, kontrollant avgör | provarprofilen | körkatalog i Runtime + KONTROLL.md i fallet |
 | leverans | beställning | kvalitetsbild, överlämning, lärdomspost, användningsnoter, förslagsrad | — | kontorspost + privat fall |
 
+Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **brief, koncept, bygge,
+redaktionellt-pass, leverans**. Steg inom stående mandat: uppstart, research, matning, kritik, granskning-d, provare.
+
 ## Proportion — tre storlekar
 
 | Storlek | Exempel | Steg som körs | Vad som INTE körs |
