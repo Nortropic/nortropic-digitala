@@ -17,7 +17,7 @@ interventionsbeslut med skäl, proportion. Fakta skilt från antaganden.
 
 ## §2 Målgrupper, uppgifter och resor
 
-Segment med belägg; toppuppgifter (två till fem) i besökarens ord, rangordnade; per uppgift en resa (start, hinder,
+Ur research §3–§4 och intervjun (B1–B4): segment med belägg; toppuppgifter (två till fem) i besökarens ord, rangordnade; per uppgift en resa (start, hinder,
 slut); användarens behov och kundens önskemål båda utskrivna. Insiktskälla (`intervjuer`, `observationer`, `data`,
 `antaganden`, `saknas`) står här.
 
@@ -29,7 +29,7 @@ Sidor och sektioner motiverade av uppgifterna och sökintentionen (research §15
 
 ## §4 Handlingar och konvertering
 
-De handlingar som uppgifterna kräver (kontakt, offert, bokning, köp, hitta hit, läsa vidare), var de behövs och
+Ur intervjun (C1–C3, BOK-, BET-, CRM-svar) och `integrationer.md`: de handlingar som uppgifterna kräver (kontakt, offert, bokning, köp, hitta hit, läsa vidare), var de behövs och
 varför; vilka som är viktigast för målet. Kontaktvägar typade. För varje viktig handling: vad "klar" betyder från
 början till slut (formulär → leverans till mottagare; länk → samtal; bokning → extern tjänst nådd) och vad som
 händer vid fel (alternativ väg). Formulärfält motiverade; fel-, tom- och laddningslägen.

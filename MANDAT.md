@@ -65,3 +65,12 @@ integrationsprov är inte ett godkännande av sajten.
 Demoreglerna för fiktiva kunder (DIGITALA-1-ACCEPT-20260925 §1–§2, PRODUCT.md hos kunden); "uppmätt · bedömt · ej
 prövat" hålls isär (§7); den gamla webbförvaltningen är källmaterial, aldrig körväg (DIGITALA-1-KORRIGERING-20260926);
 inga nya abonnemang, modeller, betalvägar eller organisationsbehörigheter; privat material stannar privat.
+
+## 5. Kunddialog inom uppdraget
+
+Inom en accepterad beställning får Digitala be kunden om verksamhetsinformation genom den kontaktväg beställningen
+anger (kundintervju.md): frågor om mål, erbjudande, flöden, system, material, synlighet, förvaltning och ramar.
+Det är informationsinhämtning, inte designgodkännande, och inte ett ägarstopp. Digitala frågar aldrig efter lösenord
+eller nycklar i dialogen; åtkomst ordnas på säker väg. Ingen prospektering, ingen ny kundverksamhet, ingen obeställd
+masskontakt: bara den kund, kontakt och kanal uppdraget omfattar. Uteblivna svar döljs inte: beroendet redovisas i
+leveransen och arbetet fortsätter med det som inte beror på svaret.

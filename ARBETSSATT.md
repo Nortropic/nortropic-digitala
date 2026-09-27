@@ -9,7 +9,8 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 |---|---|---|---|---|
 | uppstart | stående | lärdomar, mandat, arbetssätt | — | läsning |
 | beredning | stående | problemformulering, proportion, metodval efter problem, interventionsbeslut (kontorets beredning laddar steget) | — | kontorets beredning och kundmappen |
-| research | stående | faktaunderlag i 18 sektioner (referensjakten en del), sökintention, kanalobservationer, verksamhetsuppgifter | — | kundmappen (research.md, VERKSAMHET.json) |
+| intervju | beställning | adaptiv kundintervju i beställningens kanal: omgångar, följdfrågor ur svaren, svar ordagrant, fakta med status, motsägelser, avsnitt 19 | — (intervju.py) | kundmappen (INTERVJU.json, INTERVJU/) |
+| research | stående | faktaunderlag i 19 sektioner (referensjakten en del), sökintention, kanalobservationer, verksamhetsuppgifter | — | kundmappen (research.md, VERKSAMHET.json) |
 | brief | beställning | samlad brief, riktning, kedjekontroll på briefen | läsare för granskning | kundmappen (PROJECT-BRIEF.md); inget ägarstopp |
 | koncept | beställning | lösningsalternativ utreds internt, en motiverad riktning väljs utan ägarstopp (antal alternativ efter uppgiften; Design Read och namngivna axlar är metoder, inte universella värden) | kritikprofilen (designkritik-komp) | privat etappmapp |
 | bygge | beställning | bygget i kundrepot | — (dagens byggväg) | kundrepot |
@@ -28,7 +29,7 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | sokkonsol | beställning | anropsplan, ägarskap, egenskap, sitemap, inspektion, sökdata, tolkning | — (sokkonsol.py) | kundmappen (kvitton); egenskapen hos Google |
 | drift | stående | driftkontroll med kvitto, incident, beroendeunderhåll, förbättring | schemaläggning genom Runtime återstår (etapp 5) | fallet (DRIFT/) |
 
-Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **brief, koncept, bygge,
+Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **intervju, brief, koncept, bygge,
 redaktionellt-pass, seo, uppfoljning, annonsberedning, lokal-synlighet, leverans, lansering, sokkonsol**. Steg inom stående
 mandat: uppstart, beredning, research, matning, kritik, granskning-d, provare, prelaunch, drift. Kanalstegen (seo,
 sokkonsol, lokal-synlighet, annonsberedning, uppfoljning) används när kundens uppdrag motiverar dem (beredningens
@@ -64,6 +65,8 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    öppettider; `fiktiv: true` spärrar de verkliga externa åtgärder som verktygen `sokkonsol.py` och `lokal_synlighet.py` gör eller förbereder, och kontrolleras av annonsberedningen); `python3 -B verktyg/copy_kontroll.py --kalla … --ut RAPPORT.json`
    — copykontrollens rapport (fraser, strukturer, platshållare, metalängder, obligatoriska element; ingen poäng);
    `node verktyg/bild/treatment.mjs`, `brand.mjs` — bildbehandling och varumärkesfiler i kundrepot (kräver `sharp` där).
+   `python3 -B verktyg/intervju.py start|svar|fakta|avgor|nasta|status|research --kund KUNDMAPP …` — kundintervjun (tillstånd i
+   kundmappen; verktyget skickar inget, sessionen använder beställningens kanal).
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.
