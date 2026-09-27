@@ -558,7 +558,7 @@
   "provare": {
    "mandat": "staende",
    "syfte": "Scenarioprov: en besökare i riktig webbläsare genom Runtimes provarprofil, utan brief, kod eller facit; utfallet avgörs av kontrollanten ur artefakter (L20).",
-   "anvisning": "Skriv uppgiften enligt UPPGIFT-MALL.md med Startadress och Kommando ordagrant (L18). Kör genom verktyg/kor_profil.py provare. Kontrollanten fyller KONTROLL-MALL.md ur sista skärmbild, sidtext och spårets sista adress, aldrig ur provarens rapport; vid oväntat tillstånd: utlösande handling (L22). Playwright-vägen: node verktyg/webblasare/besok.mjs --adress ADRESS --uppgift UPPGIFT.md --ut FALL/BESOK-<tid> [--utforare claude|codex --modell M] [--undantag-fil FIL] — uppgiften avskärmas (verktyget vägrar brief, kod, facit, kritik), spåret efterkontrolleras; kontrollanten bedömer besöket separat; Runtimes provarprofil är den andra vägen.",
+   "anvisning": "Skriv uppgiften enligt UPPGIFT-MALL.md med Startadress och Kommando ordagrant (L18). Kör genom verktyg/kor_profil.py provare. Kontrollanten fyller KONTROLL-MALL.md ur sista skärmbild, sidtext och spårets sista adress, aldrig ur provarens rapport; vid oväntat tillstånd: utlösande handling (L22). Playwright-vägen: node verktyg/webblasare/besok.mjs --adress ADRESS --uppgift UPPGIFT.md --ut FALL/BESOK-<tid> [--utforare claude|codex --modell M] [--undantag-fil FIL] — uppgiften avskärmas (verktyget vägrar brief, kod, facit, kritik), nätverksloggen natverk.jsonl efterkontrolleras (ingen spårfil); kontrollanten bedömer besöket separat; Runtimes provarprofil är den andra vägen.",
    "underlag": [
     {
      "fil": "provare/UPPGIFT-MALL.md",

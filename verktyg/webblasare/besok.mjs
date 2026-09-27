@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Avskärmat besökarprov (användning 3): en förstagångsbesökare (modell i en egen session) löser en uppgift i en riktig
 // webbläsare genom Playwright MCP, utan brief, kod, facit eller tidigare kritik. Verktyget avskärmar uppgiften, bygger
-// MCP-konfigurationen (isolerad kontext, tillåtna ursprung, spår och session sparade, inga bilder utanför verktyget),
+// MCP-konfigurationen (isolerad kontext, tillåtna ursprung, session och nätverkslogg sparade, inga bilder utanför verktyget),
 // verkställer gränsen i webbläsaren genom en init-page-fil (Playwright MCP:s --init-page): en route-hanterare på
 // kontexten avbryter varje förfrågan utanför tillåtna ursprung, loggar alla förfrågningar (redigerade) till natverk.jsonl
 // och sätter skyddsundantaget bara mot målets ursprung (då är filen privat, 0600, utanför fallet). Utföraren (claude
@@ -12,31 +12,29 @@
 //   node besok.mjs --efterkontroll NATVERK.jsonl --adress URL --ut DIR
 //   node besok.mjs --qa --adress URL --ut DIR [--undantag-fil F]      # bara mcp.json för en sessions fria QA (ingen avskärmning, ingen uppgift)
 import { args, origin, sha256, nu, lasUndantag, skriv } from './gemensamt.mjs';
-import { readFileSync, writeFileSync, chmodSync, mkdirSync, existsSync, readdirSync, mkdtempSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { readFileSync, writeFileSync, chmodSync, mkdirSync, existsSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HAR = dirname(fileURLToPath(import.meta.url));
-const arKorningsfil = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-const a = arKorningsfil ? args(process.argv.slice(2)) : { _: [] };
+const a = args(process.argv.slice(2));
 const AVSKARMAT = /(?<![a-zåäö])(brief|briefen|facit|facitet|kritik|kritiken|research|källkod|source)(?![a-zåäö])|PROJECT-BRIEF|\bsrc\/|\.(tsx?|jsx?|css|json)\b|node_modules|verktyg\//i;
 
 function efterkontroll(loggFil, tillatna) {
-  // natverk.jsonl skrivs av init-page-hanteraren: en JSON-rad per förfrågan {tid, metod, url (redigerad), ursprung, blockerad}
+  // natverk.jsonl: första raden är verktygets metarad {meta, privat, mal}; sedan skriver init-page-hanteraren en JSON-rad per förfrågan {tid, metod, url (redigerad), ursprung, blockerad}
   let text = '';
   try { text = readFileSync(loggFil, 'utf8'); } catch (e) { return { lasbart: false, fel: 'kunde inte läsa nätverksloggen: ' + e.message.slice(0, 100) }; }
   const ursprung = new Set(); let antal = 0; let blockerade = 0; const utanfor = new Set();
   for (const rad of text.split('\n')) {
     if (!rad.trim()) continue;
-    try { const j = JSON.parse(rad); antal++; if (j.ursprung) ursprung.add(j.ursprung); if (j.blockerad) { blockerade++; utanfor.add(j.ursprung); } else if (j.ursprung && !tillatna.has(j.ursprung)) utanfor.add(j.ursprung); } catch {}
+    try { const j = JSON.parse(rad); if (j.meta) continue; antal++; if (j.ursprung) ursprung.add(j.ursprung); if (j.blockerad) { blockerade++; utanfor.add(j.ursprung); } else if (j.ursprung && !tillatna.has(j.ursprung)) utanfor.add(j.ursprung); } catch {}
   }
   return { lasbart: true, antal_forfragningar: antal, blockerade, ursprung: [...ursprung], ursprung_utanfor: [...utanfor], inom_gransen: utanfor.size === 0 };
 }
 
-export function initFilText(mal, tillat, loggFil, undantag) {
+function initFilText(mal, tillat, loggFil, undantag) {
   // Körs av Playwright MCP på varje sida (--init-page). En hanterare per kontext: gräns, logg, undantag bara mot målet.
   return `// Digitalas gräns för besökarprovet${undantag ? ' — PRIVAT: bär skyddsundantaget (0600), delas aldrig' : ''}
 import { appendFileSync } from 'node:fs';
@@ -64,7 +62,7 @@ export default async ({ page }) => {
 `;
 }
 
-if (arKorningsfil && a.efterkontroll) {
+if (a.efterkontroll) {
   if (!a.adress || !a.ut) { console.error('användning: --efterkontroll NATVERK.jsonl --adress URL --ut DIR'); process.exit(2); }
   const till = new Set([origin(a.adress), ...(a.tillat ? String(a.tillat).split(';').map(origin) : [])]);
   const e = efterkontroll(a.efterkontroll, till);
@@ -74,10 +72,8 @@ if (arKorningsfil && a.efterkontroll) {
 }
 
 const qaLage = !!a.qa;
-if (arKorningsfil && (!a.adress || !a.ut || (!qaLage && !a.uppgift))) { console.error('användning: --adress URL --uppgift UPPGIFT.md --ut DIR [...] eller --qa --adress URL --ut DIR'); process.exit(2); }
-if (!arKorningsfil) { /* importerad som modul (prova_init.mjs): bara initFilText exporteras */ }
-const uppgift = !arKorningsfil ? '' : (qaLage ? '' : readFileSync(a.uppgift, 'utf8'));
-if (arKorningsfil) {
+if (!a.adress || !a.ut || (!qaLage && !a.uppgift)) { console.error('användning: --adress URL --uppgift UPPGIFT.md --ut DIR [...] eller --qa --adress URL --ut DIR'); process.exit(2); }
+const uppgift = qaLage ? '' : readFileSync(a.uppgift, 'utf8');
 if (!qaLage) {
   const traff = uppgift.match(AVSKARMAT);
   if (traff) { console.log(JSON.stringify({ vagrad: 'uppgiften är inte avskärmad: bär "' + traff[0] + '" (brief, facit, kritik, research, kod eller filnamn får inte nå besökaren)' })); process.exit(2); }
@@ -90,6 +86,7 @@ const undantag = lasUndantag(a['undantag-fil']);
 const mcpUt = resolve(a.ut, 'mcp-ut'); mkdirSync(mcpUt, { recursive: true });
 const cli = resolve(HAR, 'node_modules/@playwright/mcp/cli.js');
 const loggFil = join(mcpUt, 'natverk.jsonl');
+writeFileSync(loggFil, JSON.stringify({ meta: true, privat: !!undantag, mal, tillatna_ursprung: tillat, skapad: nu(), not: 'nätverkslogg från init-page-filen: redigerade url:er, inga headers; privat när skyddsundantag använts' }) + '\n');
 const mcpArgs = [cli, '--isolated', '--headless', '--allowed-origins', tillat.join(';'), '--save-session', '--output-dir', mcpUt, '--console-level', 'error', '--image-responses', 'allow', '--no-webmcp', '--block-service-workers', '--caps', 'vision', '--idle-timeout', '600000'];
 let initFil; let initKatalog = null;
 if (undantag) {
@@ -115,7 +112,7 @@ När uppgiften är löst eller omöjlig: svara med exakt ett JSON-objekt {"utfal
 `;
 if (!qaLage) writeFileSync(join(a.ut, 'BESOKARE.md'), prompt);
 const rapport = { schema: 1, verktyg: 'besok', lage: qaLage ? 'qa' : 'besok', adress: a.adress, tillatna_ursprung: tillat, uppgift_sha256: qaLage ? null : sha256(Buffer.from(uppgift)), utforare: a.utforare || 'claude', modell: a.modell || null, torr: !!a.torr || qaLage, undantag: !!undantag, spar_privat: !!undantag, init_katalog: initKatalog ? '(privat, utanför fallet)' : null, tid: nu(), mcp: 'mcp.json', prompt: qaLage ? null : 'BESOKARE.md', svar: null, efterkontroll: null,
-  not: 'avskärmad besökare: uppgiften utan brief, kod, facit eller kritik; MCP:s allowlist är ingen säkerhetsgräns — efterkontrollen av spåret är; bedömningen görs av kontrollanten separat; en modellbaserad besökare är inte en människa' };
+  not: 'avskärmad besökare: uppgiften utan brief, kod, facit eller kritik; MCP:s allowlist är ingen säkerhetsgräns — efterkontrollen av nätverksloggen är; bedömningen görs av kontrollanten separat; en modellbaserad besökare är inte en människa' };
 if (!a.torr && !qaLage) {
   const ut = a.utforare || 'claude';
   // tom arbetskatalog för utföraren: varken fallet, initfilen eller repot är läsbara som cwd
@@ -138,6 +135,9 @@ if (!a.torr && !qaLage) {
   rapport.efterkontroll = efterkontroll(loggFil, new Set(tillat));
   rapport.inom_gransen = rapport.efterkontroll.inom_gransen === true;
 }
+if (initKatalog) {
+  // den privata initfilen (bär undantaget) behövs bara under körningen; i torrläge står den kvar för inspektion av provet
+  if (!a.torr) { try { rmSync(initKatalog, { recursive: true, force: true }); rapport.initfil_raderad = true; } catch { rapport.initfil_raderad = false; } } else rapport.initfil_raderad = false;
+}
 skriv(a.ut, 'BESOK.json', rapport);
 console.log(JSON.stringify({ ut: a.ut, torr: rapport.torr, utforare: rapport.utforare, inom_gransen: rapport.inom_gransen ?? null }));
-}

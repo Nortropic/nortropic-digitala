@@ -6,8 +6,8 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "78b53e84564702d19b754578e0a85f66f6b400df0e6f51462c55d943ca06db66",
-   "byte": 28766,
+   "sha256": "8681096b937211e6aebaeb8b6a83c3d3b663f70c89e11a3aa58bb3a797275e9b",
+   "byte": 28774,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
    "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med); ändrad igen 2026-09-27 (tillägg 2: rader för kundintervju och integrationer i C och D); ändrad igen 2026-09-27 (etapp 4: rad för webbläsarvägen i C och D)",

@@ -70,7 +70,7 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    kundmappen; verktyget skickar inget, sessionen använder beställningens kanal).
    `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
    pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
-   regressionsprov, avskärmat besökarprov i egen session med efterkontroll av spåret.
+   regressionsprov, avskärmat besökarprov i egen session med efterkontroll av nätverksloggen (`natverk.jsonl`; ingen spårfil).
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.

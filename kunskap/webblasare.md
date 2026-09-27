@@ -13,7 +13,7 @@ QA:n riktig interaktion och ger besökarprovet en Playwright-väg med samma avsk
 |---|---|---|---|---|
 | 1. Utvecklaren eller designern undersöker renderingen under arbetet | `inspektera.mjs` | verktyget (fasta vyer och tillstånd) | ja: brief och kodfiler bifogas som lista med hashar (`--kontext`) och läses av sessionen | skärmbilder (första vyn, hela sidan, hover, fokus, meny, reflow 320), tillgänglighetsträd, konsol, sidfel, nätverk med blockerade förfrågningar, tangentbordsväg med synlig fokus, omladdning, bakåt/framåt, spår |
 | 2. Utforskande QA väljer själv vägar | `utforska.mjs` (heuristisk motor) och sessionen genom Playwright MCP (`mcp.json` ur `besok.mjs --qa`: ingen uppgift, ingen avskärmning) | motorn (crawl inom ursprunget, formulärens felvägar, meny, tangentbord, 404, bakåt) eller sessionen | ja, inom testmandatet | fynd typade fel/varning/observation med reproduktion, `REGRESSION.json` som körs om med `--regression`, spår |
-| 3. Avskärmad förstagångsbesökare löser en uppgift | `besok.mjs` (Playwright MCP i egen session: claude eller codex) | modellen, inom gränsen | nej: uppgiften avskärmas (brief, kod, facit, kritik, filnamn vägras), inga andra verktyg | besökets svar (utfall, steg, hinder), MCP-session och spår, efterkontroll av ursprung |
+| 3. Avskärmad förstagångsbesökare löser en uppgift | `besok.mjs` (Playwright MCP i egen session: claude eller codex) | modellen, inom gränsen | nej: uppgiften avskärmas (brief, kod, facit, kritik, filnamn vägras), inga andra verktyg | besökets svar (utfall, steg, hinder), MCP-session, nätverkslogg (`natverk.jsonl` ur init-page-filen; ingen spårfil) och efterkontroll av ursprung |
 
 Skärmbilder kompletterar interaktionen och ersätter den inte; layout bedöms i bilderna — ett textträd är inte
 bildseende. Mobilvyer (390, 768, 320) är emulerade, inte prov på fysisk enhet; det står i varje rapport. En
@@ -56,8 +56,15 @@ leveransen är klar; kvalitetsbilden pekar på körningen.
 
 ## Körbevis
 
-`test_webblasare.py` kör alla tre verktygen mot en lokal provsajt (inspektion med kontext, gräns, tillstånd och
-redigerat undantag; QA som hittar 404, dubbla h1, osynlig fokus, inte skickar utan tillåtelse, skickar med
-testmarkering och fångar dubbelt inskick, kör om regressionsprov; besökarprovets avskärmning, MCP-konfiguration och
-efterkontroll mot ett syntetiskt spår). En verklig modellkörning av besökarprovet (claude -p med MCP) redovisas som
-eget körbevis när den gjorts; utan den är användning 3 prövad i torrläge.
+`test_webblasare.py` kör alla tre verktygen mot en lokal provsajt: inspektion med kontext, gräns, tillstånd och
+redigerat undantag (målet får headern, en tillåten tredje part aldrig); QA som hittar 404, dubbla h1, osynlig fokus,
+inte skickar utan tillåtelse, skickar med testmarkering och fångar dubbelt inskick, kör om regressionsprov;
+besökarprovets avskärmning, MCP-konfigurationen mot den pinnade versionens `--help`, init-page-filen körd i en riktig
+Playwright-sida (tredje part blockeras och loggas, målet nås, undantaget bara till målet) och efterkontrollen av den
+verkliga `natverk.jsonl`. Torrläget (`--torr`) bevisar konfigurationen, inte besöket: en mockad anslutning är inte
+live-användning. Verkliga modellkörningar av besökarprovet (claude -p med Playwright MCP, mot en lokal provsajt med
+formulär) är gjorda 2026-09-27 och redovisade i kontorets privata `evidence/nasta-uppdrag/local/helhet-20260927/`:
+`BEVIS-BESOK-LIVE.txt` (claude-sonnet-5, 14 turer, uppgiften löst, tre förfrågningar inom ursprunget, formulärinskicket
+mottaget av provmottagaren) och `BEVIS-BESOK-LIVE-UNDANTAG.txt` (samma väg med skyddsundantag: init-filen privat utanför
+utförarens arbetskatalog läst av den verkliga MCP-servern, headern mottagen bara av målet). Inte prövat live: att
+utföraren faktiskt vägras de förbjudna verktygen (ingen tur försökte), och en verkligt skyddad Vercel-förhandsvisning.

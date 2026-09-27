@@ -107,7 +107,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `referenser-professionella.md` | Koncept (valfritt); kritik | Jämförelsedimensionerna och urvalet | Jämförelse med motivering | briefen vinner; ett drag kan vara "gäller inte" |
 | `kundintervju.md` | Steget intervju (kedjedrivaren eller Codex) | Hela | Intervju i beställningens kanal; svar ordagrant; fakta med status | ingen konflikt möjlig: kundens svar är kundens; tolkningen märks |
 | `integrationer.md` | Brief §4/§9; bygge; prelaunch | Hela; vid prelaunch formulär och leads | Leveranskrav och kontroller per integrationsnivå | briefens §4 vinner; nivån väljs efter behov |
-| `webblasare.md` | Bygge; qa; provare (kedjedrivaren eller Codex; besökaren i egen session) | Hela | Tre användningar, tillstånd, gränser, spår, regressionsprov | ingen konflikt möjlig; skärmbilderna avgör layout |
+| `webblasare.md` | Bygge; qa; provare (kedjedrivaren eller Codex; besökaren i egen session) | Hela | Tre användningar, tillstånd, gränser, nätverkslogg, regressionsprov | ingen konflikt möjlig; skärmbilderna avgör layout |
 | `seo.md`, `seo-lokal.md` | Steget seo (kedjedrivaren) | Hela; seo-lokal bara vid lokal/hybrid | Struktur, teknik, strukturerad data; rapport ur seo_kontroll.py | briefens §5 vinner |
 | `sokkonsol.md` | Steget sokkonsol; lansering | Hela | Plan, live med åtkomst, tolkning | fiktiv verksamhet: vägras |
 | `lokal-synlighet.md` | Steget lokal-synlighet | Hela | Datablad, NAP-kontroll | inte tillämpligt utanför lokal räckvidd |

@@ -167,7 +167,8 @@ class Webblasare(unittest.TestCase):
         Handler.huvuden = []
         code, out, err = kor('prova_init.mjs', '--init', str(init), '--adresser', self.bas + '/tredje/,http://localhost:%d/om/' % self.port, '--ut', str(self.d / 'init-ut.json'))
         self.assertEqual(code, 0, err[-400:])
-        rader = [json.loads(l) for l in logg.read_text().splitlines() if l.strip()]
+        alla = [json.loads(l) for l in logg.read_text().splitlines() if l.strip()]
+        self.assertTrue(alla and alla[0].get('meta') and alla[0]['privat'] is False, 'första raden är verktygets metarad'); rader = [r for r in alla if not r.get('meta')]
         self.assertTrue(any(r['ursprung'] == self.bas and not r['blockerad'] for r in rader)); self.assertTrue(any(r['ursprung'] == 'http://localhost:%d' % self.port and r['blockerad'] for r in rader))
         self.assertFalse(any(h.get('Host', '').startswith('localhost') for h in Handler.huvuden), 'blockerad förfrågan når aldrig servern')
         code, out, err = kor('besok.mjs', '--efterkontroll', str(logg), '--adress', self.bas + '/', '--ut', str(self.d / 'besok-e'))
@@ -192,6 +193,10 @@ class Webblasare(unittest.TestCase):
             import shutil; shutil.rmtree(Path(initu).parent, ignore_errors=True)
         finally:
             und.unlink(missing_ok=True)
+            try:
+                hem.rmdir()
+            except OSError:
+                pass
 
 
 if __name__ == '__main__':
