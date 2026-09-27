@@ -73,10 +73,14 @@ def g1_handlingar(handlingar, bygge=None):
             return grind('1 viktiga handlingar', 'EJ_MATT', 'HANDLINGAR.json utan handlingar')
         rows = []
         for h in data['handlingar']:
-            if not all(data.get(k) for k in ('fall', 'kund')) or not h.get('bevis') or not h.get('kontroll_id'):
-                return grind('1 viktiga handlingar', 'EJ_MATT', 'handling saknar fall/kund/bevis/kontroll_id; äldre fri status är inte verifierat resultat')
+            if not all(data.get(k) for k in ('fall', 'kund')) or not all(h.get(k) for k in ('bevis','kontroll_id','steg','niva')):
+                return grind('1 viktiga handlingar', 'EJ_MATT', 'handling saknar fall/kund/bevis/kontroll_id/steg/niva; äldre fri status är inte verifierat resultat')
             b = stegbevis.las(h['bevis'])
-            g = stegbevis.kontrollera(h['bevis'], data['fall'], data['kund'], b.get('steg'))
+            if h['niva'] not in ('lokal','privat-preview','drift') or b.get('niva') not in ('lokal','privat-preview','drift'):
+                return grind('1 viktiga handlingar', 'EJ_MATT', 'dokument/statik är inte ett genomfört handlingsprov')
+            if b.get('niva') != h['niva']:
+                raise stegbevis.Vagrad('handlingsprovet gäller annan provnivå än handlingens förväntade nivå')
+            g = stegbevis.kontrollera(h['bevis'], data['fall'], data['kund'], h['steg'])
             kr = g['stegkrav']['kontroller']
             if h['kontroll_id'] not in kr or not any(r['id'] == h['kontroll_id'] and r['utfall'] == 'godkant' for r in b['kontroller']):
                 raise stegbevis.Vagrad('handlingen saknar obligatoriskt godkänt prov: ' + h['kontroll_id'])
@@ -85,7 +89,7 @@ def g1_handlingar(handlingar, bygge=None):
             if actual_build != data['bygge_sha256']:
                 raise stegbevis.Vagrad('råresultatet gäller annat bygginnehåll; en ny hash i HANDLINGAR.json räcker inte')
             rows.append('%s (%s): godkänt kandidatbundet prov %s, nivå %s' % (h.get('namn'), h.get('typ'), h['kontroll_id'], b['niva']))
-        return grind('1 viktiga handlingar', 'PASS', '; '.join(rows))
+        return grind('1 viktiga handlingar', 'PASS', '; '.join(rows) + '; endast angiven provnivå: lokalt accepterat är inte externt skickat eller mottaget')
     except (stegbevis.Vagrad, KeyError, TypeError) as e:
         return grind('1 viktiga handlingar', 'FAIL', str(e), 'rätta bevisbindningen och prova faktisk kandidat; återanvänd inte fri status')
 

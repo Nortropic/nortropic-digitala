@@ -19,6 +19,7 @@ Search Console API (webmasters v3: sites.add, sitemaps.submit/list, searchanalyt
 """
 import argparse
 import base64
+import hashlib
 import json
 import os
 import re
@@ -114,6 +115,8 @@ def http_oppna(metod, url, body=None, headers=None, timeout=30):
             status = r.status
     except urllib.error.HTTPError as e:
         raw = e.read().decode('utf-8', 'replace'); status = e.code
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        return 0, {'utfall': 'okänt', 'feltyp': type(e).__name__}
     try:
         return status, json.loads(raw) if raw.strip() else {}
     except ValueError:
@@ -130,10 +133,10 @@ def kontroll_fore_live(v, doman, kommando, oppna):
             raise Vagrad('https://%s/ svarar %s; kanonisk domän måste svara 200 före %s' % (doman, status, kommando))
 
 
-def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, sov=time.sleep):
+def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, sov=time.sleep, rader=None, spara=lambda: None):
     """Utför ett kommando live; returnerar kvittorader (hemligheter aldrig med)."""
     plan = {p['steg']: p for p in anropsplan(doman, urler)}
-    rader = []
+    rader = rader if rader is not None else []
     tok = access_token(atkomst, oppna)
     auth = {'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json'}
     def call(steg, url=None, nyttolast=None):
@@ -153,6 +156,7 @@ def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, 
                    'siteUrl': (payload or {}).get('siteUrl') if isinstance(payload, dict) else None,
                    'felorsaker': sorted(reasons), 'retry': retry}
             rader.append(row)
+            spara()
             if not retry:
                 return status, svar
             row['vantan_sekunder'] = 2 ** (attempt - 1)
@@ -161,6 +165,7 @@ def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, 
         status, svar = call('token')
         if status == 200:
             rader[-1]['meta_tagg'] = svar.get('token')
+            spara()
     elif kommando == 'verifiera':
         status, svar = call('verifiera')
         if not 200 <= status < 300:
@@ -169,6 +174,7 @@ def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, 
             rid = svar.get('id'); befintliga = svar.get('owners')
             if not rid or not isinstance(befintliga, list) or not isinstance(svar.get('site'), dict):
                 rader[-1]['fel'] = 'verifieringssvaret saknar id/site/owners; ägarskap och efterföljande steg ej utförda'
+                spara()
                 return rader
             nya = [a for a in agare if a not in befintliga]
             if nya:
@@ -205,12 +211,13 @@ def tolkning(rader):
         context = {'adress': r.get('inspectionUrl'), 'egenskap': r.get('siteUrl'), 'http_status': r.get('status')}
         if not 200 <= r.get('status', 0) < 300 or r.get('fel'):
             code = r.get('status'); reasons = felorsaker(s)
-            action = ('kontrollera autentisering, behörighet och aktiverat API; ingen indexeringsbedömning kan göras'
+            action = ('utfallet är okänt; stäm av leverantörens faktiska tillstånd och detta kvitto före nytt försök'
+                      if code == 0 else 'kontrollera autentisering, behörighet och aktiverat API; ingen indexeringsbedömning kan göras'
                       if code in (401, 403) and not reasons & {'rateLimitExceeded', 'userRateLimitExceeded'}
                       else 'kontrollera kvot eller övergående leverantörsfel; begränsade försök är slut, planera senare omprov'
                       if code in (429, 500, 502, 503, 504) or reasons & {'rateLimitExceeded', 'userRateLimitExceeded'}
                       else 'kontrollera anropets data och råsvaret; ingen indexeringsbedömning kan göras')
-            ut.append({**context, 'status': 'API-fel', 'steg': r['steg'], 'felorsaker': sorted(reasons), 'atgard': r.get('fel') or action})
+            ut.append({**context, 'status': 'utfall okänt' if code == 0 else 'API-fel', 'steg': r['steg'], 'felorsaker': sorted(reasons), 'atgard': r.get('fel') or action})
             continue
         if r['steg'] == 'inspektera' and isinstance(s, dict):
             res = (s.get('inspectionResult') or {}).get('indexStatusResult') or {}
@@ -222,7 +229,74 @@ def tolkning(rader):
     return ut
 
 
-def main(argv=None):
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def json_bytes(data):
+    return json.dumps(data, ensure_ascii=False, sort_keys=True).encode('utf-8')
+
+
+class Journal:
+    """Engångskvitto. Avsikt före transport, svar före nästa steg; inga credentials lagras."""
+    def __init__(self, path, kvitto, transport, atkomst):
+        self.path = Path(path)
+        self.q = kvitto
+        self.transport = transport
+        self.hemliga = [x for x in atkomst.values() if isinstance(x, str) and len(x) >= 8]
+        try:
+            fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError as e:
+            raise Vagrad('kvittofilen finns redan; ingen upprepning. Läs kvittot och stäm av verkligt tillstånd före ett uttryckligt nytt försök med ny kvittofil') from e
+        os.close(fd)
+        self.spara()
+
+    def sanera(self, data):
+        if isinstance(data, dict):
+            return {k: '[maskerat]' if k in ('access_token', 'refresh_token', 'client_secret', 'private_key', 'assertion') else self.sanera(v) for k, v in data.items()}
+        if isinstance(data, list):
+            return [self.sanera(x) for x in data]
+        if isinstance(data, str):
+            for value in sorted(self.hemliga, key=len, reverse=True):
+                data = data.replace(value, '[maskerat]')
+        return data
+
+    def spara(self):
+        # Keep a valid last journal even if interrupted during serialization/write.
+        tmp = self.path.with_name(self.path.name + '.tmp-' + str(os.getpid()))
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'w', encoding='utf-8') as out:
+            out.write(json.dumps(self.sanera(self.q), ensure_ascii=False, indent=1) + '\n')
+            out.flush(); os.fsync(out.fileno())
+        os.replace(tmp, self.path)
+        fd = os.open(self.path.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+    def __call__(self, metod, url, body=None, headers=None, timeout=30):
+        # Hash includes actual dynamic owners/resource-id payload, not only the template plan.
+        request = {'metod': metod, 'url': url, 'kropp_sha256': sha(body or b'')}
+        row = {**request, 'begaran_sha256': sha(json_bytes(request)), 'nummer': len(self.q['transport']) + 1,
+               'tid': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+               'status': None, 'utfall': 'okänt; avsikt sparad före anrop'}
+        self.q['transport'].append(row)
+        self.q['lage'] = 'pågår; senaste anropets utfall okänt'
+        self.spara()
+        try:
+            status, svar = self.transport(metod, url, body, headers, timeout)
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            status, svar = 0, {'utfall': 'okänt', 'feltyp': type(e).__name__}
+        if url == TOKEN_URL and isinstance(svar, dict) and isinstance(svar.get('access_token'), str):
+            self.hemliga.append(svar['access_token'])
+        row.update(status=status, utfall='svar mottaget' if status else 'okänt',
+                   svar_sha256=sha(json_bytes(svar)), svar=self.sanera(svar))
+        self.spara()
+        return status, svar
+
+
+def main(argv=None, *, transport=None):
     p = argparse.ArgumentParser(prog='sokkonsol', description=__doc__.split('\n\n')[0])
     p.add_argument('kommando', choices=('plan', 'token', 'verifiera', 'sitemap', 'inspektera', 'sokdata'))
     p.add_argument('--verksamhet', required=True)
@@ -232,35 +306,51 @@ def main(argv=None):
     p.add_argument('--live', action='store_true')
     p.add_argument('--ut', required=True)
     a = p.parse_args(argv)
+    journal = None
     try:
         v = vu.las(a.verksamhet)
         doman = a.doman or (v.get('webb') or {}).get('doman')
         if not doman:
             raise Vagrad('ingen domän: --doman eller webb.doman i VERKSAMHET.json')
         urler = [u.strip() for u in a.urler.split(',') if u.strip()]
-        kvitto = {'schema': 1, 'verksamhet': v['namn'], 'fiktiv': v['fiktiv'], 'doman': doman, 'kommando': a.kommando, 'tid': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-                  'live': bool(a.live), 'plan': anropsplan(doman, urler), 'dokumentation': DOK, 'anrop': [], 'tolkning': [],
-                  'not': 'plan = vad som skulle göras; live = vad som gjordes med statuskoder. En plan är inte en verifierad integration.'}
+        plan = anropsplan(doman, urler)
+        atk = {}
         if a.kommando != 'plan':
             if not a.live:
                 raise Vagrad('%s kräver --live och --atkomst; utan åtkomst: kör plan' % a.kommando)
             if not a.atkomst:
                 raise Vagrad('--atkomst saknas (privat fil 0600); extern aktivering: OAuth-klient eller tjänstekonto med scopes webmasters och siteverification')
             atk = las_atkomst(a.atkomst)
-            kontroll_fore_live(v, doman, a.kommando, http_oppna)
-            kvitto['anrop'] = kor(a.kommando, v, doman, urler, atk, http_oppna, agare=v.get('sokkonsol_agare'))
+        kvitto = {'schema': 2, 'verksamhet': v['namn'], 'fiktiv': v['fiktiv'], 'doman': doman, 'kommando': a.kommando,
+                  'tid': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'live': bool(a.live),
+                  'provniva': 'plan' if a.kommando == 'plan' else 'testtransport' if transport else 'externa API-anrop',
+                  'bindning': {'verksamhet_sha256': sha(Path(a.verksamhet).read_bytes()),
+                               'atkomst_sha256': sha(Path(a.atkomst).read_bytes()) if atk else None,
+                               'kod': {p.name: sha(p.read_bytes()) for p in (Path(__file__), Path(vu.__file__))},
+                               'plan_sha256': sha(json_bytes(plan)), 'kommando': a.kommando, 'doman': doman},
+                  'plan': plan, 'dokumentation': DOK, 'anrop': [], 'transport': [], 'tolkning': [], 'lage': 'förberedd',
+                  'not': 'En plan är inte en verifierad integration. API-svar avser endast dessa anrop, inte indexering eller drift. Testtransport är inte extern framgång. Okänt utfall kräver avstämning före nytt försök; ett nytt filnamn gör ingen avstämning.'}
+        journal = Journal(a.ut, kvitto, transport or http_oppna, atk)
+        if a.kommando != 'plan':
+            kontroll_fore_live(v, doman, a.kommando, journal)
+            kor(a.kommando, v, doman, urler, atk, journal, agare=v.get('sokkonsol_agare'), rader=kvitto['anrop'], spara=journal.spara)
             kvitto['tolkning'] = tolkning(kvitto['anrop'])
-    except (Vagrad, vu.Vagrad) as e:
-        print(json.dumps({'vagrad': e.args[0]}, ensure_ascii=False))
+        unknown = any(not r.get('status') for r in kvitto['transport'])
+        failed = any((not 200 <= r['status'] < 300 or r.get('fel')) for r in kvitto['anrop'] if r.get('slutligt', True))
+        kvitto['lage'] = 'utfall okänt; avstämning krävs' if unknown else 'API-fel' if failed else 'plan' if a.kommando == 'plan' else 'API-anrop besvarade'
+        journal.spara()
+        code = 2 if unknown else 1 if failed else 0
+    except (Vagrad, vu.Vagrad, OSError) as e:
+        if journal:
+            # Never turn an exception into success or erase already journalled observations.
+            journal.q['lage'] = 'avbruten; läs transportens utfall'
+            journal.q['feltyp'] = type(e).__name__
+            journal.spara()
+        msg = e.args[0] if isinstance(e, (Vagrad, vu.Vagrad)) else type(e).__name__
+        print(json.dumps({'vagrad': msg}, ensure_ascii=False))
         return 2
-    text = json.dumps(kvitto, ensure_ascii=False, indent=1)
-    if a.atkomst:
-        for hemligt in (json.loads(Path(a.atkomst).read_text()).values() if Path(a.atkomst).is_file() else []):
-            if isinstance(hemligt, str) and len(hemligt) >= 8:
-                assert hemligt not in text, 'hemlighet i kvitto'
-    Path(a.ut).write_text(text + '\n', encoding='utf-8')
-    print(json.dumps({'kommando': a.kommando, 'live': bool(a.live), 'anrop': len(kvitto['anrop']), 'ut': a.ut}, ensure_ascii=False))
-    return 1 if any((not 200 <= r['status'] < 300 or r.get('fel')) for r in kvitto['anrop'] if r.get('slutligt', True)) else 0
+    print(json.dumps({'kommando': a.kommando, 'live': bool(a.live), 'anrop': len(kvitto['anrop']), 'lage': kvitto['lage'], 'ut': a.ut}, ensure_ascii=False))
+    return code
 
 
 if __name__ == '__main__':

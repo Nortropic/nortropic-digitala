@@ -29,9 +29,9 @@ Varje godkänd kontroll anger `id`, `utfall: "godkant"`, konkret `observerat`, e
 måste märkas med sin faktiska metod och räckvidd i råresultatet; kuvertet bevisar inte att påståendet är sant.
 
 `HANDLINGAR.json` i prelaunch använder samma väg: toppnivå `fall`, `kund`, `bygge_sha256` (ur prelaunch.bygg_hash för exakt byggkatalog), `handlingar`; varje handling har
-`namn`, `typ`, `bevis` (stegbevisfil) och `kontroll_id` för obligatoriskt faktiskt prov. Äldre fria statussträngar
+`namn`, `typ`, `steg` (förväntat steg), `niva` (förväntad nivå), `bevis` (stegbevisfil) och `kontroll_id` för obligatoriskt faktiskt prov. Äldre fria statussträngar
 står som EJ_MATT. Kontrollraden anger också `byggpekare` till samma bygginnehållshash i det faktiska råresultatet;
-att byta hash enbart i HANDLINGAR.json kan inte återanvända ett prov på en äldre byggnad. Ett dokumentprov får aldrig presenteras som verifierad extern leverans.
+att byta hash enbart i HANDLINGAR.json kan inte återanvända ett prov på en äldre byggnad. Handlingsgrinden tillåter endast `lokal`, `privat-preview` eller `drift`, och kräver exakt match mot förväntat steg och nivå. Dokument/statik ger EJ_MATT. Ett lokalt accepterat formulär är inte externt skickat eller mottaget; kontrollens råresultat och observerade omfattning anger vilket led som faktiskt prövats. Ett dokumentprov får aldrig presenteras som verifierad extern leverans.
 
 Vid fortsatt/status kontrolleras kandidat, konfiguration, krav per steg, råfiler, laddningskvitto och relevanta
 kundfakta. Ändring återöppnar berörda godkännanden och deras nödvändiga efterföljare; historik och sidoeffekter

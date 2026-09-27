@@ -83,6 +83,100 @@ class Plan(unittest.TestCase):
         t = sk.tolkning(rader)
         self.assertEqual(t[0]['verdict'], 'NEUTRAL'); self.assertIn('begär indexering', t[0]['atgard'])
 
+    def journal_args(self, ut, command='verifiera'):
+        return [command, '--verksamhet', str(self.v), '--ut', str(ut), '--live', '--atkomst', str(self.atk)]
+
+    def transport(self, fail=None, stop=False):
+        calls = []
+        def api(method, url, body=None, headers=None, timeout=30):
+            calls.append((method, url, body))
+            saved = json.loads(self.journal_path.read_text())
+            self.assertEqual(saved['transport'][-1]['status'], None, 'avsikten finns på disk före varje anrop')
+            self.assertEqual(saved['transport'][-1]['url'], url)
+            if fail and fail in url:
+                if stop:
+                    raise KeyboardInterrupt('syntetiskt hårt avbrott')
+                raise sk.urllib.error.URLError('hemlig-secret-1234 får inte skrivas ut')
+            if url == sk.TOKEN_URL:
+                return 200, {'access_token': 'bearer-test-secret'}
+            if 'webResource?' in url:
+                return 200, {'id': 'resource-1', 'site': {'type': 'SITE', 'identifier': 'https://provfirma.se/'}, 'owners': ['konto@example.com']}
+            return (200 if method == 'GET' else 204), {}
+        return api, calls
+
+    def test_journal_bindning_och_positiv_kedja(self):
+        self.journal_path = self.d/'positive.json'
+        v = json.loads(self.v.read_text()); v['sokkonsol_agare'] = ['kund@example.com']; self.v.write_text(json.dumps(v))
+        api, calls = self.transport()
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = sk.main(self.journal_args(self.journal_path), transport=api)
+        q = json.loads(self.journal_path.read_text())
+        self.assertEqual(code, 0)
+        self.assertEqual(q['lage'], 'API-anrop besvarade')
+        self.assertEqual(q['provniva'], 'testtransport')
+        self.assertEqual([r['steg'] for r in q['anrop']], ['verifiera', 'agare', 'egenskap', 'sitemap'])
+        self.assertEqual(len(q['transport']), 6)
+        self.assertEqual(q['bindning']['verksamhet_sha256'], sk.sha(self.v.read_bytes()))
+        self.assertEqual(q['bindning']['atkomst_sha256'], sk.sha(self.atk.read_bytes()))
+        self.assertEqual(q['bindning']['kod']['sokkonsol.py'], sk.sha(Path(sk.__file__).read_bytes()))
+        self.assertEqual(q['bindning']['plan_sha256'], sk.sha(sk.json_bytes(q['plan'])))
+        owner = next(r for r in q['transport'] if '/webResource/resource-1' in r['url'])
+        body = next(r[2] for r in calls if '/webResource/resource-1' in r[1])
+        self.assertEqual(owner['kropp_sha256'], sk.sha(body))
+        self.assertEqual(owner['begaran_sha256'], sk.sha(sk.json_bytes({k: owner[k] for k in ('metod','url','kropp_sha256')})))
+        text = self.journal_path.read_text()
+        for secret in ('hemlig-secret-1234', 'refresh-token-9999', 'bearer-test-secret'):
+            self.assertNotIn(secret, text)
+        self.assertEqual(self.journal_path.stat().st_mode & 0o777, 0o600)
+
+    def test_tappat_svar_efter_verifiering_bevaras_och_upprepning_vagras(self):
+        self.journal_path = self.d/'unknown.json'
+        api, calls = self.transport(fail='/sites/')
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = sk.main(self.journal_args(self.journal_path), transport=api)
+        q = json.loads(self.journal_path.read_text())
+        self.assertEqual(code, 2)
+        self.assertEqual([(r['steg'], r['status']) for r in q['anrop']], [('verifiera',200), ('egenskap',0)])
+        self.assertIn('okänt', q['lage'])
+        self.assertIn('okänt', q['transport'][-1]['utfall'])
+        self.assertEqual(sum('webResource?' in r[1] for r in calls), 1)
+        before = self.journal_path.read_bytes(); n = len(calls)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(sk.main(self.journal_args(self.journal_path), transport=api), 2)
+        self.assertIn('finns redan', out.getvalue())
+        self.assertEqual(len(calls), n)
+        self.assertEqual(self.journal_path.read_bytes(), before)
+        self.assertNotIn('hemlig-secret-1234', before.decode())
+
+    def test_preflight_och_verifiering_timeout_samt_hart_avbrott(self):
+        for fail, stop in [('https://provfirma.se/',False), ('webResource?',False), ('webResource?',True)]:
+            with self.subTest(fail=fail, stop=stop):
+                self.journal_path = self.d/('kvitto-%s.json' % len(list(self.d.glob('kvitto-*'))))
+                api, calls = self.transport(fail=fail, stop=stop)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    if stop:
+                        with self.assertRaises(KeyboardInterrupt):
+                            sk.main(self.journal_args(self.journal_path), transport=api)
+                    else:
+                        self.assertEqual(sk.main(self.journal_args(self.journal_path), transport=api), 2)
+                q = json.loads(self.journal_path.read_text())
+                self.assertNotEqual(q['lage'], 'API-anrop besvarade')
+                self.assertIn('okänt', q['transport'][-1]['utfall'])
+                n = len(calls)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(sk.main(self.journal_args(self.journal_path), transport=api), 2)
+                self.assertEqual(len(calls), n)
+                self.assertFalse(any('/sitemaps/' in x[1] for x in calls))
+
+    def test_http_timeout_returns_observed_unknown_without_exception_text(self):
+        from unittest.mock import patch
+        for error in (TimeoutError('secret detail'), sk.urllib.error.URLError('secret detail')):
+            with patch.object(sk.urllib.request, 'urlopen', side_effect=error):
+                status, reply = sk.http_oppna('POST', sk.SV + '/webResource', b'{}')
+            self.assertEqual(status, 0)
+            self.assertEqual(reply['utfall'], 'okänt')
+            self.assertNotIn('secret detail', json.dumps(reply))
+
     def test_tjanstekonto_signerar_med_openssl(self):
         import subprocess
         key = subprocess.run(['openssl', 'genrsa', '2048'], capture_output=True, check=True).stdout.decode()

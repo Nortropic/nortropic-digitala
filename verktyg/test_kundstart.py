@@ -65,6 +65,23 @@ class Kundstart(unittest.TestCase):
             code = ks.main(list(args) + ['--bas-url', 'http://kundstart.test', '--nyckel-fil', str(self.nyckel)])
         return code, json.loads(out.getvalue())
 
+    def test_fel_tjanst_vagras_fore_anrop_och_import(self):
+        ks.spara_kundstart(self.k, {'schema': 1, 'arende_id': 'ar_test12345678',
+                                 'bas_url': 'http://kundstart.test', 'hamtat': [], 'lank_hash': 'a'*64})
+        before = (self.k/'KUNDSTART.json').read_bytes()
+        for command in ('hamta', 'status', 'lank', 'aterkalla'):
+            with self.subTest(command=command), contextlib.redirect_stdout(io.StringIO()) as out:
+                code = ks.main([command, '--kund', str(self.k), '--bas-url', 'http://annan.test',
+                                '--nyckel-fil', str(self.nyckel)])
+            self.assertEqual(code, 2)
+            self.assertIn('bas-url', json.loads(out.getvalue())['vagrad'])
+            self.assertEqual(self.anrop, [])
+            self.assertFalse(iv.stig(self.k).exists())
+            self.assertEqual((self.k/'KUNDSTART.json').read_bytes(), before)
+        with self.assertRaisesRegex(ks.Vagrad, 'bas-url'):
+            ks.hamta(self.k, 'http://annan.test', 'x', None, False, paket=paket())
+        ks.bunden(ks.las_kundstart(self.k), 'http://kundstart.test/')
+
     def test_skapa_skickar_kanda_fakta_med_lasbar_kalla_och_skriver_lanken_0600(self):
         self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'regelstyrd'}
         code, r = self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')

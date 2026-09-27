@@ -86,4 +86,67 @@ class Konsumtion(unittest.TestCase):
             self.assertEqual(len(ks.signaler(self.base,'x',None)),2);ks.signaler(self.base,'x',None)
         self.assertEqual(pages[0],pages[2]);self.assertIn('cursor=nasta',pages[1])
 
+    def test_delvis_import_omprovas_pa_samma_export_utan_dubbletter(self):
+        real = iv.svar
+        failed = False
+        def fail_once(*a, **kw):
+            nonlocal failed
+            if not failed:
+                failed = True
+                raise iv.Vagrad('syntetiskt importfel före sparning')
+            return real(*a, **kw)
+        with patch.object(ks, 'anrop', self.api), patch.object(iv, 'svar', fail_once):
+            with self.assertRaisesRegex(ks.Vagrad, 'ej registrerade'):
+                ks.konsumera(self.k, self.base, 'x', None, 'ansvarig')
+            self.assertEqual(self.ack, [])
+            first = (self.k/'KUNDSTART/signal-7/EXPORT.json').read_bytes()
+            d, r = ks.konsumera(self.k, self.base, 'x', None, 'ny utförare')
+        self.assertEqual(r['importstatus'], 'fullständig')
+        self.assertEqual(len(self.ack), 1)
+        self.assertEqual(len([x for x in self.calls if x[1].endswith('/export')]), 1)
+        self.assertEqual(first, (self.k/'KUNDSTART/signal-7/EXPORT.json').read_bytes())
+        self.assertEqual(len(d['hamtat']), 2)
+        self.assertTrue(d['hamtat'][0]['ej_registrerade'])
+        self.assertFalse(d['hamtat'][1]['ej_registrerade'])
+        rows = iv.las(self.k)['svar']
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(len({(x['fraga_id'], x['kundstart_revision']) for x in rows}), 3)
+
+    def test_avvikelseplan_binds_och_lamnar_oppet_arbete_vid_kvittens(self):
+        self.p['svar'] = [{'fraga_id': 'SAK1', 'revision': 7, 'text': 'Kundord utan omgång'}]
+        progress = self.k/'KUNDSTART/signal-7/KONSUMTION.json'
+        with patch.object(ks, 'anrop', self.api):
+            for _ in range(2):
+                with self.assertRaisesRegex(ks.Vagrad, 'avvikelseplan'):
+                    ks.konsumera(self.k, self.base, 'x', None, 'importör')
+            state = json.loads(progress.read_text())
+            self.assertEqual(state['importstatus'], 'delvis')
+            self.assertEqual(self.ack, [])
+            self.assertEqual(len(ks.las_kundstart(self.k)['hamtat']), 2, 'ett faktiskt nytt importförsök')
+            plan = {'schema': 'digitala-importavvikelse/1', 'signal_id': self.p['signal']['id'],
+                    'export_sha256': state['export_sha256'], 'avvikelser_sha256': state['avvikelser_sha256'],
+                    'ansvarig': 'Sakansvarig', 'skal': 'Kundordet är bevarat; strukturfelet utreds separat.',
+                    'nasta': 'Läs originalraden och ställ en källbunden returfråga i samma ärende.'}
+            path = self.k/'avvikelseplan.json'
+            for field in ('signal_id', 'export_sha256', 'avvikelser_sha256', 'ansvarig', 'nasta'):
+                bad = {**plan, field: ''}; path.write_text(json.dumps(bad))
+                with self.assertRaisesRegex(ks.Vagrad, 'avvikelseplan'):
+                    ks.konsumera(self.k, self.base, 'x', None, 'importör', path)
+                self.assertEqual(self.ack, [])
+            path.write_text(json.dumps(plan))
+            self.lose = True
+            with self.assertRaisesRegex(ks.Vagrad, 'tappat'):
+                ks.konsumera(self.k, self.base, 'x', None, 'importör', path)
+            _, r = ks.konsumera(self.k, self.base, 'x', None, 'ny utförare')
+        self.assertEqual(r['lage'], 'kvitterad')
+        self.assertEqual(r['importstatus'], 'delvis')
+        self.assertEqual(self.ack[0], self.ack[1], 'tappat svar återanvänder exakt kvittens')
+        self.assertEqual(self.ack[0]['import_sha256'], state['export_sha256'])
+        task = json.loads((self.k/'KUNDSTART-ARBETSUPPGIFT.json').read_text())
+        self.assertEqual(task['avvikelseansvarig'], 'Sakansvarig')
+        self.assertEqual(task['ej_registrerade'], state['importresultat']['ej_registrerade'])
+        self.assertIn('öppna', task['lage'])
+        self.assertEqual(json.loads(progress.read_text())['avvikelseplan'], plan)
+        self.assertEqual(len(iv.las(self.k)['svar']), 3)
+
 if __name__=='__main__':unittest.main()
