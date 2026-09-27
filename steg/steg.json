@@ -257,7 +257,7 @@
   "bygge": {
    "mandat": "bestallning",
    "syfte": "Bygge i kundrepot enligt brief och vald riktning.",
-   "anvisning": "Följ bygge-referens.md (krav på resultatet, mönster med skäl, browsergranskning under bygget, arbetslogg). frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21). Skriv kundrepots DESIGN.md (formatet i externa/google-design-md-README) ur briefens §7 och håll den i takt med bygget; kör linten i kundrepot (`npx -p @google/design.md@0.4.0 designmd lint --format json DESIGN.md`, paketet pinnat 0.4.0; installationen är kundrepots beroende, inget abonnemang).",
+   "anvisning": "Följ bygge-referens.md (krav på resultatet, mönster med skäl, browsergranskning under bygget, arbetslogg). frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21). Skriv kundrepots DESIGN.md (formatet i externa/google-design-md-README) ur briefens §7 och håll den i takt med bygget; kör linten i kundrepot (`npx -p @google/design.md@0.4.0 designmd lint --format json DESIGN.md`, paketet pinnat 0.4.0; installationen är kundrepots beroende, inget abonnemang). Under bygget: node verktyg/webblasare/inspektera.mjs --adress ADRESS --ut FALL/INSPEKTION-<tid> --vyer 390,1440 --kontext PROJECT-BRIEF.md,<kodfiler> [--hover SEL --fokus SEL --meny SEL] — bedöm bilderna, inte bara texten.",
    "underlag": [
     {
      "fil": "kunskap/bygge-referens.md",
@@ -312,6 +312,12 @@
      "klass": "profession",
      "obligatorisk": false,
      "delar": "\"The Format\" och \"lint\": DESIGN.md som riktningsfil i kundrepot och lint av den"
+    },
+    {
+     "fil": "kunskap/webblasare.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "användning 1 och tillstånden"
     }
    ]
   },
@@ -518,10 +524,41 @@
     }
    ]
   },
+  "qa": {
+   "mandat": "staende",
+   "syfte": "Utforskande QA i riktig webbläsare: självvalt testförlopp inom tillåtna ursprung (crawl, formulärens felvägar utan att skicka, meny, tangentbord, 404, bakåt/framåt, mobil emulering), fynd med reproduktion som blir regressionsprov; browsergranskning under bygget, inte bara efteråt.",
+   "anvisning": "Följ webblasare.md. Kör node verktyg/webblasare/utforska.mjs --adress ADRESS --ut FALL/QA-<tid> [--vy 390|1440] [--tillat ORIGIN;…] [--undantag-fil FIL] (formulär skickas bara med --formular-far-skickas --testmarkering TEXT mot kontrollerad mottagare); läs UTFORSKNING.md, rätta, kör om REGRESSION.json med --regression. För fri utforskning av en session: mcp.json ur besok.mjs --qa --adress ADRESS --ut FALL/QA-mcp (ingen uppgift, ingen avskärmning). Spår är privata när undantag använts.",
+   "underlag": [
+    {
+     "fil": "kunskap/webblasare.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/integrationer.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "formulär och leads (vad felvägarna ska visa)"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "§4 (handlingar som ska provas)"
+    },
+    {
+     "fil": "TESTDATA.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "testmarkering och testmottagare"
+    }
+   ]
+  },
   "provare": {
    "mandat": "staende",
    "syfte": "Scenarioprov: en besökare i riktig webbläsare genom Runtimes provarprofil, utan brief, kod eller facit; utfallet avgörs av kontrollanten ur artefakter (L20).",
-   "anvisning": "Skriv uppgiften enligt UPPGIFT-MALL.md med Startadress och Kommando ordagrant (L18). Kör genom verktyg/kor_profil.py provare. Kontrollanten fyller KONTROLL-MALL.md ur sista skärmbild, sidtext och spårets sista adress, aldrig ur provarens rapport; vid oväntat tillstånd: utlösande handling (L22).",
+   "anvisning": "Skriv uppgiften enligt UPPGIFT-MALL.md med Startadress och Kommando ordagrant (L18). Kör genom verktyg/kor_profil.py provare. Kontrollanten fyller KONTROLL-MALL.md ur sista skärmbild, sidtext och spårets sista adress, aldrig ur provarens rapport; vid oväntat tillstånd: utlösande handling (L22). Playwright-vägen: node verktyg/webblasare/besok.mjs --adress ADRESS --uppgift UPPGIFT.md --ut FALL/BESOK-<tid> [--utforare claude|codex --modell M] [--undantag-fil FIL] — uppgiften avskärmas (verktyget vägrar brief, kod, facit, kritik), nätverksloggen natverk.jsonl efterkontrolleras (ingen spårfil); kontrollanten bedömer besöket separat; Runtimes provarprofil är den andra vägen.",
    "underlag": [
     {
      "fil": "provare/UPPGIFT-MALL.md",
@@ -546,6 +583,12 @@
      "klass": "kund",
      "obligatorisk": false,
      "delar": "testuppgifter för scenariot, aldrig riktiga personuppgifter"
+    },
+    {
+     "fil": "kunskap/webblasare.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "användning 3 och gränserna"
     }
    ]
   },

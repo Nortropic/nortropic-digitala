@@ -51,7 +51,7 @@ Formatet beskriver riktningen; det bestämmer den inte.
 ## Browsergranskning under bygget
 
 Rendera och interagera i riktig webbläsare medan du bygger, inte bara efteråt: första vyn i 390 och 1440,
-tangentbordsväg genom menyn och formuläret, felvägar, konsol och nätverk (`verktyg/webblasare/` byggs i HELHET etapp 4 och finns inte än; tills dess Runtimes mätprofil och provarprofil).
+tangentbordsväg genom menyn och formuläret, felvägar, konsol och nätverk (`verktyg/webblasare/`, webblasare.md).
 Skärmbilder kompletterar interaktionen; ett textträd är inte bildseende.
 
 ## Arbetslogg
