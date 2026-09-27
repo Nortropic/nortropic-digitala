@@ -5,12 +5,12 @@ Kundspecifikt material (kundmappen `norrglanta/`, etappmapparna, nycklar, adress
 
 | fil här | källa | sha256 | byte | status | not |
 |---|---|---|---|---|---|
-| `kunskap/REGISTER.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md` | `24479dd639c99b74…` (flyttad: `68eac8cc627932bd…`) | 17478 | GÄLLANDE | byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; §E och §F uppdaterade), i övrigt oförändrat |
+| `kunskap/REGISTER.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md` | `e794b16d6fa15130…` (flyttad: `68eac8cc627932bd…`) | 17772 | GÄLLANDE | byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27 |
 | `kunskap/LARDOMAR.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/LARDOMAR.md` | `d28f7dfb12db0736…` (flyttad: `bbdef0425bba0d64…`) | 22201 | GÄLLANDE | byte för byte t.o.m. L23; nya poster skrivs här; huvudet ändrat 2026-09-27 (hemvist), i övrigt oförändrat |
 | `kunskap/referensjakt.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/referensjakt.md` | `7e5bf20c32007148…` | 3580 | GÄLLANDE | härledd text |
 | `kunskap/redaktionellt-pass.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/redaktionellt-pass.md` | `f880f6a40a960b2b…` | 3630 | GÄLLANDE | härledd text |
 | `kunskap/formularsakerhet.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/formularsakerhet.md` | `bdee22bf808983ff…` | 3481 | GÄLLANDE | härledd text |
-| `kunskap/MOTTAGARPROV.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/MOTTAGARPROV.md` | `333440fb98f65a5b…` (flyttad: `ee59166e175891d5…`) | 3624 | HISTORIK | mottagarproven 2026-09-26 mot kontorets ingång; avsnitt om repots egen ingång tillagt 2026-09-27, det migrerade innehållet oförändrat |
+| `kunskap/MOTTAGARPROV.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/MOTTAGARPROV.md` | `4f40ac07b8c68fae…` (flyttad: `ee59166e175891d5…`) | 3664 | HISTORIK | mottagarproven 2026-09-26 mot kontorets ingång; avsnitt om repots egen ingång tillagt 2026-09-27, det migrerade innehållet oförändrat; commitbokföringen preciserad 2026-09-27 |
 | `kunskap/externa/KONTROLL-20260926.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/KONTROLL.txt` | `fdd8923cb1bf6357…` | 3278 | HISTORIK | kontrollen av externa/ mot läsbevisen vid del 1 |
 | `kunskap/externa/KONTROLL-20260926.sha256` | `nortropic-projektkontor/evidence/digitala/local/kunskap/KONTROLL.sha256` | `3fa2ac16492bb1ae…` | 1523 | HISTORIK | sha256-listan från del 1 |
 | `kunskap/externa/addyosmani-accessibility-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/addyosmani-accessibility-SKILL.md` | `267fb2a0707d6142…` | 14358 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
@@ -32,4 +32,4 @@ Kundspecifikt material (kundmappen `norrglanta/`, etappmapparna, nycklar, adress
 | `kunskap/externa/vercel-web-interface-guidelines-command-e3d624ba.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/vercel-web-interface-guidelines-command-e3d624ba.md` | `5a775e6411f790f5…` | 7760 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
 | `provare/AGENTS-provare.md` | `nortropic-projektkontor/evidence/digitala/local/genomforande-20260926/provvag/AGENTS-provare.md` | `8c52e68b1bf1ddf0…` | 1531 | GÄLLANDE | provarens instruktion, förlaga från provvägen (samma text som Runtimes provarprofil fick som förlaga) |
 
-Regel för senare ändringar: en migrerad fil som ändras efter flytten får sin rad uppdaterad (flyttad version i parentes, gällande sha256 och byte); `verktyg/test_repo_konsistens.py` kräver att raden stämmer med filen.
+Regel för senare ändringar: en migrerad fil som ändras efter flytten får sin rad uppdaterad (flyttad version i parentes, gällande sha256 och byte); `verktyg/test_repo_konsistens.py` kräver att JSON-radens gällande sha256 stämmer med filen; tabellen här hålls i takt för hand och prövas inte.

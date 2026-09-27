@@ -33,7 +33,7 @@ arbetsytans `index.html`).
 - **Claude som session:** Runtimes läsarprofil (bara Read, claude-opus-5) i en kopia av repot med repots egen `AGENTS.md`
   som systeminstruktion, fyra frågor utan filnamn (steget för mätning och dess mandat, beställningsstegen, kvittots roll,
   lärdomens plats). Godkänt; fem anmärkningar om vad ingången inte namngav (kundmappens plats, undantagsfilens form,
-  kontorets lärdomsfil, förslagsradens plats, beställningsstegen samlat) rättade i `6726fd8`. Protokoll i kontorets privata
+  kontorets lärdomsfil, förslagsradens plats, beställningsstegen samlat) rättade: fyra i `6726fd8`, proportionstabellens i `37543de`. Protokoll i kontorets privata
   `evidence/nasta-uppdrag/local/ombyggnad-20260927/mottagarprov-digitala-r1/`.
 - **Codex som session:** Runtimes Codex-profil (skrivskyddad sandlåda, inget nät, gpt-6-astra) i en kopia av repot; Codex
   läste repots egen `AGENTS.md` som instruktion, samma frågor, samma svarsschema. Godkänt på 56 sekunder; tre anmärkningar

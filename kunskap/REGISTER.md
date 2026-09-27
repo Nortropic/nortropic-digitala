@@ -62,6 +62,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 
 | Underlag | Steg och utförare | När det läses; vilka delar | Uppgift eller kontroll | Vid konflikt med brief eller mandat |
 |---|---|---|---|---|
+| `KEDJA.md` (repots rot) | uppstart, båda utförarna | hela, vid uppstart av ett fall eller en etapp (obligatoriskt i `steg/steg.json`) | kontroll: vad Runtime skyddar mekaniskt och vad sessionen själv bär | beskrivande; ingen konflikt möjlig |
 | 1 frontend-design | Brief §5 (kedjedrivaren); bygge; redaktionellt pass | Vid tokenplan och pass 2: "Design principles", "Process: plan, review against the brief, build, critique", "Restraint and self-critique"; vid passet: "More on writing in design" (hela filen är 9 KB) | Tvåpass-syntesen, klusterlistan mot AI-generiska mönster, skrivråden | Briefen och ACCEPT vinner; avvikelsen skrivs i briefens konfliktrad |
 | 2 WIG `command.md` | Granskning D (Runtimes läsare); bygge (kedjedrivaren) | Vid kodgranskning: "Accessibility", "Focus States", "Forms", "Animation", "Typography", "Content Handling", "Images", "Hydration Safety", "Anti-patterns (flag these)"; inte "Output Format" | Kodläsningslista för gränssnitt: formulär, fokus, reduced motion, bilder | Ett råd som strider mot ett accepterat krav (t.ex. briefens längdregel) redovisas som förslag och ändrar inget |
 | 3 web-quality-audit | Granskning D; mätsteget (kedjedrivaren) | "How it works", "Audit categories", "Severity levels", "Audit output format" (Verification-punkterna); inte "Tool routing" (Chrome DevTools MCP används inte) | Bevistyper (fält, lab, statisk), allvarlighetsgrader, "aggregerad poäng är inte målet" | — |
@@ -89,7 +90,7 @@ filnamn) redovisas i `MOTTAGARPROV.md` (kontorets ingång 2026-09-26; repots ege
 ## F. Installerat och registrerat (etapp 1, DIGITALA-1-TILLAGGSMANDAT-BESLUT-20260926, 2026-09-26)
 
 Formen per resurs är ett nyttoval (regel 7). Hemvistfrågan (kontoret, ett eget repo eller operatörens användarnivå)
-var öppen vid installationen och är avgjord genom OMBYGGNAD-20260927: detta repo. Skills på användarnivå och Impeccable i
+var öppen vid installationen och är avgjord genom kontorets beslutspost OMBYGGNAD-20260927 (`docs/decisions.md`): detta repo. Skills på användarnivå och Impeccable i
 kundrepot ligger kvar som leveransformer tills en förslagsrad prövar dem. Versioner byts bara som nytt
 beslut med ny läsning (regel 4). Råmaterial: `../genomforande-20260926/etapp1/`.
 

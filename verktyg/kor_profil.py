@@ -14,7 +14,8 @@ matning/PROFIL.json: tar den aktiva koden dem som parametrar (--vyer, --axe-tagg
 lika med kodens standardvärden, annars vägras körningen. Kritikens fråga och schema kommer ur kritik/; varje
 {{PLATSHÅLLARE}} fylls med --parameter, och en fråga med kvarvarande platshållare vägras. Laddningskvittots hash och
 steg binds till körningen (kritik: i frågan; provare: som --bindning; mätning: i KORNING-posten). Varje körning
-lämnar FALL/KORNING-<tid>-<profil>-<etikett>.json med argv, körkatalog och utfall. --torr visar bara kommandot.
+lämnar FALL/KORNING-<tid>-<profil>-<etikett>.json med argv, körkatalog och utfall. --torr visar bara kommandot. I bokförd argv, också i --torr, ersätts undantagsfilens sökväg med <undantag-fil>;
+själva kommandot körs med den riktiga sökvägen.
 """
 import argparse
 import hashlib
