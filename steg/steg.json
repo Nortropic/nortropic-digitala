@@ -527,7 +527,7 @@
   "qa": {
    "mandat": "staende",
    "syfte": "Utforskande QA i riktig webbläsare: självvalt testförlopp inom tillåtna ursprung (crawl, formulärens felvägar utan att skicka, meny, tangentbord, 404, bakåt/framåt, mobil emulering), fynd med reproduktion som blir regressionsprov; browsergranskning under bygget, inte bara efteråt.",
-   "anvisning": "Följ webblasare.md. Kör node verktyg/webblasare/utforska.mjs --adress ADRESS --ut FALL/QA-<tid> [--vy 390|1440] [--tillat ORIGIN;…] [--undantag-fil FIL] (formulär skickas bara med --formular-far-skickas --testmarkering TEXT mot kontrollerad mottagare); läs UTFORSKNING.md, rätta, kör om REGRESSION.json med --regression. För fri utforskning av en session: mcp.json ur besok.mjs --torr utan avskärmningskrav. Spår är privata när undantag använts.",
+   "anvisning": "Följ webblasare.md. Kör node verktyg/webblasare/utforska.mjs --adress ADRESS --ut FALL/QA-<tid> [--vy 390|1440] [--tillat ORIGIN;…] [--undantag-fil FIL] (formulär skickas bara med --formular-far-skickas --testmarkering TEXT mot kontrollerad mottagare); läs UTFORSKNING.md, rätta, kör om REGRESSION.json med --regression. För fri utforskning av en session: mcp.json ur besok.mjs --qa --adress ADRESS --ut FALL/QA-mcp (ingen uppgift, ingen avskärmning). Spår är privata när undantag använts.",
    "underlag": [
     {
      "fil": "kunskap/webblasare.md",

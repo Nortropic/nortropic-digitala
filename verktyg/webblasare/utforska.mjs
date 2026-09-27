@@ -21,7 +21,7 @@ if (farSkicka && !markering) { console.error('--formular-far-skickas kräver --t
 const regression = a.regression ? JSON.parse(readFileSync(a.regression, 'utf8')) : null;
 const fynd = []; const sidor = []; const ko = [a.adress]; const sedda = new Set();
 const lagg = (typ, sida, vad, repro, extra = {}) => fynd.push({ typ, sida, vad, repro, ...extra });
-const b = await oppna({ vy: a.vy || '390', tillat, undantag, hemliga, spar: true });
+const b = await oppna({ vy: a.vy || '390', tillat, undantag, hemliga, spar: true, mal: a.adress });
 const page = b.page;
 const LANGT = 'x'.repeat(2000); const SCRIPT = '<script>alert(1)</script>'; const UNICODE = 'Åsa Öberg-Ärlig ✓ 🌱';
 
@@ -39,10 +39,9 @@ async function provaFormular(url, i) {
     r.tomt = { giltigt_tomt: giltigt };
     if (giltigt === true) lagg('varning', url, 'formuläret godtar tomt inskick enligt klientvalidering (required saknas)', { steg: ['öppna ' + url, 'lämna fälten tomma', 'kontrollera form.checkValidity()'] }, { form: i });
   } else {
-    await klickSubmit();
-    r.tomt = { navigerade: page.url() !== urlFore, url: page.url() };
-    if (page.url() !== urlFore) lagg('fel', url, 'tomt inskick gick igenom (sidan navigerade)', { steg: ['öppna ' + url, 'klicka skicka utan att fylla i'] }, { form: i });
-    if (page.url() !== urlFore) await page.goto(url, { waitUntil: 'load' });
+    // inget tomt inskick när formulär får skickas: ett omarkerat inskick skulle kunna nå mottagaren; klientvalideringen prövas i läget utan sändning
+    const giltigt = await form.evaluate(f => f.checkValidity()).catch(() => null);
+    r.tomt = { giltigt_tomt: giltigt, skickat: false };
   }
   for (const [namn, varde] of [['langt', LANGT], ['script', SCRIPT], ['unicode', UNICODE]]) {
     for (const f of falt) { await f.fill(varde).catch(() => null); }

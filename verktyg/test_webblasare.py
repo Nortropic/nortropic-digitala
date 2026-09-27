@@ -9,7 +9,6 @@ import sys
 import tempfile
 import threading
 import unittest
-import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -35,6 +34,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         Handler.huvuden.append(dict(self.headers))
+        if self.path == '/tredje/':
+            body = ('<!doctype html><html lang="sv"><head><title>Tredje</title></head><body><h1>Tredje part</h1><img src="http://localhost:%d/kontakt/" alt="tredje"><a href="/">Hem</a></body></html>' % self.server.server_address[1]).encode('utf-8')
+            self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if self.path in SIDOR:
             body = SIDOR[self.path].encode('utf-8')
             self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
@@ -53,7 +55,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 def kor(*args, timeout=180):
-    p = subprocess.run([NODE, *args], cwd=WB, capture_output=True, text=True, timeout=timeout)
+    extra = ['--experimental-strip-types'] if args and args[0] == 'prova_init.mjs' else []  # init-page-filen är .ts (som MCP kräver); harnessen läser den med Nodes typavskalning
+    p = subprocess.run([NODE, *extra, *args], cwd=WB, capture_output=True, text=True, timeout=timeout)
     return p.returncode, p.stdout, p.stderr
 
 
@@ -96,8 +99,22 @@ class Webblasare(unittest.TestCase):
             text = (self.d / 'insp' / 'INSPEKTION.json').read_text() + (self.d / 'insp' / 'INSPEKTION.md').read_text()
             self.assertNotIn('provhemlighet-ABCDEFGHIJ', text); self.assertTrue(r['spar_privat'])
             self.assertTrue(any(h.get('x-vercel-protection-bypass') == 'provhemlighet-ABCDEFGHIJ-0123456789' for h in Handler.huvuden), 'undantaget ska nå målet som header')
+            # tillåten tredje part får aldrig undantaget: sidan /tredje/ hämtar en bild från den andra tillåtna originen (localhost)
+            Handler.huvuden = []
+            code, out, err = kor('inspektera.mjs', '--adress', self.bas + '/tredje/', '--ut', str(self.d / 'insp2'), '--vyer', '1440', '--tillat', 'http://localhost:%d' % self.port, '--tillstand', 'reload', '--undantag-fil', str(und))
+            self.assertEqual(code, 0, err[-400:])
+            r2 = json.loads((self.d / 'insp2' / 'INSPEKTION.json').read_text())
+            self.assertFalse(any('localhost' in b['url'] for b in r2['vyer']['1440']['natverk']['blockerade']), 'den tillåtna tredje parten ska inte blockeras')
+            mal = [h for h in Handler.huvuden if h.get('Host') == '127.0.0.1:%d' % self.port]
+            tredje = [h for h in Handler.huvuden if h.get('Host') == 'localhost:%d' % self.port]
+            self.assertTrue(mal and all(h.get('x-vercel-protection-bypass') for h in mal), 'målet får undantaget')
+            self.assertTrue(tredje and not any(h.get('x-vercel-protection-bypass') for h in tredje), 'tredje part får aldrig undantaget')
         finally:
             und.unlink(missing_ok=True)
+            try:
+                hem.rmdir()
+            except OSError:
+                pass
 
     def test_utforska_hittar_fynd_skickar_inte_utan_tillatelse_och_skriver_regressionsprov(self):
         code, out, err = kor('utforska.mjs', '--adress', self.bas + '/', '--ut', str(self.d / 'qa'), '--max-sidor', '6')
@@ -128,7 +145,7 @@ class Webblasare(unittest.TestCase):
         r = json.loads((self.d / 'besok' / 'BESOK.json').read_text())
         self.assertTrue(r['torr']); cfg = json.loads((self.d / 'besok' / 'mcp.json').read_text())
         args = cfg['mcpServers']['webblasare']['args']
-        for flagga in ('--isolated', '--headless', '--allowed-origins', '--save-trace', '--save-session', '--output-dir'):
+        for flagga in ('--isolated', '--headless', '--allowed-origins', '--save-session', '--output-dir', '--init-page'):
             self.assertIn(flagga, args, flagga)
         self.assertIn(self.bas, args)
         prompt = (self.d / 'besok' / 'BESOKARE.md').read_text()
@@ -137,13 +154,44 @@ class Webblasare(unittest.TestCase):
             upp.write_text(dalig + '\n')
             code, out, err = kor('besok.mjs', '--adress', self.bas + '/', '--uppgift', str(upp), '--ut', str(self.d / 'besok-x'), '--torr')
             self.assertEqual(code, 2, dalig)
-        # efterkontroll: ett syntetiskt spår med förfrågan utanför tillåtet ursprung
-        z = self.d / 'spar.zip'
-        with zipfile.ZipFile(z, 'w') as zf:
-            zf.writestr('trace.network', json.dumps({'type': 'resource-snapshot', 'snapshot': {'request': {'url': self.bas + '/'}}}) + '\n' + json.dumps({'type': 'resource-snapshot', 'snapshot': {'request': {'url': 'https://example.com/x'}}}) + '\n')
-        code, out, err = kor('besok.mjs', '--efterkontroll', str(z), '--adress', self.bas + '/', '--ut', str(self.d / 'besok-e'))
+        # qa-läge: bara mcp.json, ingen uppgift, ingen avskärmning
+        code, out, err = kor('besok.mjs', '--qa', '--adress', self.bas + '/', '--ut', str(self.d / 'qa-mcp'))
+        self.assertEqual(code, 0, err[-400:]); rq = json.loads((self.d / 'qa-mcp' / 'BESOK.json').read_text()); self.assertEqual(rq['lage'], 'qa'); self.assertTrue((self.d / 'qa-mcp' / 'mcp.json').is_file()); self.assertFalse((self.d / 'qa-mcp' / 'BESOKARE.md').exists())
+        # MCP-flaggorna i konfigurationen finns i den pinnade versionens --help
+        hjalp = subprocess.run([NODE, str(WB / 'node_modules' / '@playwright' / 'mcp' / 'cli.js'), '--help'], capture_output=True, text=True, timeout=60).stdout
+        for flagga in [x for x in args if x.startswith('--')]:
+            self.assertIn(flagga, hjalp, flagga)
+        # init-page-filen verkställer gränsen i en riktig sida: tredje part blockeras och loggas, målet nås, undantaget bara till målet
+        init = self.d / 'besok' / 'init-grans.ts'; self.assertTrue(init.is_file())
+        logg = self.d / 'besok' / 'mcp-ut' / 'natverk.jsonl'
+        Handler.huvuden = []
+        code, out, err = kor('prova_init.mjs', '--init', str(init), '--adresser', self.bas + '/tredje/,http://localhost:%d/om/' % self.port, '--ut', str(self.d / 'init-ut.json'))
+        self.assertEqual(code, 0, err[-400:])
+        rader = [json.loads(l) for l in logg.read_text().splitlines() if l.strip()]
+        self.assertTrue(any(r['ursprung'] == self.bas and not r['blockerad'] for r in rader)); self.assertTrue(any(r['ursprung'] == 'http://localhost:%d' % self.port and r['blockerad'] for r in rader))
+        self.assertFalse(any(h.get('Host', '').startswith('localhost') for h in Handler.huvuden), 'blockerad förfrågan når aldrig servern')
+        code, out, err = kor('besok.mjs', '--efterkontroll', str(logg), '--adress', self.bas + '/', '--ut', str(self.d / 'besok-e'))
         self.assertEqual(code, 1, err[-400:]); e = json.loads((self.d / 'besok-e' / 'EFTERKONTROLL.json').read_text())
-        self.assertEqual(e['ursprung_utanfor'], ['https://example.com']); self.assertFalse(e['inom_gransen'])
+        self.assertEqual(e['ursprung_utanfor'], ['http://localhost:%d' % self.port]); self.assertFalse(e['inom_gransen']); self.assertGreaterEqual(e['blockerade'], 1)
+        # med undantag: initfilen privat utanför fallet, headern bara till målet
+        hem = Path.home() / '.nortropic-hemligheter' / 'test-webblasare'; hem.mkdir(parents=True, exist_ok=True)
+        und = hem / 'undantag2.txt'; und.write_text('provhemlighet-KLMNOPQRST-9876543210\n'); und.chmod(0o600)
+        upp.write_text('Uppgift: hitta hur man ber om en offert och beskriv vad som hände.\nTestdata: namn Test Testsson, e-post test@example.com.\n')
+        try:
+            code, out, err = kor('besok.mjs', '--adress', self.bas + '/tredje/', '--uppgift', str(upp), '--ut', str(self.d / 'besok-u'), '--torr', '--undantag-fil', str(und), '--tillat', 'http://localhost:%d' % self.port)
+            self.assertEqual(code, 0, err[-400:]); ru = json.loads((self.d / 'besok-u' / 'BESOK.json').read_text()); self.assertTrue(ru['spar_privat'])
+            cfgu = json.loads((self.d / 'besok-u' / 'mcp.json').read_text()); initu = cfgu['mcpServers']['webblasare']['args'][cfgu['mcpServers']['webblasare']['args'].index('--init-page') + 1]
+            self.assertFalse(Path(initu).is_relative_to(self.d), 'initfilen med undantag ligger utanför fallet'); self.assertEqual(oct(Path(initu).stat().st_mode & 0o777), '0o600')
+            self.assertNotIn('provhemlighet-KLMNOPQRST', (self.d / 'besok-u' / 'BESOK.json').read_text() + (self.d / 'besok-u' / 'mcp.json').read_text())
+            Handler.huvuden = []
+            code, out, err = kor('prova_init.mjs', '--init', initu, '--adresser', self.bas + '/tredje/', '--ut', str(self.d / 'init-ut2.json'))
+            self.assertEqual(code, 0, err[-400:])
+            mal = [h for h in Handler.huvuden if h.get('Host') == '127.0.0.1:%d' % self.port]; tredje = [h for h in Handler.huvuden if h.get('Host') == 'localhost:%d' % self.port]
+            self.assertTrue(mal and all(h.get('x-vercel-protection-bypass') == 'provhemlighet-KLMNOPQRST-9876543210' for h in mal))
+            self.assertTrue(tredje and not any(h.get('x-vercel-protection-bypass') for h in tredje))
+            import shutil; shutil.rmtree(Path(initu).parent, ignore_errors=True)
+        finally:
+            und.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

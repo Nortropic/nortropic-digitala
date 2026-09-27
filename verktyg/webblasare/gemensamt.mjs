@@ -65,8 +65,10 @@ export function redigeraUrl(url) {
 export function origin(url) { return new URL(url).origin; }
 
 /** Startar webbläsare + kontext för en vy med värdverkställd ursprungsgräns (route-nivå: allt utanför tillåtna ursprung
- *  avbryts och loggas som blockerat), skyddsundantag som header bara mot målets ursprung, logg och spår. */
-export async function oppna({ vy = '1440', tillat = [], undantag = null, hemliga = [], spar = null, extra = {} }) {
+ *  avbryts och loggas som blockerat), skyddsundantag som header bara mot målets ursprung (`mal`; tillåtna tredje parter
+ *  får det aldrig), logg och spår. */
+export async function oppna({ vy = '1440', tillat = [], undantag = null, hemliga = [], spar = null, extra = {}, mal = null }) {
+  const malUrsprung = mal ? origin(mal) : (tillat.length ? origin(tillat[0]) : null);
   const v = VYER[vy]; if (!v) throw new Error('okänd vy: ' + vy + ' (390, 768, 1440, 320)');
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({ viewport: v.viewport, deviceScaleFactor: v.deviceScaleFactor, isMobile: v.isMobile, hasTouch: v.hasTouch, locale: 'sv-SE', timezoneId: 'Europe/Stockholm', ...extra });
@@ -82,7 +84,7 @@ export async function oppna({ vy = '1440', tillat = [], undantag = null, hemliga
       return route.abort('blockedbyclient');
     }
     const headers = { ...req.headers() };
-    if (undantag && tillatna.has(o)) headers['x-vercel-protection-bypass'] = undantag;
+    if (undantag && o === malUrsprung) headers['x-vercel-protection-bypass'] = undantag;  // bara målets ursprung, aldrig tredje part
     return route.continue({ headers });
   });
   ctx.on('page', p => {

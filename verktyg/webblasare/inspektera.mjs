@@ -19,7 +19,7 @@ const tillstand = new Set(String(a.tillstand || 'tangentbord,reflow,reload,bakat
 const kontext = (a.kontext ? String(a.kontext).split(',') : []).map(f => ({ fil: f, namn: basename(f), sha256: sha256(readFileSync(f)), byte: readFileSync(f).length }));
 const rapport = { schema: 1, verktyg: 'inspektera', adress: a.adress, tid: nu(), tillatna_ursprung: tillat, undantag: !!undantag, kontext, vyer: {}, not: 'utvecklarinspektion med kontext; skärmbilderna avgör layout (textträdet är inte bildseende); mobilvyerna är emulerade, inte fysisk enhet' };
 for (const vy of vyer) {
-  const b = await oppna({ vy, tillat, undantag, hemliga, spar: true });
+  const b = await oppna({ vy, tillat, undantag, hemliga, spar: true, mal: a.adress });
   const r = { namn: b.vy.namn, sidor: [], tillstand: {} };
   try {
     const svar = await b.page.goto(a.adress, { waitUntil: 'load', timeout: 45000 });
