@@ -2,7 +2,7 @@
 """Prelaunch: åtta grindar som rapport före lansering — 0 byggintegritet, 1 viktiga handlingar från början till slut,
 2 prestanda, 3 responsivitet, 4 tillgänglighet, 5 SEO-beredskap, 6 juridik (rapporteras, avgörs av människa),
 7 säkerhet. Varje grind får PASS, FAIL, EJ_MATT eller MANNISKA med belägg; helheten är "redo" bara när grind 0–5 och 7
-är PASS och grind 6 saknar ohanterade flaggor. Verktyget godkänner aldrig juridik och gissar aldrig: det som inte
+är PASS, JURIDIK.json är lämnad och grind 6 saknar ohanterade flaggor. Verktyget godkänner aldrig juridik och gissar aldrig: det som inte
 mätts står som EJ_MATT. Mätvärden kommer ur Runtimes mätkvitto (--matning), handlingsprov ur provarkörningar
 (--handlingar), säkerhetsrubriker ur en sparad svarshuvudfil eller ett live-HEAD-anrop (--adress).
 

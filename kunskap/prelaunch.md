@@ -16,5 +16,6 @@ verktygsprov bevisar inte mänsklig användbarhet eller affärsresultat.
 | 6 juridik | basen och satta flaggor (juridikflaggor.md); rapporteras, avgörs av människa | `JURIDIK.json` + människans beslut |
 | 7 säkerhet | säkerhetsrubriker (CSP med frame-ancestors, HSTS, nosniff, Referrer-Policy), beroenden utan high/critical (`npm audit`), formulärskydd (formularsakerhet.md), inga nycklar i bunten | svarshuvuden (sparade eller live), auditfil |
 
-Helheten är "redo" bara när grind 0–5 och 7 är PASS och juridiken saknar ohanterade flaggor. Ett underkännande
+Helheten är "redo" bara när grind 0–5 och 7 är PASS, JURIDIK.json är lämnad (människans genomgång av basen och
+flaggorna) och juridiken saknar ohanterade flaggor. Ett underkännande
 går till diagnos → åtgärd → omprov av den berörda grinden (KVALITET.md:s loop), inte till ett ägarstopp.

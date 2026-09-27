@@ -244,7 +244,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§5 designriktning och konfliktraden"
+     "delar": "§7 designriktning och konfliktraden"
     },
     {
      "fil": "kunskap/referenser-professionella.md",
@@ -404,7 +404,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": false,
-     "delar": "§5 för handlingens text (--handling-text)"
+     "delar": "§4 för handlingens text (--handling-text)"
     }
    ]
   },
@@ -459,7 +459,7 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§5 designriktning (läggs i bedömarens underlag som utdrag)"
+     "delar": "§7 designriktning (läggs i bedömarens underlag som utdrag)"
     },
     {
      "fil": "kunskap/externa/hallmark-SKILL-13ac0ec7.md",
@@ -571,7 +571,7 @@
   "annonsberedning": {
    "mandat": "bestallning",
    "syfte": "Kanal- och kampanjberedning för Google Ads och Meta Ads: mål, målgrupp, budskap, kreativa tillgångar, landningssidans överensstämmelse, spårning, konverteringsdefinitioner, budgetvillkor, utkast/pausade objekt och resultatläsning; aldrig start eller spendering utan uttryckligt mandat.",
-   "anvisning": "Följ annonser.md. Skriv KANALPLAN.json ur beredningen och briefen §5; kör verktyg/annonsberedning.py bygg --bygge BYGGE; rätta fynden (textlängder, landningssida, budskap). Utkasten är PAUSED; överföring kräver plattformsåtkomst (namngivet externt beroende) och mandat med budget. Resultat läses med rapport --export.",
+   "anvisning": "Följ annonser.md. Skriv KANALPLAN.json ur beredningen och briefen §5; kör verktyg/annonsberedning.py bygg --kanalplan KANALPLAN.json --verksamhet VERKSAMHET.json --bygge BYGGE --ut FALL/ANNONSER; rätta fynden (textlängder, landningssida, budskap). Utkasten är PAUSED; överföring kräver plattformsåtkomst (namngivet externt beroende) och mandat med budget. Resultat läses med rapport --export FIL --ut FALL/ANNONSRAPPORT.json; overfor --verksamhet VERKSAMHET.json --ut FALL/OVERFORING.json kör spärren och vägrar tills en överföringsväg med åtkomst finns.",
    "underlag": [
     {
      "fil": "kunskap/annonser.md",
@@ -602,7 +602,7 @@
   "lokal-synlighet": {
    "mandat": "bestallning",
    "syfte": "Google-företagsprofil och citationer: tillämplighet, behörig åtkomstväg, korrekta verksamhetsuppgifter, kategorier, öppettider, serviceområde, bilder, länkar och uppföljning; NAP-kontroll mot sajten.",
-   "anvisning": "Följ lokal-synlighet.md. Kör verktyg/lokal_synlighet.py datablad (ur VERKSAMHET.json; beskrivning ur briefen) och kontrollera --bygge. Profilen skapas och verifieras av behörig människa; skapa aldrig en profil för en fiktiv verksamhet; tvinga inte lokala krav på icke-lokala uppdrag.",
+   "anvisning": "Följ lokal-synlighet.md. Kör verktyg/lokal_synlighet.py datablad --verksamhet VERKSAMHET.json [--beskrivning FIL ur briefen] --ut FALL/LOKAL-SYNLIGHET.md och kontrollera --verksamhet VERKSAMHET.json --bygge BYGGE --ut FALL/NAP-KONTROLL.json. Profilen skapas och verifieras av behörig människa; skapa aldrig en profil för en fiktiv verksamhet; tvinga inte lokala krav på icke-lokala uppdrag.",
    "underlag": [
     {
      "fil": "kunskap/lokal-synlighet.md",
@@ -726,7 +726,7 @@
   "sokkonsol": {
    "mandat": "bestallning",
    "syfte": "Sökkonsolens ägarskapsväg, egenskap, sitemap, URL-inspektion och sökdata, med tolkning till åtgärder; anropsplan utan åtkomst, kvitto per anrop med åtkomst.",
-   "anvisning": "Följ sokkonsol.md. Kör verktyg/sokkonsol.py plan (alltid) och token/verifiera/inspektera/sokdata --live bara med åtkomstfil (0600) för en skarp verksamhet efter att lansering.py kontrollera visat noll fynd; fiktiva verksamheter och förhandsvisningsdomäner vägras. Skriv tolkningen (observation → åtgärd) i fallets uppföljning; hitta aldrig på data för en oindexerad sajt.",
+   "anvisning": "Följ sokkonsol.md. Kör verktyg/sokkonsol.py plan --verksamhet VERKSAMHET.json --ut FALL/SOKKONSOL-plan.json (alltid) och token|verifiera|inspektera|sokdata --verksamhet VERKSAMHET.json --atkomst FIL --live --ut FALL/SOKKONSOL-<kommando>.json bara med åtkomstfil (0600) för en skarp verksamhet efter att lansering.py kontrollera visat noll fynd; fiktiva verksamheter och förhandsvisningsdomäner vägras. Skriv tolkningen (observation → åtgärd) i fallets uppföljning; hitta aldrig på data för en oindexerad sajt.",
    "underlag": [
     {
      "fil": "kunskap/sokkonsol.md",

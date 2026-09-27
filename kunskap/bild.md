@@ -2,7 +2,7 @@
 
 Professionsfil (HELHET-20260927, avsnitt 5). Laddas i steget `brief` (§8) och `bygge`. Verktygen i `verktyg/bild/`
 (`treatment.mjs`, `brand.mjs`) är återvunna ur det arkiverade repot (revision `e4c8c52`, 2026-09-10) som körbara
-verktyg, oförändrade i kod; två kommentarsrader om det gamla sammanhanget (nodnummer, slot-schema.md) är ersatta; körbevis 2026-09-27 med `sharp` 0.34.4 (Apache-2.0, libvips 8.17.2). Inte återinförda: anskaffning
+verktyg, oförändrade i kod; fyra kommentarsrader om det gamla sammanhanget (nodnummer, slot-schema.md, launch.js) är ersatta; körbevis 2026-09-27 med `sharp` 0.34.4 (Apache-2.0, libvips 8.17.2). Inte återinförda: anskaffning
 genom bildgenereringstjänst (`fetch-images.mjs`, fal.ai: kräver konto och kostnad, ägarbeslut per kund) och den
 mekaniska gallringen `score.mjs` (fasta trösklar som gav en poäng och ett "godkänd"; hade ingen användning utan
 genereringen och strider mot regeln om automatisk stilpoäng).
