@@ -40,10 +40,13 @@ beställningssteg utan `--bestallning POST-ID`. Ett beställnings-id är namnet 
 - **Underhåll av en levererad sajt mellan beställningar** (till exempel en trasig länk eller ett stavfel på
   Norrglänta): inget beslut ger Digitala rätt att ändra sajten utan beställning. Tills ägaren beslutar är det en
   beställning. Ägarens ombyggnadsbesked säger uttryckligen att inget nytt underhållsåtagande för Norrglänta ska
-  uppfinnas.
-- **Tak för stående arbete per månad** (modellsessioner, tid): inget ägarbeslut; fallets ram gäller, förbrukning
-  redovisas i kontorsposten.
-- **Nästa kund**: beslutet är ägarens efter bedömningen av Norrglänta (DIGITALA-1-ACCEPT-20260925 §7).
+  uppfinnas. Ägarens svar 2026-09-27 (kontorets OMBYGGNAD-AGARSVAR-20260927): ägaren arbetar fram en underhållsform;
+  tills den är beslutad är varje ändring av en levererad sajt en beställning.
+- **Tak för stående arbete per månad** (modellsessioner, tid): inget ägarbeslut; frågan står i ägarens tur sedan
+  OMBYGGNAD-RESULTAT-20260927 (2026-09-27) och är obesvarad, kedjedrivarens förslag står i OMBYGGNAD-AGARSVAR-20260927;
+  fallets ram gäller, förbrukning redovisas i kontorsposten och i månadsomgången.
+- **Nästa kund**: beslutet är ägarens efter bedömningen av Norrglänta (DIGITALA-1-ACCEPT-20260925 §7); ägaren tar
+  fram nästa fiktiva fall (2026-09-27).
 
 ## 4. Gränser som alltid gäller
 
