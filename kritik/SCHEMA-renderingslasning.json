@@ -1,20 +1,294 @@
 {
-  "type": "object", "additionalProperties": false,
-  "required": ["verdict", "blocking_findings", "improvements", "questions", "best", "worst", "seen_files", "could_not_review", "summary"],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "blocking_findings",
+    "improvements",
+    "questions",
+    "best",
+    "worst",
+    "seen_files",
+    "could_not_review",
+    "summary",
+    "kriterieversion",
+    "referensjamforelser",
+    "bedomningsbindning"
+  ],
   "properties": {
-    "verdict": {"type": "string", "enum": ["approved", "rejected"]},
-    "blocking_findings": {"type": "array", "maxItems": 30, "items": {"type": "object", "additionalProperties": false,
-      "required": ["id", "where", "finding", "fix"],
-      "properties": {"id": {"type": "string", "maxLength": 40}, "where": {"type": "string", "maxLength": 300}, "finding": {"type": "string", "maxLength": 800}, "fix": {"type": "string", "maxLength": 800}}}},
-    "improvements": {"type": "array", "maxItems": 40, "items": {"type": "object", "additionalProperties": false,
-      "required": ["id", "where", "finding", "fix", "weight"],
-      "properties": {"id": {"type": "string", "maxLength": 40}, "where": {"type": "string", "maxLength": 300}, "finding": {"type": "string", "maxLength": 800}, "fix": {"type": "string", "maxLength": 800}, "weight": {"type": "string", "enum": ["hög", "medel", "låg"]}}}},
-    "questions": {"type": "object", "additionalProperties": false, "required": ["q1", "q2", "q3", "q4", "q5", "q6"],
-      "properties": {"q1": {"type": "string", "maxLength": 1500}, "q2": {"type": "string", "maxLength": 1500}, "q3": {"type": "string", "maxLength": 1500}, "q4": {"type": "string", "maxLength": 1500}, "q5": {"type": "string", "maxLength": 1500}, "q6": {"type": "string", "maxLength": 1500}}},
-    "best": {"type": "array", "items": {"type": "string", "maxLength": 400}, "maxItems": 10},
-    "worst": {"type": "array", "items": {"type": "string", "maxLength": 400}, "maxItems": 10},
-    "seen_files": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 300},
-    "could_not_review": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 30},
-    "summary": {"type": "string", "maxLength": 2000}
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "ej_bedombart"
+      ]
+    },
+    "blocking_findings": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "where",
+          "finding",
+          "fix",
+          "criterion",
+          "consequence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "where": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "finding": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "fix": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "criterion": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 800
+          }
+        }
+      }
+    },
+    "improvements": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "where",
+          "finding",
+          "fix",
+          "weight"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "where": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "finding": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "fix": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "weight": {
+            "type": "string",
+            "enum": [
+              "hög",
+              "medel",
+              "låg"
+            ]
+          }
+        }
+      }
+    },
+    "questions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6"
+      ],
+      "properties": {
+        "q1": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "q2": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "q3": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "q4": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "q5": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "q6": {
+          "type": "string",
+          "maxLength": 1500
+        }
+      }
+    },
+    "best": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      },
+      "maxItems": 10
+    },
+    "worst": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 400
+      },
+      "maxItems": 10
+    },
+    "seen_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 300
+    },
+    "could_not_review": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 30
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "kriterieversion": {
+      "type": "string",
+      "enum": [
+        "digitala-kvalitet/2"
+      ]
+    },
+    "referensjamforelser": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kandidatbild",
+          "referensbild",
+          "observation",
+          "konsekvens",
+          "kalla",
+          "tid",
+          "vy",
+          "drag",
+          "beslut_och_skal"
+        ],
+        "properties": {
+          "kandidatbild": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "referensbild": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "konsekvens": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "kalla": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "tid": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "vy": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "drag": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "beslut_och_skal": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "bedomningsbindning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "underlag_sha256",
+        "kriterier_sha256",
+        "kandidat",
+        "miljo",
+        "konfiguration",
+        "rackvidd",
+        "krav_sha256",
+        "domkod_sha256"
+      ],
+      "properties": {
+        "underlag_sha256": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "kriterier_sha256": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "kandidat": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "miljo": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "konfiguration": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "rackvidd": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "krav_sha256": {
+          "type": "string"
+        },
+        "domkod_sha256": {
+          "type": "string"
+        }
+      }
+    }
   }
 }

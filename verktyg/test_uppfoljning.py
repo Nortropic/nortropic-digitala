@@ -38,14 +38,14 @@ class Prov(unittest.TestCase):
         self.assertIn('| `quote_submit` |', md); self.assertIn('Ingen spårning före samtycke', md)
         (self.d / 'a.js').write_text("track('quote_submit', {tjanst: t}); fbq('init', '1');")
         k = up.kontrollera(matplan(), str(self.d))
-        self.assertEqual([h['finns_i_koden'] for h in k['handelser']], [True, False])
+        self.assertEqual([h['texttraff'] for h in k['handelser']], [True, False])
         self.assertEqual(k['sparare'], ['Meta-pixel'])
-        self.assertTrue(any('utan spår av samtyckesmekanism' in f for f in k['fynd']))
+        self.assertTrue(any('utan samtyckestext' in f for f in k['fynd']))
         self.assertTrue(any('phone_click finns inte' in f for f in k['fynd']))
         (self.d / 'b.js').write_text("if (consent.granted) { track('phone_click') }")
         k = up.kontrollera(matplan(verktyg='ingen'), str(self.d))
         self.assertFalse(any('samtyckesmekanism' in f for f in k['fynd']))
-        self.assertTrue(any('säger inget verktyg men bygget laddar' in f for f in k['fynd']))
+        self.assertTrue(any('säger inget verktyg men textsökningen hittar' in f for f in k['fynd']))
 
     def test_utm_och_lasning(self):
         self.assertEqual(up.utm('https://provfirma.se/?a=1', 'Google', 'cpc', 'Vår Kampanj 2026'), 'https://provfirma.se/?a=1&utm_source=google&utm_medium=cpc&utm_campaign=v-r-kampanj-2026')

@@ -127,9 +127,9 @@ class Kundstart(unittest.TestCase):
         self.assertEqual(code, 0, r); self.assertIn('FÖRKASTADE TOLKNINGAR', r['meddelande'])
         s = iv.las(str(self.k))
         ton = [f for f in s['fakta'] if f['nyckel'] == 'ton']
-        self.assertEqual([(f['varde'], f['status'], bool(f.get('ersatt'))) for f in ton], [('Varm och personlig', 'tolkning', True), ('Saklig och rak', 'kunden uppger', False)], 'kundens ord står kvar, ingen tolkning återuppstår')
+        self.assertEqual([(f['varde'], f['status'], bool(f.get('ersatt'))) for f in ton], [('Saklig och rak', 'kunden uppger', False)], 'kundens ord står kvar, ingen tolkning återuppstår')
         # härledd utdata levererar kundens ord, inte tolkningen
-        self.assertIn('Saklig och rak', iv.research_md(s)); self.assertIn('ersatt', json.dumps(ton[0]))
+        self.assertIn('Saklig och rak', iv.research_md(s)); self.assertFalse(any(f['status']=='tolkning' for f in ton))
         # en rättelse i paketets rattelser-lista med annat värde än speglingen redovisas
         p3 = paket(revision=13); p3['fakta_ai'] = []
         p3['rattelser'] = [{'nyckel': 'erbjudande', 'varde': 'Annat värde', 'mottaget': 't', 'revision': 6, 'idempotens': 'k3', 'tidigare': {'varde': '', 'kalla': '', 'typ': 'ingen'}}]
@@ -255,10 +255,9 @@ class Kundstart(unittest.TestCase):
         code, r = self.kor('hamta', '--kund', str(self.k))
         self.assertEqual(code, 0, r)
         s = iv.las(str(self.k))
-        m = next(x for x in s['motsagelser'] if x['nyckel'] == 'ton')
-        self.assertEqual(m['lage'], 'avgjord'); self.assertEqual(m['galler'], 'Saklig och rak'); self.assertIn('rättelse', m['skal'])
-        tolk = next(f for f in s['fakta'] if f['nyckel'] == 'ton' and f['status'] == 'tolkning')
-        self.assertTrue(tolk.get('ersatt'))
+        self.assertFalse(any(f['nyckel']=='ton' and f['status']=='tolkning' for f in s['fakta']))
+        self.assertEqual(next(f for f in s['fakta'] if f['nyckel']=='ton')['varde'], 'Saklig och rak')
+        self.assertIn('FÖRKASTADE TOLKNINGAR', r['meddelande'])
 
     def test_vagrar_kundmapp_i_repot_och_nyckelfil_med_fel_rattighet(self):
         os.chmod(self.nyckel, 0o644)

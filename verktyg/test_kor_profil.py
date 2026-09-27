@@ -45,6 +45,14 @@ def receipt_file(tmp, steg='kritik', profil_text=None, name='LADDNING.json'):
             put('underlag/profession/kritik/FRAGA-%s.md' % mall, 'kritik/FRAGA-%s.md' % mall, 'profession', (ROT / ('kritik/FRAGA-%s.md' % mall)).read_text(), 'mallen')
             put('underlag/profession/kritik/SCHEMA-%s.json' % mall, 'kritik/SCHEMA-%s.json' % mall, 'profession', (ROT / ('kritik/SCHEMA-%s.json' % mall)).read_text(), 'schemat')
         put('underlag/profession/kunskap/externa/SKILL.md', 'kunskap/externa/SKILL.md', 'profession', 'kalibrering', 'delar')
+        from test_kritikbevis import bildfixture
+        kund=tmp/'kund'; d=bildfixture(kund)
+        put('underlag/kund/BEVISKRAV.json','BEVISKRAV.json','kund',(kund/'BEVISKRAV.json').read_text())
+        put('underlag/kund/BEDOMNINGSUNDERLAG.json', 'BEDOMNINGSUNDERLAG.json', 'kund', (kund/'BEDOMNINGSUNDERLAG.json').read_text())
+        put('underlag/profession/kritik/BEDOMNING-v2.md', 'kritik/BEDOMNING-v2.md', 'profession', (ROT/'kritik/BEDOMNING-v2.md').read_text())
+        for b in d['bilder']:
+            rel='underlag/kund/'+b['fil']; target=ws/rel;target.write_bytes((kund/b['fil']).read_bytes())
+            rows.append({'plats':rel,'fil':b['fil'],'klass':'kund','status':'laddad','delar':'bild','sha256':b['sha256']})
     elif steg == 'matning':
         put('underlag/profession/matning/PROFIL.json', 'matning/PROFIL.json', 'profession', profil_text or (ROT / 'matning/PROFIL.json').read_text())
     else:

@@ -1,14 +1,17 @@
 # Brief — mall för PROJECT-BRIEF.md
 
 Professionsfil (HELHET-20260927, avsnitt 3–4). Laddas i steget `brief`. Briefen skrivs i kundmappen och är
-kedjans styrande dokument tillsammans med det accepterade uppdraget och mandatet. Bevisregel: varje värde citerar en
+kedjans arbetsdokument, underordnat styrkta kundbehov, sakuppgifter och ägarens mandat.
+Skilj kundkrav från interna designhypoteser. En hypotes kan omprövas med skäl och behovsspår; bevara föregående
+version. Att följa en svag brief ger inte godkänt resultat (kritik/BEDOMNING-v2.md). Bevisregel: varje värde citerar en
 research-rad, en referensfil eller en beredningsrad; antaganden märks. Riktning väljs internt utan ägarstopp och
 redovisas i leveransen; ägaren tar ställning efteråt.
 
 ## §0 Läsanvisning och konfliktrad
 
 Vem som ska läsa vad. Konfliktraden: varje ställe där ett råd (professionsunderlag, extern text) strider mot
-briefen eller det accepterade uppdraget, med valet och skälet.
+briefen eller det accepterade uppdraget, med valet och skälet. Kundbehov och mandat väger högre än intern brief;
+uppdatera briefen när dess hypotes missar behovet. §5 är sök/kanaler och §7 designriktning.
 
 ## §1 Verksamhet och problem
 

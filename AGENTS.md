@@ -43,3 +43,7 @@ Regler:
   om arbetssättet går till kontorets lärdomsfil `evidence/forvaltningsutveckling/local/kontoret/LARDOMAR.md`.
 
 Instruction-loading probe identifier: `NDG-ENTRY-20260927-4F2A7C`.
+
+Bedömningskontrakt `digitala-kvalitet/2` i `kritik/BEDOMNING-v2.md` gäller nya bedömningar. Kundbehov och
+mandat står över intern brief; professionell otillräcklighet kan blockera trots gröna teknikprov. Frys kriterier
+före kandidatgranskning, bind faktisk kandidat och öppnade referensbilder; tidigare acceptanser ändras inte.

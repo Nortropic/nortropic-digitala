@@ -2,8 +2,8 @@
 
 Professionsfil (HELHET-20260927, avsnitt 5), återvunnen ur det arkiverade repots premiumchecklista och
 exemplarlista (verifierade renderbara 2026-07-27; adresserna kan ha ändrats), omgjord från kriterier med poäng till
-jämförelsedimensioner utan poäng. Valfritt underlag i steget `koncept` och vid kritik: används när briefen motiverar
-en jämförelse. Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet; kriterierna är
+jämförelsedimensioner utan poäng. Vid ny formgivning och kvalitetsomarbetning används faktisk, öppnad
+referensjämförelse i koncept och kritik även när en äldre brief saknar den (kritik/BEDOMNING-v2.md). Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet; kriterierna är
 KVALITET.md:s, kund- och uppgiftsmotiverade.
 
 ## Åtta jämförelsedimensioner — inga kriterier
@@ -11,7 +11,8 @@ KVALITET.md:s, kund- och uppgiftsmotiverade.
 Dimensionerna är frågor att ställa till ett konkret drag i kandidaten, bredvid ett exempel som löst samma sak.
 Ingen av dem är ett krav: vilka som gäller för en kund väljs i konceptsteget ur briefens §1–§2 och §7 med skäl, och
 ett drag som inte gäller (en informationssida utan handling, en portfölj där bilden bär) skrivs som "gäller inte"
-med skäl. Där en dimension strider mot briefen vinner briefen och avvikelsen står i konfliktraden. Kvantiteter i
+med skäl. Styrkta kundbehov och mandat väger högre än den interna briefen; en svag designhypotes omprövas
+med skäl i konfliktraden. Kvantiteter i
 parentes är exemplens vanliga lägen, inte gränser.
 
 1. **Hållning** — kan sajten beskrivas i en mening; känns den igen utan logotyp; finns ett motiverat avsteg från

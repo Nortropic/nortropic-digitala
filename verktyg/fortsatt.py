@@ -7,7 +7,7 @@ nästa handling med laddad arbetsyta. Underkänt går till diagnos → åtgärd 
 (driftsättningar, skickade meddelanden, kvitton) bokförs så att återupptagning inte upprepar leveranser.
 
     python3 -B verktyg/fortsatt.py --kund KUNDMAPP --fall FALL [--bestallning POST-ID] [--utforare claude|codex] [fortsatt]
-    python3 -B verktyg/fortsatt.py --kund … --fall … klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not TEXT [--kvitto FIL …] [--sidoeffekt TEXT …] [--beroende TEXT]
+    python3 -B verktyg/fortsatt.py --kund … --fall … klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not TEXT [--bevis FIL] [--kvitto FIL …] [--sidoeffekt TEXT …] [--beroende TEXT] [--lost-beroende TEXT]
     python3 -B verktyg/fortsatt.py --kund … --fall … omprova --steg S --not TEXT
     python3 -B verktyg/fortsatt.py --kund … --fall … status
 
@@ -23,10 +23,13 @@ beredningen ({"seo": true, "sokkonsol": false, …}); saknas filen när ett kana
 namngivet beroende i stället för att gissa. Lansering, sokkonsol och drift kräver lanseringsmandatet i BESTALLNING.json;
 utan det slutar vägen vid färdig privat leverans (leverans), vilket är normalfallet — kommer mandatet senare återöppnas
 stegen automatiskt. Verktygets egna markeringar ('markering': 'verktyg') omprövas varje körning; utförarens rapporterade
-utfall ('markering': 'utforare') står tills `omprova` sätter steget i omprövning med en not.
+utfall ('markering': 'utforare') omprövas mot kandidat, konfiguration, krav, fakta och råbevis.
+Klar/N/A kräver --bevis enligt kunskap/bevis-och-fortsattning.md; föråldrade godkännanden och deras
+beroende efterföljare återöppnas med bevarad historik. --lost-beroende stänger endast det namngivna hindret.
 """
 import argparse
 import hashlib
+import fcntl
 import json
 import os
 import sys
@@ -37,12 +40,19 @@ HERE = Path(__file__).resolve().parent
 ROT = HERE.parent
 sys.path.insert(0, str(HERE))
 import ladda_steg  # noqa: E402
+import stegbevis  # noqa: E402
 
 KANALSTEG = ('seo', 'sokkonsol', 'lokal-synlighet', 'annonsberedning', 'uppfoljning')
 LANSERINGSSTEG = ('lansering', 'sokkonsol', 'drift')
 UTFALL = ('klar', 'underkand', 'inte-tillampligt', 'vantar')
 STATUS_VERKTYG = 'inte tillämpligt'
 STATUS_VANTAR = 'väntar (externt beroende)'
+# A dependent stage cannot use an unfinished predecessor; other work can continue.
+FORUTSATTER = {'koncept': ['brief'], 'bygge': ['koncept'], 'redaktionellt-pass': ['bygge'],
+              'seo': ['bygge'], 'matning': ['bygge'], 'kritik': ['bygge'], 'granskning-d': ['bygge'],
+              'qa': ['bygge'], 'provare': ['bygge'], 'prelaunch': ['bygge', 'matning', 'kritik', 'granskning-d', 'qa', 'provare'],
+              'leverans': ['prelaunch'], 'lansering': ['leverans'], 'drift': ['lansering']}
+FAKTA = ('BESTALLNING.json', 'KANALBEHOV.json', 'VERKSAMHET.json', 'PROJECT-BRIEF.md', 'research.md', 'INTERVJU.json')
 
 
 class Vagrad(Exception):
@@ -87,7 +97,10 @@ def _skriv_privat(p, text):
         os.chmod(p.parent, 0o700)
     except OSError:
         pass
-    p.write_text(text, encoding='utf-8')
+    tmp = p.with_name(p.name + '.tmp-%d' % os.getpid())
+    with tmp.open('w', encoding='utf-8') as f:
+        os.chmod(tmp, 0o600); f.write(text); f.flush(); os.fsync(f.fileno())
+    os.replace(tmp, p)
     try:
         os.chmod(p, 0o600)
     except OSError:
@@ -111,6 +124,35 @@ def _notera(st, text):
 def _beroende(st, text):
     if text not in st['beroenden']:
         st['beroenden'].append(text)
+
+
+def los_beroenden(st, texter, notering, utforare):
+    for text in texter:
+        if text not in st['beroenden']:
+            raise Vagrad('beroendet är inte aktivt: ' + text)
+        st['beroenden'].remove(text)
+        st.setdefault('losta_beroenden', []).append({'beroende': text, 'skal': notering, 'tid': nu(), 'utforare': utforare})
+
+
+def faktabindning(s, steg):
+    # Preparatory work must not reopen because its own later outputs are newly created.
+    names = FAKTA if steg not in ('uppstart', 'beredning', 'intervju', 'research') else ()
+    return [{'fil': str(Path(s['kund']) / n), 'sha256': stegbevis.sha(Path(s['kund']) / n) if (Path(s['kund']) / n).is_file() else None} for n in names]
+
+
+def giltighetskontroll(s, utforare):
+    for n, st in s['steg'].items():
+        if st['status'] not in ('klar', STATUS_VERKTYG) or st.get('markering') == 'verktyg':
+            continue
+        try:
+            stegbevis.giltigt(st.get('godkannande'), s['fall'], s['kund'], n, st.get('laddning'))
+        except (stegbevis.Vagrad, OSError, TypeError) as e:
+            _ateroppna(s, n, utforare, 'bevisens giltighet upphörde: ' + str(e))
+    for n in s['ordning']:
+        st = s['steg'][n]
+        blocked = [x for x in FORUTSATTER.get(n, []) if s['steg'].get(x, {}).get('status') not in ('klar', STATUS_VERKTYG)]
+        if blocked and st['status'] == 'klar':
+            _ateroppna(s, n, utforare, 'förutsättning omprövas: ' + ', '.join(blocked))
 
 
 def kanalbehov(s):
@@ -193,6 +235,7 @@ def _verktygsmarkera(st, skal):
 
 def _ateroppna(s, n, utforare, skal):
     st = s['steg'][n]
+    st.setdefault('historik', []).append({'status': st['status'], 'godkannande': st.pop('godkannande', None), 'tid': nu(), 'skal': skal})
     st['status'] = 'inte påbörjat'; st.pop('markering', None); _notera(st, '%s återöppnat: %s' % (nu(), skal)); logga(s, utforare, 'återöppnat', n, skal)
 
 
@@ -228,6 +271,8 @@ def nasta_steg(s, utforare='claude', rot=ROT):
     saknade = [n for n in s['ordning'] if n not in defs]
     if saknade:
         raise Vagrad('fallets stegordning har steg som inte längre finns i steg/steg.json: %s (ny version av steg.json; avgör fallet manuellt)' % ', '.join(saknade))
+    giltighetskontroll(s, utforare)
+    hindrade = []
     for n in s['ordning']:
         st = s['steg'][n]
         lage, skal = _tillamplighet(n, kb, best, defs, s['kund'])
@@ -241,9 +286,19 @@ def nasta_steg(s, utforare='claude', rot=ROT):
             return n, 'blockerad', skal
         if lage == 'markera':
             _verktygsmarkera(st, skal); continue
+        block = [x for x in FORUTSATTER.get(n, []) if s['steg'].get(x, {}).get('status') not in ('klar', STATUS_VERKTYG)]
+        if block:
+            hindrade.append((n, 'väntar på nödvändiga steg: ' + ', '.join(block))); continue
+        for text in st.pop('automatiska_beroenden', []):
+            if text in st['beroenden']:
+                los_beroenden(st, [text], 'förutsättningen är nu uppfylld', utforare)
         return n, 'redo', None
     vantar = [n for n, st in s['steg'].items() if st['status'] == STATUS_VANTAR]
-    return None, 'slut', 'alla tillämpliga steg klara: färdig privat leverans' + (' och lansering' if s['steg'].get('lansering', {}).get('status') == 'klar' else '') + ('; väntar på externt beroende: ' + ', '.join(vantar) if vantar else '')
+    if hindrade:
+        return hindrade[0][0], 'blockerad', hindrade[0][1]
+    if vantar:
+        return vantar[0], 'blockerad', 'ofullständigt uppdrag; väntar på nödvändiga beroenden: ' + ', '.join(vantar)
+    return None, 'slut', 'alla tillämpliga steg klara med giltiga bevis: färdig privat leverans' + (' och lansering' if s['steg'].get('lansering', {}).get('status') == 'klar' else '')
 
 
 def nasta_md(s, namn, step, receipt):
@@ -264,8 +319,8 @@ def nasta_md(s, namn, step, receipt):
         lines += ['', '## Väntar på externt beroende (omprova när det finns)']
         for n, st in vantar:
             lines.append('- %s: %s' % (n, '; '.join(st['beroenden']) or '—'))
-    lines += ['', '## När steget är gjort', 'python3 -B verktyg/fortsatt.py --kund KUND --fall FALL klart --steg %s --utfall klar|underkand|inte-tillampligt|vantar --not "vad som gjordes" [--kvitto FIL] [--sidoeffekt "vad som verkställdes"] [--beroende "vad som saknas"]' % namn,
-              '', 'Underkänt: diagnos → åtgärd → omprov av samma steg (KVALITET.md); ingen ägarfråga för sådant som ryms i uppdraget. Saknat externt beroende: --utfall vantar --beroende "vad" — vägen fortsätter med allt annat och steget omprövas med `omprova` när beroendet finns.']
+    lines += ['', '## När steget är gjort', 'python3 -B verktyg/fortsatt.py --kund KUND --fall FALL klart --steg %s --utfall klar|underkand|inte-tillampligt|vantar --not "vad som gjordes" --bevis STEGBEVIS.json [--kvitto FIL] [--sidoeffekt "vad som verkställdes"] [--beroende "vad som saknas"]' % namn,
+              '', 'Underkänt: diagnos → åtgärd → omprov av samma steg (KVALITET.md); ingen ägarfråga för sådant som ryms i uppdraget. Saknat externt beroende: --utfall vantar --beroende "vad" — oberoende steg kan fortsätta, nödvändiga efterföljare och slutleverans väntar. Läs kunskap/bevis-och-fortsattning.md; steget omprövas med `omprova` när beroendet finns.']
     return '\n'.join(lines) + '\n'
 
 
@@ -279,7 +334,10 @@ def fortsatt(fall, kund, bestallning, utforare, rot=ROT, torr=False):
         s['nasta'] = {'steg': None, 'lage': 'slut', 'skal': skal}; logga(s, utforare, 'slut', None, skal); spara(fall, s)
         return s, {'nasta': None, 'lage': 'slut', 'meddelande': skal}
     if lage == 'blockerad':
-        s['nasta'] = {'steg': namn, 'lage': 'blockerad', 'skal': skal}; _beroende(s['steg'][namn], skal); logga(s, utforare, 'blockerad', namn, skal); spara(fall, s)
+        s['nasta'] = {'steg': namn, 'lage': 'blockerad', 'skal': skal}; _beroende(s['steg'][namn], skal);
+        if s['steg'][namn]['status'] != STATUS_VANTAR:
+            s['steg'][namn].setdefault('automatiska_beroenden', []).append(skal)
+        logga(s, utforare, 'blockerad', namn, skal); spara(fall, s)
         return s, {'nasta': namn, 'lage': 'blockerad', 'meddelande': skal}
     st = s['steg'][namn]
     defs = ladda_steg.las_steg(rot)['steg']
@@ -306,17 +364,34 @@ def fortsatt(fall, kund, bestallning, utforare, rot=ROT, torr=False):
     return s, {'nasta': namn, 'lage': 'påbörjat', 'arbetsyta': receipt['arbetsyta'], 'nasta_md': str(Path(fall) / 'NASTA.md'), 'meddelande': 'läs NASTA.md och UNDERLAG.md i arbetsytan'}
 
 
-def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), beroende=None, rot=ROT):
+def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), beroende=None, rot=ROT, bevis=None, losta=()):
     s = las(fall, rot=rot)
     if steg not in s['steg']:
         raise Vagrad('okänt steg: ' + steg)
     if utfall not in UTFALL:
         raise Vagrad('utfall ska vara en av ' + ', '.join(UTFALL))
+    giltighetskontroll(s, utforare)
     st = s['steg'][steg]
     if st['status'] != 'påbörjat':
         raise Vagrad('steget %s är inte laddat och påbörjat (status: %s); kör fortsatt först' % (steg, st['status']))
     if utfall == 'vantar' and not beroende:
         raise Vagrad('utfallet vantar kräver --beroende "vad som saknas"')
+    godkannande = None
+    if utfall in ('klar', 'inte-tillampligt'):
+        blocked = [x for x in FORUTSATTER.get(steg, []) if s['steg'].get(x, {}).get('status') not in ('klar', STATUS_VERKTYG)]
+        if blocked:
+            spara(fall, s)
+            raise Vagrad('förutsättningar är inte klara: ' + ', '.join(blocked))
+        if not bevis:
+            raise Vagrad('klar/N/A kräver --bevis med obligatoriska resultat, kandidat, miljö och konfiguration enligt BEVISKRAV.json')
+        try:
+            godkannande = stegbevis.kontrollera(bevis, fall, s['kund'], steg, st.get('laddning'), utfall)
+        except stegbevis.Vagrad as e:
+            raise Vagrad(str(e)) from e
+        godkannande['fakta'] = faktabindning(s, steg)
+    los_beroenden(st, losta, notering, utforare)
+    if utfall in ('klar', 'inte-tillampligt') and st['beroenden']:
+        raise Vagrad('olösta beroenden kan inte ge klar; använd --lost-beroende med explicit skäl: ' + '; '.join(st['beroenden']))
     for k in kvitton:
         if not Path(k).is_file():
             raise Vagrad('kvittot finns inte: ' + k)
@@ -329,6 +404,8 @@ def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), b
         _beroende(st, beroende)
     st['noter'].append('%s %s: %s' % (nu(), utfall, notering))
     st['markering'] = 'utforare'
+    if godkannande:
+        st['godkannande'] = godkannande
     if utfall == 'klar':
         st['status'] = 'klar'; st['avslutat'] = nu()
     elif utfall == 'underkand':
@@ -364,6 +441,7 @@ def status(s):
             'utforare_senast': s['logg'][-1]['utforare'] if s['logg'] else None,
             'steg': {n: st['status'] for n, st in s['steg'].items()}, 'underkanda': {n: st['underkanda'] for n, st in s['steg'].items() if st['underkanda']},
             'sidoeffekter': [n + ': ' + x for n, st in s['steg'].items() for x in st['sidoeffekter']], 'beroenden': [n + ': ' + x for n, st in s['steg'].items() for x in st['beroenden']],
+            'losta_beroenden': {n: st.get('losta_beroenden', []) for n, st in s['steg'].items() if st.get('losta_beroenden')},
             'vantar': [n for n, st in s['steg'].items() if st['status'] == STATUS_VANTAR],
             'nasta': s.get('nasta'), 'handelser': len(s['logg']), 'uppdaterad': s.get('uppdaterad')}
 
@@ -372,23 +450,34 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog='fortsatt', description=__doc__.split('\n\n')[0])
     p.add_argument('kommando', nargs='?', default='fortsatt', choices=('fortsatt', 'klart', 'omprova', 'status'))
     p.add_argument('--kund'); p.add_argument('--fall', required=True); p.add_argument('--bestallning'); p.add_argument('--utforare', choices=('claude', 'codex'), default='claude'); p.add_argument('--rot', default=str(ROT)); p.add_argument('--torr', action='store_true')
-    p.add_argument('--steg'); p.add_argument('--utfall'); p.add_argument('--not', dest='notering'); p.add_argument('--kvitto', action='append', default=[]); p.add_argument('--sidoeffekt', action='append', default=[]); p.add_argument('--beroende')
+    p.add_argument('--steg'); p.add_argument('--utfall'); p.add_argument('--not', dest='notering'); p.add_argument('--kvitto', action='append', default=[]); p.add_argument('--sidoeffekt', action='append', default=[]); p.add_argument('--beroende'); p.add_argument('--bevis'); p.add_argument('--lost-beroende', action='append', default=[])
     a = p.parse_args(argv)
+    lock = None
     try:
+        _kontrollera_fall(a.fall, Path(a.rot))
+        Path(a.fall).mkdir(parents=True, exist_ok=True)
+        lock = (Path(a.fall) / '.fortsatt.lock').open('a'); os.chmod(lock.name, 0o600)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as e:
+            raise Vagrad('fallet uppdateras redan av annan utförare; försök efter avslutad skrivning') from e
         if a.kommando == 'fortsatt':
             s, ut = fortsatt(a.fall, a.kund, a.bestallning, a.utforare, Path(a.rot), a.torr)
         elif a.kommando == 'klart':
             if not (a.steg and a.utfall and a.notering):
                 raise Vagrad('klart kräver --steg, --utfall och --not')
-            s, ut = klart(a.fall, a.steg, a.utfall, a.notering, a.utforare, a.kvitto, a.sidoeffekt, a.beroende, Path(a.rot))
+            s, ut = klart(a.fall, a.steg, a.utfall, a.notering, a.utforare, a.kvitto, a.sidoeffekt, a.beroende, Path(a.rot), a.bevis, a.lost_beroende)
         elif a.kommando == 'omprova':
             if not (a.steg and a.notering):
                 raise Vagrad('omprova kräver --steg och --not')
             s, ut = omprova(a.fall, a.steg, a.notering, a.utforare, Path(a.rot))
         else:
-            s = las(a.fall, rot=Path(a.rot)); ut = status(s)
+            s = las(a.fall, rot=Path(a.rot)); giltighetskontroll(s, a.utforare); spara(a.fall, s); ut = status(s)
     except (Vagrad, ladda_steg.Vagrad) as e:
         print(json.dumps({'vagrad': str(e.args[0]) if e.args else str(e)}, ensure_ascii=False)); return 2
+    finally:
+        if lock is not None:
+            lock.close()
     print(json.dumps(ut, ensure_ascii=False))
     return 0
 

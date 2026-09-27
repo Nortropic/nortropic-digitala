@@ -20,6 +20,7 @@ En intervju med företagets representant är inte ett användartest; en testdial
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -150,7 +151,10 @@ def las(kund):
 
 def spara(kund, s):
     s['uppdaterad'] = nu()
-    stig(kund).write_text(json.dumps(s, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    path=stig(kund); tmp=path.with_name(path.name + '.tmp-%d' % os.getpid())
+    with tmp.open('w', encoding='utf-8') as out:
+        os.chmod(tmp, 0o600); out.write(json.dumps(s, ensure_ascii=False, indent=1) + '\n'); out.flush(); os.fsync(out.fileno())
+    os.replace(tmp, path)
 
 
 def kanda_nycklar(s):
@@ -233,14 +237,14 @@ def start(kund, kanal, testdialog=False, om=False):
 
 def tolka_svarsfil(text):
     """### <id> följt av kundens svar ordagrant, till nästa ###."""
-    delar = re.split(r'(?m)^###\s+([A-Z]+\d+)\s*$', text)
+    delar = re.split(r'(?m)^###\s+((?:[A-Z]+\d+|(?:RET|BEH)\d+_\d+))\s*$', text)
     ut = {}
     for i in range(1, len(delar) - 1, 2):
         ut[delar[i]] = delar[i + 1].strip()
     return ut
 
 
-def svar(kund, omgang, fil):
+def svar(kund, omgang, fil, kallmetadata=None):
     s = las(kund)
     o = next((x for x in s['omgangar'] if x['nr'] == omgang), None)
     if not o:
@@ -260,6 +264,8 @@ def svar(kund, omgang, fil):
             if HEMLIGT.search(t):
                 raise Vagrad('svaret på %s ser ut att innehålla ett lösenord eller en nyckel; vägras och sparas inte — be kunden ta bort det och använd säker åtkomstväg' % q['id'])
             s['svar'].append({'fraga_id': q['id'], 'omgang': oo['nr'], 'svarsfil_omgang': omgang, 'nyckel': q['nyckel'], 'omrade': q['omrade'], 'text': t, 'mottaget': nu(), 'status': 'kunden uppger'})
+            if kallmetadata and fid in kallmetadata:
+                s['svar'][-1].update(kallmetadata[fid])
             for oo2 in s['omgangar']:
                 for q2 in oo2['fragor']:
                     if q2['id'] == fid:
@@ -286,7 +292,6 @@ def svar(kund, omgang, fil):
     for f in foljd:
         if f['id'] not in kanda_id:
             s['vantande_foljdfragor'].append(f); kanda_id.add(f['id'])
-    spara(kund, s)
     s.setdefault('okanda_svar', []).extend({'omgang': omgang, 'fraga_id': fid, 'tid': nu()} for fid in okanda)
     spara(kund, s)
     return s, 'omgång %d: %d svar registrerade ordagrant; %d följdfrågor väntar (regler: %s)%s' % (omgang, nya, len(s['vantande_foljdfragor']), ', '.join(sorted({u['regel'] for u in s['foljdregler_utlosta']})) or 'inga', ('; VARNING: okända fråge-id ignorerade: ' + ', '.join(okanda)) if okanda else '')

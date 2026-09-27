@@ -18,6 +18,7 @@ import re
 import subprocess
 import sys
 import time
+import kritikbevis
 
 ROT = Path(__file__).resolve().parents[1]
 STEG_FIL = 'steg/steg.json'
@@ -190,13 +191,26 @@ def planera(rot, steg_namn, kund, bestallning):
         rows.append(row)
     if saknade:
         raise Vagrad('saknat obligatoriskt underlag: ' + ', '.join(saknade))
+    bildrad = next((r for r in rows if r['fil'] == kritikbevis.BILDFIL and r['status'] == 'laddad'), None)
+    if bildrad:
+        try:
+            d = kritikbevis.manifest(json.loads(Path(bildrad['kalla']).read_text()), kund_dir)
+        except (kritikbevis.Vagrad, ValueError) as e:
+            raise Vagrad(str(e)) from e
+        required=utan_lankar(kund_dir/d['kravfil'],kund_dir)
+        rows.append({'fil':d['kravfil'],'klass':'kund','obligatorisk':True,'delar':'fördefinierade bildkrav och tillämplighet','kalla':str(required),'sha256':d['krav_sha256'],'pinnad_sha256':None,'byte':required.stat().st_size,'status':'laddad','plats':'underlag/kund/'+d['kravfil']})
+        for b in d['bilder']:
+            resolved = utan_lankar(kund_dir / b['fil'], kund_dir)
+            rows.append({'fil': b['fil'], 'klass': 'kund', 'obligatorisk': True, 'delar': 'öppna bilden: ' + b['drag'],
+                         'kalla': str(resolved), 'sha256': b['sha256'], 'pinnad_sha256': None, 'byte': resolved.stat().st_size,
+                         'status': 'laddad', 'plats': 'underlag/kund/' + b['fil']})
     return step, rows, kund_dir
 
 
 def underlag_md(steg_namn, step, rows, bestallning):
     lines = ['# Underlag för steget %s' % steg_namn, '',
-             'Fullständig lista; du kan inte lista kataloger. Läs bara de delar som anges. Underlagen är råd: briefen, det',
-             'accepterade uppdraget och mandatet vinner. Kundfiler (`underlag/kund/`) och professionsfiler (`underlag/profession/`)',
+             'Fullständig lista; du kan inte lista kataloger. Läs bara de delar som anges. Styrkta kundbehov och ägarens',
+             'mandat står över råd och internt skrivna designhypoteser i briefen. Kundfiler (`underlag/kund/`) och professionsfiler (`underlag/profession/`)',
              'hålls isär; en kundpreferens blir aldrig praxis: erfarenhet klassas som observation, kundpreferens, hypotes eller',
              'dokumenterad felorsak (kunskap/LARDOMAR.md), och ingen mängd tillämpningar gör något till praxis.',
              '', '**Syfte:** ' + step['syfte'], '', '**Anvisning:** ' + step['anvisning'], '',

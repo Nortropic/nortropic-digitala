@@ -65,11 +65,13 @@ lanseringsmandat eller ett kanalbehov som kommer senare återöppnar stegen auto
 laddar stegets underlag i fallet (ett redan laddat steg återupptas utan ny laddning),
 skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
-per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
-[--beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
-utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att allt annat fortsätter, och `omprova
+per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--bevis FIL] [--kvitto FIL] [--sidoeffekt …]
+[--beroende …] [--lost-beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
+utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att oberoende arbete kan fortsätta, och `omprova
 --steg S --not …` öppnar steget igen när beroendet finns. En färsk utförare kör `status` och `fortsatt` och tar över
-utan att ägaren återberättar. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
+utan att ägaren återberättar. Klar/N/A kräver kandidat-, miljö- och konfigurationsbundet råbevis enligt
+[kunskap/bevis-och-fortsattning.md](kunskap/bevis-och-fortsattning.md). Ändrade bevis eller nödvändiga förutsättningar
+återöppnar aktuellt godkännande; väntan är aldrig färdig leverans. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
 Runtime/.runtime/bin/codex-<version>`, samma modell som Runtimes konfiguration anger), inte med den CLI som råkar ligga i
 PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körde (L27).
 
@@ -120,3 +122,7 @@ Norrglänta.
 En beställning bär hela uppdraget till färdig privat förhandsvisning (`MANDAT.md` §2). Brief, koncept, interna
 kvalitetsval och vanliga rättningar går inte via ägaren; en intern gransknings- och rättningsloop (`KVALITET.md`)
 avgör omtag. Ägaren får den färdiga leveransen och rapporten och lämnar därefter sin bedömning.
+
+Bedömningskontrakt `digitala-kvalitet/2` i `kritik/BEDOMNING-v2.md` gäller nya bedömningar. Kundbehov och
+mandat står över intern brief; professionell otillräcklighet kan blockera trots gröna teknikprov. Frys kriterier
+före kandidatgranskning, bind faktisk kandidat och öppnade referensbilder; tidigare acceptanser ändras inte.

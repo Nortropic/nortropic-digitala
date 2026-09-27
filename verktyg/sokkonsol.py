@@ -42,6 +42,7 @@ SC = 'https://searchconsole.googleapis.com/v1'
 FORHANDSVISNINGSSUFFIX = '.vercel.app'  # värdplattformens förhandsvisningsdomäner får aldrig bli sökkonsol-egenskaper
 DOK = {'siteverification': 'https://developers.google.com/site-verification/v1/getting_started',
        'searchconsole': 'https://developers.google.com/webmaster-tools/v1/api_reference_index',
+       'errors': 'https://developers.google.com/webmaster-tools/v1/errors',
        'urlinspection': 'https://developers.google.com/webmaster-tools/v1/urlInspection.index/inspect'}
 
 
@@ -129,7 +130,7 @@ def kontroll_fore_live(v, doman, kommando, oppna):
             raise Vagrad('https://%s/ svarar %s; kanonisk domän måste svara 200 före %s' % (doman, status, kommando))
 
 
-def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None):
+def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None, sov=time.sleep):
     """Utför ett kommando live; returnerar kvittorader (hemligheter aldrig med)."""
     plan = {p['steg']: p for p in anropsplan(doman, urler)}
     rader = []
@@ -137,23 +138,46 @@ def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None):
     auth = {'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json'}
     def call(steg, url=None, nyttolast=None):
         p = plan[steg]
-        body = json.dumps(nyttolast if nyttolast is not None else p['nyttolast']).encode() if (nyttolast is not None or p['nyttolast'] is not None) else None
-        status, svar = oppna(p['metod'], url or p['url'], body, auth)
-        rader.append({'steg': steg, 'metod': p['metod'], 'url': url or p['url'], 'status': status, 'svar': svar})
-        return status, svar
+        payload = nyttolast if nyttolast is not None else p['nyttolast']
+        body = json.dumps(payload).encode() if payload is not None else None
+        # Read-only POSTs and idempotent PUTs only. Verification POST has external side effects:
+        # its uncertain outcome requires observation rather than blind repetition.
+        retry_safe = steg in ('inspektera', 'sokdata', 'token', 'agare', 'egenskap', 'sitemap')
+        for attempt in range(1, 4):
+            status, svar = oppna(p['metod'], url or p['url'], body, auth)
+            reasons = felorsaker(svar)
+            transient = status in (429, 500, 502, 503, 504) or (status == 403 and bool(reasons & {'rateLimitExceeded', 'userRateLimitExceeded'}))
+            retry = retry_safe and transient and attempt < 3
+            row = {'steg': steg, 'metod': p['metod'], 'url': url or p['url'], 'status': status, 'svar': svar,
+                   'forsok': attempt, 'slutligt': not retry, 'inspectionUrl': (payload or {}).get('inspectionUrl') if isinstance(payload, dict) else None,
+                   'siteUrl': (payload or {}).get('siteUrl') if isinstance(payload, dict) else None,
+                   'felorsaker': sorted(reasons), 'retry': retry}
+            rader.append(row)
+            if not retry:
+                return status, svar
+            row['vantan_sekunder'] = 2 ** (attempt - 1)
+            sov(row['vantan_sekunder'])
     if kommando == 'token':
         status, svar = call('token')
         if status == 200:
             rader[-1]['meta_tagg'] = svar.get('token')
     elif kommando == 'verifiera':
         status, svar = call('verifiera')
-        if status == 200 and agare:
-            rid = svar.get('id'); befintliga = svar.get('owners') or []
+        if not 200 <= status < 300:
+            return rader
+        if agare:
+            rid = svar.get('id'); befintliga = svar.get('owners')
+            if not rid or not isinstance(befintliga, list) or not isinstance(svar.get('site'), dict):
+                rader[-1]['fel'] = 'verifieringssvaret saknar id/site/owners; ägarskap och efterföljande steg ej utförda'
+                return rader
             nya = [a for a in agare if a not in befintliga]
             if nya:
-                call('agare', SV + '/webResource/' + urllib.parse.quote(rid, safe=''), {'site': svar.get('site'), 'owners': befintliga + nya})
-        if status == 200:
-            call('egenskap'); call('sitemap')
+                status, _ = call('agare', SV + '/webResource/' + urllib.parse.quote(rid, safe=''), {'site': svar['site'], 'owners': befintliga + nya})
+                if not 200 <= status < 300:
+                    return rader
+        status, _ = call('egenskap')
+        if 200 <= status < 300:
+            call('sitemap')
     elif kommando == 'sitemap':
         call('sitemap')
     elif kommando == 'inspektera':
@@ -164,15 +188,34 @@ def kor(kommando, v, doman, urler, atkomst, oppna, meta_token=None, agare=None):
     return rader
 
 
+def felorsaker(svar):
+    error = svar.get('error') if isinstance(svar, dict) else None
+    if not isinstance(error, dict):
+        return set()
+    return {str(r['reason']) for r in error.get('errors', []) if isinstance(r, dict) and r.get('reason')}
+
+
 def tolkning(rader):
     """Observationer att omsätta i åtgärder (kunskap/sokkonsol.md), inte betyg."""
     ut = []
     for r in rader:
+        if not r.get('slutligt', True):
+            continue
         s = r.get('svar') or {}
+        context = {'adress': r.get('inspectionUrl'), 'egenskap': r.get('siteUrl'), 'http_status': r.get('status')}
+        if not 200 <= r.get('status', 0) < 300 or r.get('fel'):
+            code = r.get('status'); reasons = felorsaker(s)
+            action = ('kontrollera autentisering, behörighet och aktiverat API; ingen indexeringsbedömning kan göras'
+                      if code in (401, 403) and not reasons & {'rateLimitExceeded', 'userRateLimitExceeded'}
+                      else 'kontrollera kvot eller övergående leverantörsfel; begränsade försök är slut, planera senare omprov'
+                      if code in (429, 500, 502, 503, 504) or reasons & {'rateLimitExceeded', 'userRateLimitExceeded'}
+                      else 'kontrollera anropets data och råsvaret; ingen indexeringsbedömning kan göras')
+            ut.append({**context, 'status': 'API-fel', 'steg': r['steg'], 'felorsaker': sorted(reasons), 'atgard': r.get('fel') or action})
+            continue
         if r['steg'] == 'inspektera' and isinstance(s, dict):
             res = (s.get('inspectionResult') or {}).get('indexStatusResult') or {}
-            ut.append({'adress': '', 'verdict': res.get('verdict'), 'coverage': res.get('coverageState'), 'senast_crawlad': res.get('lastCrawlTime'),
-                       'atgard': 'ingen' if res.get('verdict') == 'PASS' else 'läs coverageState: "upptäckt, inte indexerad" > 2 veckor på viktiga sidor → begär indexering igen och stärk intern länkning; "genomsökt, inte indexerad" → tunt innehåll, fördjupa'})
+            ut.append({**context, 'status': 'observerat indexeringssvar' if res else 'ofullständigt API-svar', 'verdict': res.get('verdict'), 'coverage': res.get('coverageState'), 'senast_crawlad': res.get('lastCrawlTime'),
+                       'atgard': 'indexStatusResult saknas; gör ingen innehållsdiagnos' if not res else 'ingen' if res.get('verdict') == 'PASS' else 'läs coverageState: "upptäckt, inte indexerad" > 2 veckor på viktiga sidor → begär indexering igen och stärk intern länkning; "genomsökt, inte indexerad" → tunt innehåll, fördjupa'})
         if r['steg'] == 'sokdata' and isinstance(s, dict) and s.get('rows'):
             kand = [x for x in s['rows'] if 5 <= (x.get('position') or 0) <= 20]
             ut.append({'rader': len(s['rows']), 'sidforbattringskandidater_position_5_20': len(kand), 'atgard': 'frågor i position 5–20 med visningar: lägg frasens lydelse i sida eller FAQ; visningar utan klick: skriv om description; återkommande nya frågor: ny sida bara med genuint innehåll'})
@@ -217,7 +260,7 @@ def main(argv=None):
                 assert hemligt not in text, 'hemlighet i kvitto'
     Path(a.ut).write_text(text + '\n', encoding='utf-8')
     print(json.dumps({'kommando': a.kommando, 'live': bool(a.live), 'anrop': len(kvitto['anrop']), 'ut': a.ut}, ensure_ascii=False))
-    return 0
+    return 1 if any((not 200 <= r['status'] < 300 or r.get('fel')) for r in kvitto['anrop'] if r.get('slutligt', True)) else 0
 
 
 if __name__ == '__main__':
