@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "beskrivning": "Digitalas steg och de underlag varje steg får. Profession = filer i detta repo, pinnade i steg/PINNAR.sha256. Kund = filer i kundmappen (utanför repot), aldrig pinnade här. mandat: 'staende' = ryms i det stående mandatet (MANDAT.md); 'bestallning' = kräver en beställnings beslutspost. Bindningen härrör ur kunskap/REGISTER.md §D; ändras bara med ny version.",
+  "steg": {
+    "uppstart": {
+      "mandat": "staende",
+      "syfte": "Uppstart av ett fall eller en etapp: läs lärdomarna, mandatet och arbetssättet innan något görs.",
+      "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Avstämning av lärdomar sker efter två relevanta tillämpningar, inte nu.",
+      "underlag": [
+        {"fil": "kunskap/LARDOMAR.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "MANDAT.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "ARBETSSATT.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": false, "delar": "läsanvisningen och §1 om briefen finns"}
+      ]
+    },
+    "research": {
+      "mandat": "staende",
+      "syfte": "Läsning och referensjakt: kandidater, budget räknad som frågor, sedd kontra läst, betyg som filter.",
+      "anvisning": "Följ referensjakt.md. Budgeten räknas som frågor (L4). Skriv källtabellen i kundmappens research.md; referenser stödjer designval och kopieras aldrig.",
+      "underlag": [
+        {"fil": "kunskap/referensjakt.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "research.md", "klass": "kund", "obligatorisk": false, "delar": "hela, om den finns (steget skapar eller utökar den)"}
+      ]
+    },
+    "brief": {
+      "mandat": "bestallning",
+      "syfte": "Samlad brief med rekommenderad visuell riktning; ägarens briefstopp följer.",
+      "anvisning": "Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Briefen och ACCEPT vinner över råd; avvikelser i briefens konfliktrad.",
+      "underlag": [
+        {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Design principles; Process; Restraint and self-critique"},
+        {"fil": "kunskap/redaktionellt-pass.md", "klass": "profession", "obligatorisk": true, "delar": "del 2 (kedjekontrollen)"},
+        {"fil": "kunskap/externa/emil-prototype-SKILL.md", "klass": "profession", "obligatorisk": false, "delar": "Operating Posture; Hard Rules 1–3; Workflow fas 1–5 (som metod, inte skill)"},
+        {"fil": "research.md", "klass": "kund", "obligatorisk": true, "delar": "hela"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": false, "delar": "tidigare version om den finns"}
+      ]
+    },
+    "koncept": {
+      "mandat": "bestallning",
+      "syfte": "Konceptsteg före bygget: Design Read, tre dial-värden och två–tre riktningar på namngivna axlar (L16).",
+      "anvisning": "Läs Taste §0 'Brief Inference' och §1 'The Three Dials' före Design Read; §4.1–4.3 och §4.7–4.8 före komp. Konstanterna ska omfatta det som redan fungerar i produktion; en fjärde axel 'rytm' nedanför vikningen (L16). Taste är råd och mallvarning, inte mall.",
+      "underlag": [
+        {"fil": "kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md", "klass": "profession", "obligatorisk": true, "delar": "§0 (0.A–0.D); §1 (1.A–1.C); §4.1–4.3; §4.7–4.8 — inte §2, §3, §5, §6–9"},
+        {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Design principles; Restraint and self-critique"},
+        {"fil": "kunskap/externa/emil-prototype-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Operating Posture; Hard Rules 1–3; Workflow fas 1–5 (som metod)"},
+        {"fil": "kunskap/externa/emil-prototype-PICKER-d16ebe60.md", "klass": "profession", "obligatorisk": false, "delar": "bara om en live-bläddringsyta efterfrågas"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "§5 designriktning och konfliktraden"}
+      ]
+    },
+    "bygge": {
+      "mandat": "bestallning",
+      "syfte": "Bygge i kundrepot enligt brief och vald riktning.",
+      "anvisning": "frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21).",
+      "underlag": [
+        {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Design principles; Process; Restraint and self-critique"},
+        {"fil": "kunskap/externa/emil-mobile-native-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "The Symptom Table; The Fixes 1–11; Baseline; Never Ship"},
+        {"fil": "kunskap/formularsakerhet.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "kunskap/externa/emil-emil-design-eng-SKILL.md", "klass": "profession", "obligatorisk": false, "delar": "The Animation Decision Framework 1–4; Component Building Principles — bara när briefens motion-nivå är över 'ingen'"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "hela"}
+      ]
+    },
+    "redaktionellt-pass": {
+      "mandat": "bestallning",
+      "syfte": "Redaktionellt pass som eget steg: faktatrohet och redaktionell kvalitet är två kontroller (L8).",
+      "anvisning": "Följ redaktionellt-pass.md helt; frontend-design 'More on writing in design'. Ett förslag som ändrar godkänt innehåll ligger i egen commit (L10).",
+      "underlag": [
+        {"fil": "kunskap/redaktionellt-pass.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "More on writing in design"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "§1–§3 (tjänster, ton, demoregler)"}
+      ]
+    },
+    "matning": {
+      "mandat": "staende",
+      "syfte": "Modellfri mätning av en adress eller fil genom Runtimes mätprofil med Digitalas profilval.",
+      "anvisning": "Kör genom verktyg/kor_profil.py matning; vyer, axe-taggar, delar och sektioner kommer ur matning/PROFIL.json. Binda mätningen till commit och driftsättning (L9). Skyddade adresser: undantagsfilen, aldrig värdet. Sök utdata efter nyckeln efteråt utan utskrift.",
+      "underlag": [
+        {"fil": "matning/PROFIL.json", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "matning/TACKNING.md", "klass": "profession", "obligatorisk": false, "delar": "vilka sajtspecifika prov som inte täcks av profilen"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": false, "delar": "§5 för handlingens text (--handling-text)"}
+      ]
+    },
+    "kritik": {
+      "mandat": "staende",
+      "syfte": "Kritik genom Runtimes kritikprofil: designkritik av komp, renderingsläsning eller femsekunderstest, med Digitalas fråga och schema.",
+      "anvisning": "Välj mall i kritik/ (designkritik-komp, renderingslasning, femsekunderstest). Fyll varje {{PLATSHÅLLARE}}. Kalibrera med frontend-designs klusterlista. Bedömaren får skärmbilder, aldrig facit; varje bild ska öppnas. Skriv 'okänt' där underlaget inte räcker.",
+      "underlag": [
+        {"fil": "kritik/FRAGA-designkritik-komp.md", "klass": "profession", "obligatorisk": true, "delar": "mallen"},
+        {"fil": "kritik/SCHEMA-designkritik-komp.json", "klass": "profession", "obligatorisk": true, "delar": "schemat"},
+        {"fil": "kritik/FRAGA-renderingslasning.md", "klass": "profession", "obligatorisk": true, "delar": "mallen"},
+        {"fil": "kritik/SCHEMA-renderingslasning.json", "klass": "profession", "obligatorisk": true, "delar": "schemat"},
+        {"fil": "kritik/FRAGA-femsekunderstest.md", "klass": "profession", "obligatorisk": true, "delar": "mallen"},
+        {"fil": "kritik/SCHEMA-femsekunderstest.json", "klass": "profession", "obligatorisk": true, "delar": "schemat"},
+        {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "kalibreringslistan (AI-generiska mönster) och 'Restraint and self-critique'"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "§5 designriktning (läggs i bedömarens underlag som utdrag)"}
+      ]
+    },
+    "granskning-d": {
+      "mandat": "staende",
+      "syfte": "Kodläsning och kvalitetsgranskning D av ett bygge mot gränssnittsregler, tillgänglighet, mobil och formulärsäkerhet.",
+      "anvisning": "WIG command.md: Accessibility, Focus States, Forms, Animation, Typography, Content Handling, Images, Hydration Safety, Anti-patterns (inte Output Format). web-quality-audit: How it works, Audit categories, Severity levels, Audit output format (inte Tool routing). accessibility: Evidence-led audit workflow, Testing checklist › Manual testing. mobile-native: Symptom Table, Fixes, Baseline, Never Ship. formularsakerhet.md och redaktionellt-pass.md som frågor. Kodläsning och renderingsläsning hittar olika fel (L7): gör båda.",
+      "underlag": [
+        {"fil": "kunskap/externa/vercel-web-interface-guidelines-command-e3d624ba.md", "klass": "profession", "obligatorisk": true, "delar": "Accessibility; Focus States; Forms; Animation; Typography; Content Handling; Images; Hydration Safety; Anti-patterns (flag these)"},
+        {"fil": "kunskap/externa/addyosmani-web-quality-audit-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "How it works; Audit categories; Severity levels; Audit output format"},
+        {"fil": "kunskap/externa/addyosmani-accessibility-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Evidence-led audit workflow; Perceivable–Robust vid behov; Testing checklist › Manual testing"},
+        {"fil": "kunskap/externa/emil-mobile-native-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "The Symptom Table; The Fixes 1–11; Baseline; Never Ship"},
+        {"fil": "kunskap/formularsakerhet.md", "klass": "profession", "obligatorisk": true, "delar": "kodläsningsfrågorna"},
+        {"fil": "kunskap/redaktionellt-pass.md", "klass": "profession", "obligatorisk": true, "delar": "som fråga"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "kvalitetsbasen och konfliktraden"}
+      ]
+    },
+    "provare": {
+      "mandat": "staende",
+      "syfte": "Scenarioprov: en besökare i riktig webbläsare genom Runtimes provarprofil, utan brief, kod eller facit; utfallet avgörs av kontrollanten ur artefakter (L20).",
+      "anvisning": "Skriv uppgiften enligt UPPGIFT-MALL.md med Startadress och Kommando ordagrant (L18). Kör genom verktyg/kor_profil.py provare. Kontrollanten fyller KONTROLL-MALL.md ur sista skärmbild, sidtext och spårets sista adress, aldrig ur provarens rapport; vid oväntat tillstånd: utlösande handling (L22).",
+      "underlag": [
+        {"fil": "provare/UPPGIFT-MALL.md", "klass": "profession", "obligatorisk": true, "delar": "mallen"},
+        {"fil": "provare/KONTROLL-MALL.md", "klass": "profession", "obligatorisk": true, "delar": "mallen"},
+        {"fil": "provare/AGENTS-provare.md", "klass": "profession", "obligatorisk": true, "delar": "provarens instruktion (ges till provarprofilen)"},
+        {"fil": "TESTDATA.md", "klass": "kund", "obligatorisk": false, "delar": "testuppgifter för scenariot, aldrig riktiga personuppgifter"}
+      ]
+    },
+    "leverans": {
+      "mandat": "bestallning",
+      "syfte": "Leverans av ett bygge eller en etapp: kvalitetsbild (tekniskt prövat, professionellt bedömt, ej observerat), överlämning med begränsningar, lärdomspost, användningsnoter och förslagsrad.",
+      "anvisning": "Följ KVALITET.md. Bygg kvalitetsbilden med verktyg/kvalitetsbild.py ur körningarnas kvitton. Skriv användningsnoterna (ANVANDNINGSNOTER.md från laddningen) och lärdomsposten i LARDOMAR.md; förslagsraden till planen. Uppmätt, bedömt och ej prövat hålls isär; gröna prov ersätter inte visuell bedömning.",
+      "underlag": [
+        {"fil": "KVALITET.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "MANDAT.md", "klass": "profession", "obligatorisk": true, "delar": "gränserna för leverans och driftsättning"},
+        {"fil": "kunskap/LARDOMAR.md", "klass": "profession", "obligatorisk": true, "delar": "formen (inledningen) för lärdomsposten"},
+        {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": true, "delar": "hela"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+# Proveniens — migrerat material
+
+Kopierat 2026-09-27 08:22Z från kontorets privata `evidence/digitala/local/` (kontorets main `4798ed2`), byte för byte.
+Kundspecifikt material (kundmappen `norrglanta/`, etappmapparna, nycklar, adresser) är **inte** kopierat. Maskinläsbar lista: `PROVENIENS.json`.
+
+| fil här | källa | sha256 | byte | status | not |
+|---|---|---|---|---|---|
+| `kunskap/REGISTER.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md` | `68eac8cc627932bd…` | 17183 | GÄLLANDE | byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json |
+| `kunskap/LARDOMAR.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/LARDOMAR.md` | `bbdef0425bba0d64…` | 22109 | GÄLLANDE | byte för byte t.o.m. L23; nya poster skrivs här |
+| `kunskap/referensjakt.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/referensjakt.md` | `7e5bf20c32007148…` | 3580 | GÄLLANDE | härledd text |
+| `kunskap/redaktionellt-pass.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/redaktionellt-pass.md` | `f880f6a40a960b2b…` | 3630 | GÄLLANDE | härledd text |
+| `kunskap/formularsakerhet.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/formularsakerhet.md` | `bdee22bf808983ff…` | 3481 | GÄLLANDE | härledd text |
+| `kunskap/MOTTAGARPROV.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/MOTTAGARPROV.md` | `ee59166e175891d5…` | 2463 | HISTORIK | mottagarproven 2026-09-26 mot kontorets ingång |
+| `kunskap/externa/KONTROLL-20260926.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/KONTROLL.txt` | `fdd8923cb1bf6357…` | 3278 | HISTORIK | kontrollen av externa/ mot läsbevisen vid del 1 |
+| `kunskap/externa/KONTROLL-20260926.sha256` | `nortropic-projektkontor/evidence/digitala/local/kunskap/KONTROLL.sha256` | `3fa2ac16492bb1ae…` | 1523 | HISTORIK | sha256-listan från del 1 |
+| `kunskap/externa/addyosmani-accessibility-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/addyosmani-accessibility-SKILL.md` | `267fb2a0707d6142…` | 14358 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/addyosmani-web-quality-LICENSE.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/addyosmani-web-quality-LICENSE.txt` | `c122223ac43e8642…` | 1068 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/addyosmani-web-quality-audit-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/addyosmani-web-quality-audit-SKILL.md` | `1903cfb4dcba987d…` | 10450 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/anthropic-frontend-design-LICENSE.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/anthropic-frontend-design-LICENSE.txt` | `0d542e0c8804e39a…` | 10174 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/anthropic-frontend-design-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/anthropic-frontend-design-SKILL.md` | `d91970639e9f5c37…` | 9390 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/canvas-design-SKILL-33375500.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/canvas-design-SKILL-33375500.md` | `a1f288079624402f…` | 11939 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/emil-LICENSE.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/emil-LICENSE.txt` | `4ff5bdb7887ec143…` | 1070 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/emil-emil-design-eng-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/emil-emil-design-eng-SKILL.md` | `ffbe68e6007fb42c…` | 27123 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/emil-mobile-native-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/emil-mobile-native-SKILL.md` | `888b7651d66d66db…` | 16838 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/emil-prototype-PICKER-d16ebe60.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/emil-prototype-PICKER-d16ebe60.md` | `31a55eec94715cc7…` | 7548 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/emil-prototype-SKILL.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/emil-prototype-SKILL.md` | `bba39c955eb1871c…` | 7830 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/google-design-md-README-9bf8eae6.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/google-design-md-README-9bf8eae6.md` | `0cb9242992168ccc…` | 13148 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/hallmark-SKILL-13ac0ec7.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/hallmark-SKILL-13ac0ec7.md` | `59469635bbbd21ac…` | 67460 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/leonxlnx-taste-LICENSE-ce26fc25.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/leonxlnx-taste-LICENSE-ce26fc25.txt` | `4575a543ab88dad1…` | 1065 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md` | `aa194351b246b8b4…` | 87253 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/vercel-web-interface-guidelines-LICENSE-e3d624ba.txt` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/vercel-web-interface-guidelines-LICENSE-e3d624ba.txt` | `6cd1609c9c122335…` | 1068 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `kunskap/externa/vercel-web-interface-guidelines-command-e3d624ba.md` | `nortropic-projektkontor/evidence/digitala/local/kunskap/externa/vercel-web-interface-guidelines-command-e3d624ba.md` | `5a775e6411f790f5…` | 7760 | GÄLLANDE (pinnad) | extern text eller licens, pinnad enligt REGISTER |
+| `provare/AGENTS-provare.md` | `nortropic-projektkontor/evidence/digitala/local/genomforande-20260926/provvag/AGENTS-provare.md` | `8c52e68b1bf1ddf0…` | 1531 | GÄLLANDE | provarens instruktion, förlaga från provvägen (samma text som Runtimes provarprofil fick som förlaga) |

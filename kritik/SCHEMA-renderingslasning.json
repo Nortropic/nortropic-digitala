@@ -1,0 +1,20 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["verdict", "blocking_findings", "improvements", "questions", "best", "worst", "seen_files", "could_not_review", "summary"],
+  "properties": {
+    "verdict": {"type": "string", "enum": ["approved", "rejected"]},
+    "blocking_findings": {"type": "array", "maxItems": 30, "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "where", "finding", "fix"],
+      "properties": {"id": {"type": "string", "maxLength": 40}, "where": {"type": "string", "maxLength": 300}, "finding": {"type": "string", "maxLength": 800}, "fix": {"type": "string", "maxLength": 800}}}},
+    "improvements": {"type": "array", "maxItems": 40, "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "where", "finding", "fix", "weight"],
+      "properties": {"id": {"type": "string", "maxLength": 40}, "where": {"type": "string", "maxLength": 300}, "finding": {"type": "string", "maxLength": 800}, "fix": {"type": "string", "maxLength": 800}, "weight": {"type": "string", "enum": ["hög", "medel", "låg"]}}}},
+    "questions": {"type": "object", "additionalProperties": false, "required": ["q1", "q2", "q3", "q4", "q5", "q6"],
+      "properties": {"q1": {"type": "string", "maxLength": 1500}, "q2": {"type": "string", "maxLength": 1500}, "q3": {"type": "string", "maxLength": 1500}, "q4": {"type": "string", "maxLength": 1500}, "q5": {"type": "string", "maxLength": 1500}, "q6": {"type": "string", "maxLength": 1500}}},
+    "best": {"type": "array", "items": {"type": "string", "maxLength": 400}, "maxItems": 10},
+    "worst": {"type": "array", "items": {"type": "string", "maxLength": 400}, "maxItems": 10},
+    "seen_files": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 300},
+    "could_not_review": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 30},
+    "summary": {"type": "string", "maxLength": 2000}
+  }
+}

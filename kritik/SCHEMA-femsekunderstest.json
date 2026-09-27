@@ -1,0 +1,12 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["vad", "var", "hur", "forst_sett_i_ordning", "oklart_eller_stor", "rubriken_lastes_som", "mobil_vs_dator", "kansla", "seen_files"],
+  "properties": {
+    "vad": {"type": "string", "maxLength": 600}, "var": {"type": "string", "maxLength": 300}, "hur": {"type": "string", "maxLength": 600},
+    "forst_sett_i_ordning": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 10},
+    "oklart_eller_stor": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 10},
+    "rubriken_lastes_som": {"type": "string", "maxLength": 400}, "mobil_vs_dator": {"type": "string", "maxLength": 600},
+    "kansla": {"type": "array", "items": {"type": "string", "maxLength": 40}, "minItems": 3, "maxItems": 3},
+    "seen_files": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 20}
+  }
+}

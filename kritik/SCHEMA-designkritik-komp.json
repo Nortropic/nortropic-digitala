@@ -1,0 +1,27 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["komp", "specificitet", "specificitet_skal", "hypotes", "styrkor", "brister_prioriterade", "mot_dagens", "mot_referenserna", "mall_kvar", "fors_vidare", "heuristik_0_4", "kognitiv_last_forsta_vyn", "okant", "sett_kontra_last", "omdome_en_mening", "seen_files"],
+  "properties": {
+    "komp": {"type": "string", "maxLength": 40},
+    "specificitet": {"type": "string", "enum": ["specifik för kunden", "annorlunda men utbytbar", "generisk"]},
+    "specificitet_skal": {"type": "string", "maxLength": 2000},
+    "hypotes": {"type": "string", "maxLength": 1500},
+    "styrkor": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
+    "brister_prioriterade": {"type": "array", "maxItems": 20, "items": {"type": "object", "additionalProperties": false,
+      "required": ["vad", "var", "varfor", "atgard"],
+      "properties": {"vad": {"type": "string", "maxLength": 600}, "var": {"type": "string", "maxLength": 300}, "varfor": {"type": "string", "maxLength": 600}, "atgard": {"type": "string", "maxLength": 600}}}},
+    "mot_dagens": {"type": "object", "additionalProperties": false, "required": ["v390", "v1440"],
+      "properties": {"v390": {"type": "string", "maxLength": 1500}, "v1440": {"type": "string", "maxLength": 1500}}},
+    "mot_referenserna": {"type": "string", "maxLength": 1500},
+    "mall_kvar": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
+    "fors_vidare": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
+    "heuristik_0_4": {"type": "object", "additionalProperties": false,
+      "required": ["synlighet", "match_verklighet", "kontroll", "konsekvens", "felforebyggande", "igenkanning", "flexibilitet", "minimalism", "felhantering", "hjalp"],
+      "properties": {"synlighet": {"type": "integer", "minimum": 0, "maximum": 4}, "match_verklighet": {"type": "integer", "minimum": 0, "maximum": 4}, "kontroll": {"type": "integer", "minimum": 0, "maximum": 4}, "konsekvens": {"type": "integer", "minimum": 0, "maximum": 4}, "felforebyggande": {"type": "integer", "minimum": 0, "maximum": 4}, "igenkanning": {"type": "integer", "minimum": 0, "maximum": 4}, "flexibilitet": {"type": "integer", "minimum": 0, "maximum": 4}, "minimalism": {"type": "integer", "minimum": 0, "maximum": 4}, "felhantering": {"type": "integer", "minimum": 0, "maximum": 4}, "hjalp": {"type": "integer", "minimum": 0, "maximum": 4}}},
+    "kognitiv_last_forsta_vyn": {"type": "string", "maxLength": 1000},
+    "okant": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 12},
+    "sett_kontra_last": {"type": "string", "maxLength": 1500},
+    "omdome_en_mening": {"type": "string", "maxLength": 400},
+    "seen_files": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 200}
+  }
+}

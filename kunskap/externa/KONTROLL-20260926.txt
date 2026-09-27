@@ -1,0 +1,25 @@
+# Kontroll av kopiorna i externa/ mot läsbevisen (del 1, 2026-09-26)
+
+Varje fil är kopierad byte för byte från ../jamforelse-underlag/lasta-texter/, och dess git-blob och storlek stämmer med LASMANIFEST.md och med raden SAMMA i revisionskontroll-20260926.txt (filen vid den fulla pinnade revisionen). Ingen fil är hämtad på nytt.
+
+| fil | ref vid läsningen (manifest) | byte | git-blob | sha256 |
+|---|---|---|---|---|
+| `anthropic-frontend-design-SKILL.md` | `HEAD` | 9390 | `a5333457c414d20d625f307df945842c0952ecc3` | `d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3` |
+| `anthropic-frontend-design-LICENSE.txt` | `HEAD` | 10174 | `f433b1a53f5b830a205fd2df78e2b34974656c7b` | `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594` |
+| `vercel-web-interface-guidelines-command-e3d624ba.md` | `e3d624baaf` | 7760 | `e1e8e3460db7c1440e34642c4f7b885185ca5366` | `5a775e6411f790f518dbc9c1fa7c50a89e6873502d9a3530a6eb223a590bcfe8` |
+| `vercel-web-interface-guidelines-LICENSE-e3d624ba.txt` | `e3d624baaf` | 1068 | `b3575a3c1358eac4b9ee36a4c851872d81417760` | `6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2` |
+| `addyosmani-web-quality-audit-SKILL.md` | `HEAD` | 10450 | `581ec7c5e8e05e6ac93d99d872906595581efc42` | `1903cfb4dcba987d50dc7a51f6c19ec43830ff924c2c8f78979d8775fbe20f91` |
+| `addyosmani-accessibility-SKILL.md` | `HEAD` | 14358 | `22a244430f890fe44cbd7a50590d5cbf8528c77b` | `267fb2a0707d6142f2871f22688203a42ba21291a2aa200fb740936e41362b5d` |
+| `addyosmani-web-quality-LICENSE.txt` | `HEAD` | 1068 | `90715bb429f374dcc4e05c35535b049d3c077313` | `c122223ac43e86421958e18623979942c21b642951e2e3736dcb63eff13587c3` |
+| `emil-emil-design-eng-SKILL.md` | `HEAD` | 27123 | `62ce902af8dd32c590ea7203e9ab2edb1d6ef81a` | `ffbe68e6007fb42cb8149f089b400a1ca007d59ba23e8948e2be4476f3175939` |
+| `emil-mobile-native-SKILL.md` | `HEAD` | 16838 | `94bba21fcb990b850e06effbf5709c96a07446ad` | `888b7651d66d66dbac4e72b7c554638eb19bd971d686d6cbdf030a5ef3788f55` |
+| `emil-prototype-SKILL.md` | `HEAD` | 7830 | `dbcc1a23c66933f7372c0aacbce2b0d7cc6100b6` | `bba39c955eb1871c5a02733976ceec5d0324198e0812e667604756489c89f7b9` |
+| `emil-prototype-PICKER-d16ebe60.md` | `d16ebe60d0` | 7548 | `aaa88c0eba38eb01c00d4eb2b144e39f808fc26a` | `31a55eec94715cc79942e91e172e539e3031dcd5e2e5ee7c1446cf2caee960a6` |
+| `emil-LICENSE.txt` | `HEAD` | 1070 | `57b46f1fd11dc62351ea548104a88aa3f659c11b` | `4ff5bdb7887ec1435c9cab0e8d1a7caee704d894d65c2a008ccc68b1cc2f260b` |
+| `leonxlnx-taste-SKILL-ce26fc25.md` | `ce26fc25c0` | 87253 | `b72132fcd466da605623ffe96e370b3991fc5285` | `aa194351b246b8b4799099d4ed7b033d29eab6e6e3d58d8d2172978be7b3ec89` |
+| `leonxlnx-taste-LICENSE-ce26fc25.txt` | `ce26fc25c0` | 1065 | `48a2f6640b81ff8eca9ce7f6a96337692713ef5b` | `4575a543ab88dad12ccea7d97e563d0bce5b448b06072e65d3264497dad326df` |
+
+Tillägg 2026-09-26 (etapp 1, DIGITALA-1-TILLAGGSMANDAT-BESLUT-20260926): Taste-skillens SKILL.md och LICENSE kopierade från
+läsningen i `../genomforande-20260926/riktning/lasning/taste-SKILL.md` respektive hämtade via GitHubs läs-API; båda
+kontrollerade mot git-blob i `Leonxlnx/taste-skill` @ `ce26fc25c0e5e8cab638f883de62d9a86ee5e45b` (repo-HEAD 2026-09-26T09:01Z;
+filen ligger som `skills/taste-skill/SKILL.md`).
