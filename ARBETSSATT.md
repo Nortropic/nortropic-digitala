@@ -51,6 +51,24 @@ Kontoret bidrar vid mellan och stor uppgift med problemformulering, osäkerheter
 beslutsunderlag genom sin beredning (AP-06, fältet `forvaltning`); Digitalas sakkunskap får påverka både
 problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
 
+## Ordinarie start- och fortsättningsväg
+
+En beställning bär hela uppdraget till färdig privat leverans. Beställningen binds i kundmappens `BESTALLNING.json`
+(utdrag ur beslutsposten: `post`, `kalla`, `kund` = VERKSAMHET.json:s namn, `omfattning` = `privat-leverans`, `helhet`
+eller en steglista, `lanseringsmandat` = post-id eller null, `utdrag` ordagrant, `testfall: true` bara för fiktiv
+verksamhet); vägen bokför filens sha256 och en ombindning när den ändras. `python3 -B verktyg/fortsatt.py --kund KUNDMAPP
+--fall FALL [--bestallning POST-ID] --utforare claude|codex` avgör nästa steg i stegens ordning (beställningssteg bara
+inom omfattningen; kanalstegen efter kundmappens `KANALBEHOV.json` ur beredningen; lansering, sokkonsol och drift bara
+med lanseringsmandat, annars slutar vägen vid leverans — kommer mandatet eller ett kanalbehov senare återöppnas stegen
+automatiskt, eftersom verktygets egna markeringar omprövas varje körning), laddar stegets underlag i fallet (ett redan
+laddat steg återupptas utan ny laddning), skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
+sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
+per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
+[--beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
+utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att allt annat fortsätter, och `omprova
+--steg S --not …` öppnar steget igen när beroendet finns. En färsk utförare kör `status` och `fortsatt` och tar över
+utan att ägaren återberättar.
+
 ## Så används verktygen i varje steg
 
 1. `python3 -B verktyg/ladda_steg.py --steg STEG --ut ARBETSYTA [--kund KUNDMAPP] [--bestallning POST-ID]` — laddar
@@ -71,6 +89,8 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
    pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
    regressionsprov, avskärmat besökarprov i egen session med efterkontroll av nätverksloggen (`natverk.jsonl`; ingen spårfil).
+   `python3 -B verktyg/publicera.py --gren GREN --granskning KATALOG --titel … --kropp FIL [--torr]` — maskinell integration i
+   main genom PR-vägen, bara med godkänd granskning bunden till HEAD, grön svit och rena pinnar; kvitto utanför repot.
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.

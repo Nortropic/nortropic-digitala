@@ -60,8 +60,10 @@ GRUND = [
 ]
 
 # Följdregler: (namn, regex på svarets text, frågor som läggs till, vad de påverkar)
+NEGATION = re.compile(r'(?i)\b(inga|ingen|inget|inte|ej|aldrig|utan|slipper)\b')
+
 FOLJDREGLER = [
-    ('bokning', re.compile(r'\bbok(a|ning|ningar|as|ar)\b|tidsbokning|boka tid', re.I), [
+    ('bokning', re.compile(r'\bbok(a|ad|ade|at|ar|as|ning|ningar|ningen)\b|tidsbokning|boka tid|kalender', re.I), [
         ('BOK1', 'C', 'bokning_tjanster', 'Vilka tjänster ska kunna bokas, hur långa är de, och behövs olika längder eller resurser (person, rum, utrustning)?'),
         ('BOK2', 'C', 'bokning_tillganglighet', 'Vilka tider är bokningsbara, hur många kan bokas samtidigt, och behövs buffertar mellan bokningar?'),
         ('BOK3', 'C', 'bokning_bekraftelse', 'Hur ska kunden få bekräftelse, och hur ska ombokning och avbokning gå till (regler, tidsgräns)?'),
@@ -235,6 +237,15 @@ def svar(kund, omgang, fil):
             nya += 1
             for namn, rx, fragor, paverkar in FOLJDREGLER:
                 m = rx.search(t)
+                if m:
+                    # negationsspärr (iakttagelse ur Kundstarts prov): "Inga bokningar via nätet, folk ringer" ska inte utlösa
+                    # bokningsfrågorna automatiskt; träffen bokförs som negerad så att utföraren avgör i fakta
+                    sats = re.split(r'[.;!?]', t[max(0, m.start() - 40):m.start()])[-1]
+                    if NEGATION.search(sats):
+                        s.setdefault('foljdregler_negerade', [])
+                        if not any(n['regel'] == namn and n['fraga_id'] == q['id'] for n in s['foljdregler_negerade']):
+                            s['foljdregler_negerade'].append({'regel': namn, 'fraga_id': q['id'], 'traff': m.group(0), 'sats': (sats + m.group(0)).strip()[-80:], 'tid': nu(), 'not': 'nämnd med negation: ingen följdfråga automatiskt; avgör i fakta om behovet finns i annan form'})
+                        continue
                 if m and not any(u['regel'] == namn and u['fraga_id'] == q['id'] for u in s['foljdregler_utlosta']):
                     s['foljdregler_utlosta'].append({'regel': namn, 'fraga_id': q['id'], 'traff': m.group(0), 'paverkar': paverkar, 'tid': nu()})
                     for fid, omr, nyckel, ftext in fragor:
@@ -351,6 +362,7 @@ def research_md(s):
         lines += ['- svar med okända fråge-id ignorerades: ' + ', '.join(x['fraga_id'] for x in s['okanda_svar']), '']
     lines += ['### Kan research.md besvara', ''] + ['- %s: %s' % (k, v) for k, v in anvandbarhet(s).items()] + ['']
     lines += ['### Följdregler som utlöstes', ''] + (['- %s ur %s ("%s") → %s' % (u['regel'], u['fraga_id'], u['traff'], u['paverkar']) for u in s['foljdregler_utlosta']] or ['- inga'])
+    lines += ['', '### Regler nämnda med negation (ingen följdfråga automatiskt; avgör i fakta)', ''] + (['- %s ur %s: "%s"' % (n['regel'], n['fraga_id'], n['sats']) for n in s.get('foljdregler_negerade', [])] or ['- inga'])
     return '\n'.join(lines) + '\n'
 
 

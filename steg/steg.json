@@ -5,7 +5,7 @@
   "uppstart": {
    "mandat": "staende",
    "syfte": "Uppstart av ett fall eller en etapp: läs lärdomarna, mandatet och arbetssättet innan något görs.",
-   "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Lärdomar klassas som observation, kundpreferens, hypotes eller dokumenterad felorsak; ingen mängd tillämpningar gör något till praxis (LARDOMAR.md). Läs KEDJA.md för vad som är mekaniskt skyddat och vad sessionen själv bär.",
+   "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Lärdomar klassas som observation, kundpreferens, hypotes eller dokumenterad felorsak; ingen mängd tillämpningar gör något till praxis (LARDOMAR.md). Läs KEDJA.md för vad som är mekaniskt skyddat och vad sessionen själv bär. Kör verktyg/fortsatt.py --kund KUNDMAPP --fall FALL för att få nästa steg laddat och NASTA.md; vid återupptagning: fortsatt.py status först.",
    "underlag": [
     {
      "fil": "kunskap/LARDOMAR.md",

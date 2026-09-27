@@ -57,6 +57,24 @@ class Intervju(unittest.TestCase):
         self.assertIn('bokningsintegrationens nivå', o2['fragor'][0]['paverkar'])
         self.assertFalse(any('kontaktformulär' in q['text'].lower() for q in o2['fragor']))
 
+    def test_bokningsregeln_traffar_bojda_former_och_kalender(self):
+        """Ur slutprovet HELHET-20260927: 'bokade besök skrivs i en Google-kalender' utlöste inte bokningsregeln."""
+        kor('start', '--kund', str(self.k), '--kanal', 'e-post', '--testdialog')
+        svar = self.k / 's.md'; svar.write_text('### C1\nMejl kommer till info@; bokade besök skrivs i en Google-kalender.\n')
+        code, r = kor('svar', '--kund', str(self.k), '--omgang', '1', '--fil', str(svar))
+        self.assertIn('bokning', r['meddelande'])
+        self.assertEqual([u['regel'] for u in iv.las(str(self.k))['foljdregler_utlosta']], ['bokning'])
+
+    def test_negerad_regel_ger_ingen_foljdfraga_men_bokfors(self):
+        """Iakttagelse från Kundstart (peer 0a): ordbaserade regler såg inte negationer."""
+        kor('start', '--kund', str(self.k), '--kanal', 'e-post', '--testdialog')
+        svar = self.k / 's.md'; svar.write_text('### C1\nInga bokningar via nätet, folk ringer.\n')
+        code, r = kor('svar', '--kund', str(self.k), '--omgang', '1', '--fil', str(svar))
+        s = iv.las(str(self.k))
+        self.assertEqual(s['foljdregler_utlosta'], []); self.assertEqual([n['regel'] for n in s['foljdregler_negerade']], ['bokning'])
+        self.assertNotIn('BOK1', json.dumps(s.get('vantande_foljdfragor', [])))
+        code, r = kor('research', '--kund', str(self.k), '--ut', str(self.k.parent / 'r.md')); self.assertIn('nämnda med negation', (self.k.parent / 'r.md').read_text())
+
     def test_motsagelse_registreras_spårbart_och_ger_foljdfraga(self):
         kor('start', '--kund', str(self.k), '--kanal', 'e-post')
         f = self.k / 'F.json'; f.write_text(json.dumps([{'nyckel': 'oppettider', 'varde': 'mån–fre 08–17', 'status': 'kunden uppger', 'kalla': 'svar C1', 'omrade': 'C'}]))
