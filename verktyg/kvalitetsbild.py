@@ -4,7 +4,8 @@
 
 Beviskedjans fynd C: varje KORNING-post får en bevisstatus och visas — korrupt (oläsbar), saknas (körkatalog eller
 kvitto borta), kvittohash (KVITTO.sha256 stämmer inte), inaktuell (laddningskvittot har ändrats sedan körningen),
-underkänd (utfallet är inte klar/svar_giltigt) eller utanför leveransen (bindningen skiljer sig från --leverans).
+underkänd (utfallet är inte klar/svar_giltigt), oavgjord (en provarkörning utan kontrollantens bedömning) eller utanför
+leveransen (bindningen skiljer sig från --leverans).
 Bara körningar med status ok och inom leveransen räknas som aktuella leveransbevis; övriga listas som historik eller
 brist och döljs aldrig. --leverans binder rapporten till leveransens revision, driftsättning och konfiguration:
 varje aktuell körning måste bära samma värden i sin bindning (kor_profil --bindning). Täckningen redovisas per profil.

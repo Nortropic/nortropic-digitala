@@ -11,8 +11,9 @@
 Runtime hittas genom NR_HOST_ROOT eller systerkatalogen "Nortropic Runtime"; den aktiva releasen läses ur
 .runtime/ap10/active.json, och profilen körs ur releasens egen kod. Mätningens vyer och axe-taggar kommer ur
 matning/PROFIL.json: tar den aktiva koden dem som parametrar (--vyer, --axe-taggar) skickas de, annars måste de vara
-lika med kodens standardvärden, annars vägras körningen. Kritikens fråga och schema kommer ur kritik/; varje
-{{PLATSHÅLLARE}} fylls med --parameter, och en fråga med kvarvarande platshållare vägras. Laddningskvittots hash och
+lika med kodens standardvärden, annars vägras körningen. Kritikens fråga och schema kommer ur den laddade
+arbetsytans kopior av kritik/-mallarna; varje {{PLATSHÅLLARE}} fylls med --parameter (avskärmade mallar tillåter inga
+parametrar), och en fråga med kvarvarande platshållare vägras. Laddningskvittots hash och
 steg binds till körningen (kritik: i frågan; provare: som --bindning; mätning: i KORNING-posten). Varje körning
 lämnar FALL/KORNING-<tid>-<profil>-<etikett>.json med argv, körkatalog, utfall och bindning (steg, mandat, beställning,
 utförare, kundmapp, repots revision, verktygens hashar, --bindning K=V). Mätprofil, kritikfråga och schema läses ur den
@@ -94,7 +95,9 @@ def bind_laddning(receipt, profil):
         path = arbetsyta / r['plats']
         if not path.is_file():
             raise Vagrad('laddat underlag saknas i arbetsytan: ' + r['plats'])
-        if r.get('sha256') and hashlib.sha256(path.read_bytes()).hexdigest() != r['sha256']:
+        if not r.get('sha256'):
+            raise Vagrad('kvittoraden saknar sha256: ' + r['plats'])
+        if hashlib.sha256(path.read_bytes()).hexdigest() != r['sha256']:
             raise Vagrad('laddat underlag ändrat sedan kvittot: ' + r['plats'])
     return arbetsyta
 
@@ -175,6 +178,8 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     fraga = laddad_fil(receipt, 'kritik/FRAGA-%s.md' % args.mall)
     schema = laddad_fil(receipt, 'kritik/SCHEMA-%s.json' % args.mall)
     policy = KONTEXT[args.mall]
+    if policy['avskarmad'] and args.parameter:
+        raise Vagrad('avskärmad bedömning (%s): inga --parameter tillåts; bedömaren får bara bilderna av det renderade resultatet' % args.mall)
     parametrar = {}
     for item in args.parameter or []:
         if '=' not in item:

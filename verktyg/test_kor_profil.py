@@ -115,7 +115,7 @@ class Kritik(Rig):
 
     def test_platshallare_fylls_och_underlaget_laggs_till(self):
         args = ['kritik', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'k-1', '--mall', 'femsekunderstest',
-                '--filer', str(self.filer), '--utforare', 'claude', '--modell', 'claude-opus-5', '--parameter', 'KONTEXT=Sajten är en kvalitetsdemo.', '--torr']
+                '--filer', str(self.filer), '--utforare', 'claude', '--modell', 'claude-opus-5', '--torr']
         code, out = self.run_cli(self.root, *args)
         self.assertEqual(code, 0, out)
         self.assertEqual(out['mall'], 'femsekunderstest')

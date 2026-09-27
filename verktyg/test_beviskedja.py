@@ -73,15 +73,20 @@ class B_LackageTillBlindBedomning(Rig):
                             '--filer', str(filer or self.filer), '--utforare', 'claude', '--modell', 'claude-opus-5', *extra, '--torr')
 
     def test_femsekunderstestet_far_varken_brief_eller_professionstext(self):
-        code, out = self.kritik('femsekunderstest', None, '--parameter', 'KONTEXT=x')
+        code, out = self.kritik('femsekunderstest')
         self.assertEqual(code, 0, out)
         self.assertEqual(out['manifest_platser'], ['VYER/a.png'])
         self.assertTrue(out['kontext_policy']['avskarmad'])
 
+    def test_femsekunderstestet_vagrar_parametrar_som_kan_bara_briefen(self):
+        code, out = self.kritik('femsekunderstest', None, '--parameter', 'KONTEXT=briefens riktning')
+        self.assertEqual(code, 2, out)
+        self.assertIn('inga --parameter', out['skal'])
+
     def test_femsekunderstestet_vagrar_bilagor_som_kan_bara_facit(self):
         filer = self.tmp / 'filer-brief.json'
         filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': 'VYER/a.png', 'vad': 'bild'}, {'kalla': '/tmp/PROJECT-BRIEF.md', 'plats': 'KUND/PROJECT-BRIEF.md', 'vad': 'brief'}]))
-        code, out = self.kritik('femsekunderstest', filer, '--parameter', 'KONTEXT=x')
+        code, out = self.kritik('femsekunderstest', filer)
         self.assertEqual(code, 2, out)
         self.assertIn('avskärmad', out['skal'])
 

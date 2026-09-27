@@ -43,7 +43,8 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    stegets obligatoriska och valfria underlag med versionskontroll och skriver `UNDERLAG.md`, `LADDNING.json` (kvitto)
    och `ANVANDNINGSNOTER.md` (skelett). Läs `UNDERLAG.md` först; den är den fullständiga listan.
 2. `python3 -B verktyg/kor_profil.py matning|kritik|provare --laddning ARBETSYTA/LADDNING.json …` — kör Runtimes profil
-   som den aktiva releasens egen kopia, med Digitalas val ur `matning/PROFIL.json` och mallarna i `kritik/`, och
+   som den aktiva releasens egen kopia, med Digitalas val ur den laddade arbetsytans `matning/PROFIL.json` och
+   `kritik/`-mallar (de laddade versionerna, verifierade mot kvittot), och
    skriver `KORNING-<tid>.json` i fallet med körkatalog, utfall och laddningskvittots hash.
 3. `python3 -B verktyg/kvalitetsbild.py --fall FALL --ut FALL/KVALITETSBILD.md` — samlar körningarnas kvitton till
    kvalitetsbilden (tekniskt prövat · professionellt bedömt · ej observerat hos verkliga användare).

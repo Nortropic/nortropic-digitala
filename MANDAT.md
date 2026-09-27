@@ -34,7 +34,7 @@ köp). "Ägaren deltar inte i prov" (DIGITALA-1-AGARBESLUT-20260926) gäller all
 En beställning bär hela det accepterade uppdraget: beredning, brief, koncept, bygge, kontroll, rättning och färdig privat
 förhandsvisning. Normala operationer och omtag inom samma uppdrag kräver inga nya beslutsposter, och det finns inga
 rutinmässiga ägarstopp före färdig sida: brief, koncept, interna kvalitetsval och vanliga rättningar går inte via
-ägaren. Ägaren får färdig leverans och rapport och lämnar därefter sin bedömning och sina synpunkter (arbetsordern HELHET-20260927 (assistentformulerad ur ägarens besked 2026-09-27; sparad ordagrant i kontoret)).
+ägaren. Ägaren får färdig leverans och rapport och lämnar därefter sin bedömning och sina synpunkter (arbetsordern HELHET-20260927, assistentformulerad ur ägarens besked 2026-09-27 och sparad ordagrant i kontoret).
 Lansering, egen domän, DNS, annonsstart eller annonsbudget, delbar länk och riktiga mottagare ligger utanför
 uppdraget tills ett uttryckligt mandat ger dem.
 
@@ -57,7 +57,7 @@ beställningssteg utan `--bestallning POST-ID`. Ett beställnings-id är namnet 
 
 ## 4. Gränser som alltid gäller
 
-Norrglänta är av ägaren underkänt som kvalitetsresultat (arbetsordern HELHET-20260927 (assistentformulerad ur ägarens besked 2026-09-27; sparad ordagrant i kontoret)): det är inte positiv
+Norrglänta är av ägaren underkänt som kvalitetsresultat (arbetsordern HELHET-20260927, assistentformulerad ur ägarens besked 2026-09-27 och sparad ordagrant i kontoret): det är inte positiv
 kvalitetsreferens, designmall eller professionspraxis, och ingen egen leverans definierar hur Digitala bygger. Dess
 tekniska körbevis (mätningar, laddningar, integrationsprov) och felreproduktioner får användas; ett lyckat
 integrationsprov är inte ett godkännande av sajten.

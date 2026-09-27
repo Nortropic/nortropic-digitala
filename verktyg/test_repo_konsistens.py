@@ -81,31 +81,36 @@ class Konsistens(unittest.TestCase):
 
 
 class MandatOchKunskapsgranser(unittest.TestCase):
-    """Etapp 2 i HELHET-20260927: inga ägarstopp, ingen automatisk praxis, inga Norrglänta-härledda stilregler."""
+    """Etapp 2 i HELHET-20260927: inga ägarstopp, ingen automatisk praxis, inga Norrglänta-härledda stilregler, i hela repot
+    (text, stegdefinition, mallar och verktygens egna texter; lärdomar, proveniens och externa källor undantagna)."""
 
-    def test_inga_agarstopp_i_steg_arbetssatt_eller_ingang(self):
-        for name in ('steg/steg.json', 'ARBETSSATT.md', 'AGENTS.md', 'MANDAT.md'):
-            text = (ROT / name).read_text(encoding='utf-8').lower()
-            self.assertNotIn('briefstopp', text, name)
+    FORBJUDET = ('briefstopp', 'två relevanta tillämpningar', 'designspecificitet före allt annat', 'exakt en primär handling',
+                 'tre dial-värden', 'två–tre riktningar')
+
+    def texter(self):
+        for path in sorted(ROT.rglob('*')):
+            if path.is_file() and '.git' not in path.parts and 'externa' not in path.parts and path.suffix in ('.md', '.json', '.py') \
+                    and path.name not in (Path(__file__).name, 'LARDOMAR.md', 'PROVENIENS.md'):
+                yield path, path.read_text(encoding='utf-8', errors='replace')
+
+    def test_inga_agarstopp_och_ingen_praxis_av_antal_i_hela_repot(self):
+        for path, text in self.texter():
+            for phrase in self.FORBJUDET:
+                self.assertNotIn(phrase.lower(), text.lower(), '%s bär det ersatta läget: %r' % (path.relative_to(ROT), phrase))
         self.assertIn('En beställning bär hela det accepterade uppdraget', (ROT / 'MANDAT.md').read_text(encoding='utf-8'))
 
-    def test_erfarenhet_klassas_och_blir_inte_praxis_av_antal(self):
+    def test_erfarenhet_klassas(self):
         text = (ROT / 'kunskap/LARDOMAR.md').read_text(encoding='utf-8')
         for word in ('observation', 'kundpreferens', 'hypotes', 'dokumenterad felorsak'):
             self.assertIn(word, text)
-        for name in ('ARBETSSATT.md', 'AGENTS.md', 'kunskap/REGISTER.md', 'kunskap/LARDOMAR.md'):
-            self.assertNotIn('två relevanta tillämpningar', (ROT / name).read_text(encoding='utf-8'), name)
+        self.assertNotIn('två relevanta tillämpningar', text)
 
     def test_kvalitetskriterierna_ar_uppgiftsmotiverade_och_norrglanta_ar_inte_referens(self):
-        text = (ROT / 'KVALITET.md').read_text(encoding='utf-8')
-        self.assertNotIn('Designspecificitet bedöms före allt annat', text)
-        self.assertIn('underkänt som kvalitetsresultat', text)
+        self.assertIn('underkänt som kvalitetsresultat', (ROT / 'KVALITET.md').read_text(encoding='utf-8'))
         self.assertIn('underkänt som kvalitetsresultat', (ROT / 'MANDAT.md').read_text(encoding='utf-8'))
-        fraga = (ROT / 'kritik/FRAGA-renderingslasning.md').read_text(encoding='utf-8')
-        self.assertNotIn('exakt en primär handling', fraga)
         krav = json.loads((ROT / 'matning/PROFIL.json').read_text(encoding='utf-8'))['krav']
-        self.assertIn('briefen', krav['h1']); self.assertIn('briefen', krav['handling'])
-
+        self.assertIn('briefen', krav['h1'])
+        self.assertIn('briefen', krav['handling'])
 
 
 if __name__ == '__main__':
