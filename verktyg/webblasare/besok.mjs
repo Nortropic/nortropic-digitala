@@ -122,7 +122,8 @@ if (!a.torr && !qaLage) {
   const arbets = mkdtempSync(join(tmpdir(), 'besok-'));
   let res;
   if (ut === 'claude') {
-    const env = { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'sv_SE.UTF-8', TMPDIR: process.env.TMPDIR || '/tmp' };
+    // samma rena miljö som Runtimes Claude-profil (PATH, HOME, USER, LOGNAME, LANG, TMPDIR): inloggningen bor i nyckelringen, inga nycklar ärvs
+    const env = { PATH: process.env.PATH, HOME: process.env.HOME, USER: process.env.USER, LOGNAME: process.env.LOGNAME, LANG: 'sv_SE.UTF-8', TMPDIR: process.env.TMPDIR || '/tmp' };
     res = spawnSync('claude', ['-p', '--output-format', 'json', '--mcp-config', join(a.ut, 'mcp.json'), '--strict-mcp-config', '--allowedTools', 'mcp__webblasare__*', '--disallowedTools', 'Bash,Read,Write,Edit,MultiEdit,NotebookEdit,Glob,Grep,LS,WebFetch,WebSearch,Agent,Task,TodoWrite,Skill', '--setting-sources', 'user', '--max-turns', '60', ...(a.modell ? ['--model', a.modell] : [])], { input: prompt, encoding: 'utf8', env, cwd: arbets, maxBuffer: 50 * 1024 * 1024, timeout: 25 * 60 * 1000 });
   } else {
     const cfg = ['-c', 'mcp_servers.webblasare.command="node"', '-c', 'mcp_servers.webblasare.args=' + JSON.stringify(mcpArgs)];
