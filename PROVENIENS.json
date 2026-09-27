@@ -6,21 +6,21 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "e77bada0eb2c8b7773c3cbafa45a6b3cce84f004c6e1c1d4f805b5c7e367552d",
-   "byte": 17829,
+   "sha256": "ca050c6ccf7163f2ab5a44f1a12997e2775c263a42a4e237b270c470361d4873",
+   "byte": 17904,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27",
+   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis)",
    "sha256_vid_flytt": "68eac8cc627932bd431d78a7198d13117ccb8c217ba567397fdd9f02fe753034"
   },
   {
    "fil": "kunskap/LARDOMAR.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/LARDOMAR.md",
-   "sha256": "d28f7dfb12db0736e00d0dd2d4e902d8e070d7ec163c9ef2a4a547fe1c4850e6",
-   "byte": 22201,
+   "sha256": "057d3a9dc2db09cb8b6581524dbcd14202bcd775b9279cb29d67f7c52599d378",
+   "byte": 23409,
    "kallans_mtime_utc": "2026-09-27T06:05:45Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte t.o.m. L23; nya poster skrivs här; huvudet ändrat 2026-09-27 (hemvist), i övrigt oförändrat",
+   "not": "byte för byte t.o.m. L23; nya poster skrivs här; huvudet ändrat 2026-09-27 (hemvist), i övrigt oförändrat; huvudet skrivet om 2026-09-27 (HELHET etapp 2: klassning i stället för trappa, Norrglänta inte referens), L16 klassad",
    "sha256_vid_flytt": "bbdef0425bba0d64baf0748deaae1ef960d7b9fd61c430146b01b751239dfe7e"
   },
   {

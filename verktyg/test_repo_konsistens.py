@@ -80,5 +80,33 @@ class Konsistens(unittest.TestCase):
                 self.assertIsNone(bad.search(text), str(path))
 
 
+class MandatOchKunskapsgranser(unittest.TestCase):
+    """Etapp 2 i HELHET-20260927: inga ägarstopp, ingen automatisk praxis, inga Norrglänta-härledda stilregler."""
+
+    def test_inga_agarstopp_i_steg_arbetssatt_eller_ingang(self):
+        for name in ('steg/steg.json', 'ARBETSSATT.md', 'AGENTS.md', 'MANDAT.md'):
+            text = (ROT / name).read_text(encoding='utf-8').lower()
+            self.assertNotIn('briefstopp', text, name)
+        self.assertIn('En beställning bär hela det accepterade uppdraget', (ROT / 'MANDAT.md').read_text(encoding='utf-8'))
+
+    def test_erfarenhet_klassas_och_blir_inte_praxis_av_antal(self):
+        text = (ROT / 'kunskap/LARDOMAR.md').read_text(encoding='utf-8')
+        for word in ('observation', 'kundpreferens', 'hypotes', 'dokumenterad felorsak'):
+            self.assertIn(word, text)
+        for name in ('ARBETSSATT.md', 'AGENTS.md', 'kunskap/REGISTER.md', 'kunskap/LARDOMAR.md'):
+            self.assertNotIn('två relevanta tillämpningar', (ROT / name).read_text(encoding='utf-8'), name)
+
+    def test_kvalitetskriterierna_ar_uppgiftsmotiverade_och_norrglanta_ar_inte_referens(self):
+        text = (ROT / 'KVALITET.md').read_text(encoding='utf-8')
+        self.assertNotIn('Designspecificitet bedöms före allt annat', text)
+        self.assertIn('underkänt som kvalitetsresultat', text)
+        self.assertIn('underkänt som kvalitetsresultat', (ROT / 'MANDAT.md').read_text(encoding='utf-8'))
+        fraga = (ROT / 'kritik/FRAGA-renderingslasning.md').read_text(encoding='utf-8')
+        self.assertNotIn('exakt en primär handling', fraga)
+        krav = json.loads((ROT / 'matning/PROFIL.json').read_text(encoding='utf-8'))['krav']
+        self.assertIn('briefen', krav['h1']); self.assertIn('briefen', krav['handling'])
+
+
+
 if __name__ == '__main__':
     unittest.main()

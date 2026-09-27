@@ -9,8 +9,8 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 |---|---|---|---|---|
 | uppstart | stående | lärdomar, mandat, arbetssätt | — | läsning |
 | research | stående | referensjakt, källtabell | — | kundmappen (research.md) |
-| brief | beställning | samlad brief, riktning, kedjekontroll på briefen | läsare för granskning | kundmappen (PROJECT-BRIEF.md); ägarens briefstopp |
-| koncept | beställning | Design Read, dial-värden, 2–3 riktningar på namngivna axlar | kritikprofilen (designkritik-komp) | privat etappmapp |
+| brief | beställning | samlad brief, riktning, kedjekontroll på briefen | läsare för granskning | kundmappen (PROJECT-BRIEF.md); inget ägarstopp |
+| koncept | beställning | lösningsalternativ utreds internt, en motiverad riktning väljs utan ägarstopp (antal alternativ efter uppgiften; Design Read och namngivna axlar är metoder, inte universella värden) | kritikprofilen (designkritik-komp) | privat etappmapp |
 | bygge | beställning | bygget i kundrepot | — (dagens byggväg) | kundrepot |
 | redaktionellt-pass | beställning | faktatrohet och redaktionell kvalitet | läsare | kundrepot (content) |
 | matning | stående | modellfri mätning: vyer, rubrikrader, handling, axe, Lighthouse, detektor | mätprofilen | körkatalog i Runtime, pekare i fallet |
@@ -54,4 +54,14 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
 
 Varje fall lämnar: lärdomspost (eller "inga nya lärdomar" med skäl) i `kunskap/LARDOMAR.md`; användningsnot per
 laddat underlag (fyra utfall) i fallets `ANVANDNINGSNOTER.md`, sammanfattad i kontorsposten; förslagsrad till planens
-block "FÖRSLAG ATT PRÖVA I NÄSTA FALL". Avstämning av ett underlag efter två relevanta tillämpningar.
+block "FÖRSLAG ATT PRÖVA I NÄSTA FALL". Användningsnoterna följs upp per underlag; ingen mängd tillämpningar gör något till
+praxis av sig själv. Erfarenhet klassas som observation, kundpreferens, hypotes eller dokumenterad felorsak
+(`kunskap/LARDOMAR.md`), och ett gemensamt arbetssätt behöver egen motivering, tillämpningsområde, stöd och prövning
+innan det skrivs in här eller i `KVALITET.md`. Ett arbetssätt blir inte ogiltigt bara för att det också användes i
+Norrglänta.
+
+## Inga rutinmässiga ägarstopp
+
+En beställning bär hela uppdraget till färdig privat förhandsvisning (`MANDAT.md` §2). Brief, koncept, interna
+kvalitetsval och vanliga rättningar går inte via ägaren; en intern gransknings- och rättningsloop (`KVALITET.md`)
+avgör omtag. Ägaren får den färdiga leveransen och rapporten och lämnar därefter sin bedömning.

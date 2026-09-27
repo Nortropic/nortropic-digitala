@@ -3,20 +3,32 @@
 Professionsfil i Digitala-repots `kunskap/` (flyttad hit 2026-09-27 från kontorets `evidence/digitala/local/kunskap/`; se
 `PROVENIENS.md`). Läses vid uppstart av nästa fall. En post per lärdom med fälten
 **observation** (vad hände, fall, bevispekare) · **möjlig generell lärdom** (formulerad som hypotes) · **lokal
-preferens?** · **tillämpning** (fall och vad som gjordes) · **kvarvarande osäkerhet** · **läge**. Lägen: *observerad en
-gång (fall)* · *återfunnen i ett andra fall (fall)* · *använd med konkret resultat (fall: vad)*. Två fall bekräftar inte
-en generell regel eller ett orsakssamband, och det skrivs inte så. Inga statusord som OBSERVERAD/BEKRÄFTAD.
+preferens?** · **tillämpning** (fall och vad som gjordes) · **kvarvarande osäkerhet** · **läge** · **klass**.
 
-**Avstämning** efter två *relevanta* tillämpningar (inte efter två fall i kalendern), per post och per underlag i
-`REGISTER.md`, med fyra utfall: *inte tillämpligt på de prövade uppgifterna* · *inte använt trots att det var relevant* ·
-*använt utan tydligt ytterligare värde* · *använt med observerad nytta eller nackdel*. Kvalitet, konkret felupptäckt,
-omarbete, kostnad och ägarbörda bedöms tillsammans; "förhindrade fel" räknas inte utan belägg för vad som faktiskt
-hände. Ett underlag som inte ändrade kod kan ha gjort en relevant kontroll; inga fynd kan betyda en bra kandidat.
+**Klass** (sedan 2026-09-27, arbetsordern HELHET-20260927): varje post är en *observation* (vad som hände, utan
+generalisering), en *kundpreferens* (gäller den kunden), en *hypotes* (ett möjligt generellt samband som inte är
+prövat) eller en *dokumenterad felorsak* (ett reproducerat fel med känd orsak och rättelse). Ingen mängd tillämpningar
+gör en post till praxis av sig själv; den gamla trappan "observerad en gång · återfunnen · använd med konkret resultat"
+räknar inte längre. Ett gemensamt arbetssätt uppstår bara som ett eget beslut med motivering, tillämpningsområde, stöd
+och prövning, skrivet i `ARBETSSATT.md` eller `KVALITET.md`. Ett arbetssätt blir inte ogiltigt för att det också
+användes i Norrglänta, och ingen lärdom ur Norrglänta upphöjs till praxis för att den kom därifrån.
+
+**Uppföljning** per underlag sker genom användningsnoterna (fyra utfall: *påverkade ett konkret val, en ändring eller ett
+fynd* · *användes som kontroll, ingen ändring behövdes* · *inte tillämpligt* · *nådde inte arbetet*), per fall, i
+`REGISTER.md`. Kvalitet, konkret felupptäckt, omarbete, kostnad och ägarbörda bedöms tillsammans; "förhindrade fel"
+räknas inte utan belägg för vad som faktiskt hände. Uppföljningen leder till ett förslag, aldrig till praxis av sig själv.
 **Avslut** betyder att framtida laddning eller tillämpning stängs av (raden märks i registret); källversioner,
 utvärderingar och historik bevaras; ingen mapp raderas och ingen leverans återställs blint.
 
 Lokala preferenser skrivs inte in som lärdomar. Norrgläntas lokala preferenser (Familjen Grotesk, solgult, ledgern,
-etiketten "Skicka förfrågan") står i dess brief.
+etiketten "Skicka förfrågan") står i dess brief. Norrglänta är underkänt som kvalitetsresultat (`MANDAT.md` §4):
+designregler som härleddes ur det fallet (en handling per vy, rubrik på två rader, tre riktningar, dial-värden) är
+hypoteser eller kundpreferenser, inte praxis.
+
+**Klassning av L1–L23 (kedjedrivarens läsning 2026-09-27, kan omprövas post för post):** dokumenterad felorsak: L3, L5,
+L6, L12, L13, L15, L17, L21, L22, L23 · observation: L2, L7, L11, L14, L19 · hypotes: L1, L4, L8, L9, L10, L16, L18, L20
+(L16 är Norrglänta-härledd och gäller inte som regel om antal riktningar) · kundpreferens: ingen post (Norrgläntas står
+i briefen).
 
 ---
 
@@ -152,7 +164,7 @@ etiketten "Skicka förfrågan") står i dess brief.
   skärmbildsskriptet (H1-rader, CTA i vyn) hittade fel ögat missade i tre versioner; (4) detektorns tal är ingen
   rangordning — låga tal kan bero på att kompen gör minst; (5) fotohypoteser kräver egna bilder.
 - **Lokal preferens?** Delvis: bäraren (säsongsobjektet) är Norrgläntas; metodlärdomarna är generella.
-  **Tillämpning**: nästa omgång komps ("Ljuset med Planen") och nästa fall.
+  **Tillämpning**: nästa omgång komps ("Ljuset med Planen") och nästa fall. **Klass** (2026-09-27): hypotes, Norrglänta-härledd; inte en regel om antal riktningar eller dial-värden.
 - **Kvarvarande osäkerhet**: ägarens omdöme; rörelse och verklig läsbarhet är osedda. **Läge**: ny.
 
 

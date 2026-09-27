@@ -25,7 +25,7 @@
     },
     "brief": {
       "mandat": "bestallning",
-      "syfte": "Samlad brief med rekommenderad visuell riktning; ägarens briefstopp följer.",
+      "syfte": "Samlad brief med rekommenderad visuell riktning; riktningen väljs internt utan ägarstopp och redovisas i leveransen.",
       "anvisning": "Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Briefen och ACCEPT vinner över råd; avvikelser i briefens konfliktrad.",
       "underlag": [
         {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Design principles; Process; Restraint and self-critique"},
@@ -37,7 +37,7 @@
     },
     "koncept": {
       "mandat": "bestallning",
-      "syfte": "Konceptsteg före bygget: Design Read, tre dial-värden och två–tre riktningar på namngivna axlar (L16).",
+      "syfte": "Konceptsteg före bygget: lösningsalternativ utreds internt och en motiverad riktning väljs utan ägarstopp; Design Read och namngivna axlar är metoder, antalet alternativ följer uppgiften, inga universella dial-värden (L16 är en hypotes, inte praxis).",
       "anvisning": "Läs Taste §0 'Brief Inference' och §1 'The Three Dials' före Design Read; §4.1–4.3 och §4.7–4.8 före komp. Konstanterna ska omfatta det som redan fungerar i produktion; en fjärde axel 'rytm' nedanför vikningen (L16). Taste är råd och mallvarning, inte mall.",
       "underlag": [
         {"fil": "kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md", "klass": "profession", "obligatorisk": true, "delar": "§0 (0.A–0.D); §1 (1.A–1.C); §4.1–4.3; §4.7–4.8 — inte §2, §3, §5, §6–9"},

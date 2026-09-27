@@ -6,7 +6,7 @@ Runtime main `b603d91` (aktiv release `03e776bd`), kontoret och detta repo 2026-
 
 | Led i Digitalas kedja | Mekaniskt (Runtime eller annan mekanism) | Sessionsburet + dokumenterade regler |
 |---|---|---|
-| Mandat och beställning | — | ägarens ord i kontorets logg; `MANDAT.md`; laddningen vägrar ett beställningssteg utan post-id (verktyg, inte spärr: sessionen kan låta bli att köra verktyget) |
+| Mandat och beställning | — | ägarens ord i kontorets logg; `MANDAT.md` (en beställning bär hela uppdraget, inga ägarstopp före färdig sida); laddningen vägrar ett beställningssteg utan post-id (verktyg, inte spärr: sessionen kan låta bli att köra verktyget) |
 | Underlagsladdning per steg | `verktyg/ladda_steg.py`: versionspinnar, klasser, kvitto, vägran vid saknat/fel/sammanblandning | att verktyget körs och `UNDERLAG.md` läses är sessionens ansvar (`AGENTS.md`); ingen mekanism tvingar en byggsession att ladda |
 | Research, brief, koncept, bygge, redaktionellt pass | — | helt sessionsburet i kundrepot och kundmappen; Vercel-driftsättning bakom inloggning är plattformens skydd, inte Runtimes |
 | Mätning | Runtimes mätprofil: pinnade verktyg, sandlådad detektor, hemlighetsregler, kvitto med hashar; från D037 Digitalas vyer och taggar som parametrar | valet av adress och driftsättning; grep efter nyckeln i utdata (regel L23) |

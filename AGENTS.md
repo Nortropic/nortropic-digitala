@@ -18,7 +18,11 @@ Regler:
   `matning/PROFIL.json` och binder körningen till laddningskvittot. Runtime prövar form och kör; innehållet är vårt.
 - Kundmappen ges med `--kund` och ligger utanför repot: kontorets privata `evidence/digitala/local/<kund>/` (se
   `kunder/README.md`); beställningen namnger kunden. Kundfiler och professionsfiler hålls i skilda klasser; en
-  kundpreferens blir aldrig praxis utan fältet "lokal preferens?" och två relevanta tillämpningar (`LARDOMAR.md`).
+  kundpreferens blir aldrig praxis, och ingen mängd tillämpningar gör något till praxis: ett gemensamt arbetssätt kräver
+  egen motivering, tillämpningsområde, stöd och prövning och skrivs som beslut i `ARBETSSATT.md` eller `KVALITET.md`
+  (`kunskap/LARDOMAR.md`, klassning).
+- En beställning bär hela uppdraget till färdig privat förhandsvisning; inga rutinmässiga ägarstopp före färdig sida
+  (`MANDAT.md` §2). Norrglänta är underkänt som kvalitetsresultat och inte referens (`MANDAT.md` §4).
 - Inga nycklar, adresser till skyddade sajter, kunduppgifter eller körutdata i repot. Skyddsundantag ges bara som
   privat fil till Runtimes profiler: en fil med rättighet exakt 0600, en rad om minst 16 tecken, utanför `/tmp`,
   `/etc` och `/var/folders` (Runtime D034), i `~/.nortropic-hemligheter/<kund>/`, given som `--undantag-fil` till
