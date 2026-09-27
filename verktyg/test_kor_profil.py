@@ -113,7 +113,7 @@ class Kritik(Rig):
         self.filer = self.tmp / 'filer.json'
         self.filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': 'VYER/a.png', 'vad': 'bild'}]))
 
-    def test_platshallare_fylls_och_underlaget_laggs_till(self):
+    def test_avskarmad_mall_bar_bara_bilden(self):
         args = ['kritik', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'k-1', '--mall', 'femsekunderstest',
                 '--filer', str(self.filer), '--utforare', 'claude', '--modell', 'claude-opus-5', '--torr']
         code, out = self.run_cli(self.root, *args)

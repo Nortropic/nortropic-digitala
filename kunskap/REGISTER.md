@@ -51,12 +51,29 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 
 ## C. Egna, härledda arbetsunderlag (skrivna av kedjedrivaren; "härlett ur" med källa och rad står i varje fil)
 
-| Fil här | Härlett ur | Roll |
-|---|---|---|
-| `referensjakt.md` | webbgrundens `skills/nortropic-plan/references/inspirationskallor.md` @ `e4c8c52` (rad 1–60), Norrgläntas brief §5 och jämförelsens §3.3 | Research: kandidater, budget som frågor, sedd/läst, betyg som filter |
-| `redaktionellt-pass.md` | copy-blocklistens strukturregler och content-designerns sidregler (webbgrunden @ `e4c8c52`), frontend-design "More on writing in design" (fil 1), Norrgläntas fynd | Redaktionellt pass (P2) och fråga i granskning D |
-| `formularsakerhet.md` | webbgrundens `skills/nortropic-prelaunch/references/security-checklist.md` @ `e4c8c52` §3 (rad 70–82), Norrgläntas brief §3 och den riktade kontrollens område 2 | Bygge av formulär; kodläsningsfrågor i granskning D |
-| `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | Uppstart av nästa fall (P4); klassning och uppföljning |
+| Fil här | Härlett ur | Form | Roll | Följer inte med |
+|---|---|---|---|---|
+| `referensjakt.md` | webbgrundens `skills/nortropic-plan/references/inspirationskallor.md` @ `e4c8c52` (rad 1–60), Norrgläntas brief §5 och jämförelsens §3.3 | metodunderlag | Research: kandidater, budget som frågor, sedd/läst, betyg som filter | — |
+| `redaktionellt-pass.md` | copy-blocklistens strukturregler och content-designerns sidregler (webbgrunden @ `e4c8c52`), frontend-design "More on writing in design" (fil 1), Norrgläntas fynd | metodunderlag | Redaktionellt pass (P2) och fråga i granskning D | — |
+| `formularsakerhet.md` | webbgrundens `skills/nortropic-prelaunch/references/security-checklist.md` @ `e4c8c52` §3 (rad 70–82), Norrgläntas brief §3 och den riktade kontrollens område 2 | metodunderlag | Bygge av formulär; kodläsningsfrågor i granskning D | — |
+| `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | lärdomsfil | Uppstart av nästa fall (P4); klassning och uppföljning | — |
+| `beredning.md` | HELHET-20260927 avsnitt 3; det arkiverade repots interventionsbeslut (`agents/project-planner.md` @ `e4c8c52` process 0) och input gate; etablerad metodlitteratur namngiven i filen | metodunderlag | Beredning: elva svar, proportion, metodval efter problem; laddas av kontorets beredning (AP-06 `forvaltning.problem`) | det gamla repots input gate, kapacitetskatalog och maskinläsbara plannerschema (agentbundna) |
+| `research-underlag.md` | det arkiverade repots forskningskontrakt v3.1.0 (`skills/nortropic-plan/references/research-kontrakt-v3.md` @ `e4c8c52`), generaliserat; sökintention och kanalobservationer nya | metodunderlag (kontrakt utan pinning) | Research: ryggrad i 18 sektioner, faktadisciplin, kontrollrad | hash-pinning av kontraktet, paketmoduler (lokal-se som paket), kapacitetssignaler |
+| `juridikflaggor.md` | det arkiverade repots `skills/nortropic-plan/references/juridikflaggor.md` och `nortropic-prelaunch/references/legal-requirements-se.md` @ `e4c8c52` | metodunderlag | Brief §10 och prelaunch: rapportera, aldrig avgöra | modulstatus 'hanterad/ohanterad' som grind; nod-3-stoppet |
+| `brief-mall.md` | det arkiverade repots briefstruktur (`agents/project-planner.md` @ `e4c8c52` §1–§7 och kalibreringsprofilen), omgjord till §0–§13 utan fast primärhandling, fast sidmall eller assurance-rad | mall | Brief: mall med bevisregel | fast primärhandling, fast sidmall, assurance-rad, maskinläsbart output-schema |
+| `bild.md` | det arkiverade repots `skills/nortropic-bild` (SKILL, behandling.md, slot-schema.md) @ `e4c8c52`; verktygen `verktyg/bild/*.mjs` kopierade därifrån | metodunderlag + körbara verktyg (`verktyg/bild/treatment.mjs`, `brand.mjs`, oförändrade) | Brief §8 och bygge: anspråk, licens, art direction, beskärning, storlekar, optimering | `fetch-images.mjs` (generering via fal.ai), `score.mjs` (poängande gallring), bildbiblioteket utanför repot |
+| `bygge-referens.md` | det arkiverade repots `skills/nortropic-stack` (+references), `agents/stack-builder.md`, `nortropic-init` @ `e4c8c52`, generaliserat från fast stack till krav och mönster | metodunderlag | Bygge: krav på resultatet, mönster med skäl, browsergranskning under bygget | fast stack (Next.js 15/Tailwind 4/shadcn), `profile.ts`/`business.ts`-kontrakten, scaffold-skript, arbetsloggens format |
+| `copy-kontroll.md` | det arkiverade repots `skills/nortropic-antislop/references/copy-blocklist.md` och `agents/content-designer.md` @ `e4c8c52`, från lag till rapport; verktyget `verktyg/copy_kontroll.py` | metodunderlag + körbart verktyg (`verktyg/copy_kontroll.py`, nyskrivet) | Redaktionellt pass: rapport att rätta eller motivera | poängen och avdragen, content-humanizer-skillen, sentence-case som regel |
+| `seo.md` | det arkiverade repots `skills/nortropic-seo-lokal/SKILL.md` @ `e4c8c52`, generaliserat från lokal formel till sökintention och lägen; verktyget `verktyg/seo_kontroll.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget seo: struktur, teknik, strukturerad data som sanning, rapport | "[tjänst] i [stad]" som universell formel; ortssidor som krav; agentens lägen |
+| `seo-lokal.md` | samma skill och `packs/lokal-se` @ `e4c8c52` (skärpningar) | metodunderlag (villkorat: lokal/hybrid) | Steget seo när briefen är lokal | paketmaskineriet, grindlinser, `business.ts` som källa (nu VERKSAMHET.json) |
+| `sokkonsol.md` | det arkiverade repots `scripts/gsc-setup.mjs` och `gsc-launch-steps.md` @ `e4c8c52`; Googles API-dokumentation (2026-09-27); verktyget `verktyg/sokkonsol.py` (nyskrivet, stdlib) | metodunderlag + körbart verktyg | Steget sokkonsol och lansering | googleapis-beroendet, `verification.ts`-skrivningen, DNS-varianten som standard |
+| `lokal-synlighet.md` | det arkiverade repots `gbp-checklist.md` och `swedish-directories.md` @ `e4c8c52`; verktyget `verktyg/lokal_synlighet.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget lokal-synlighet | branschspecifika kategoriexempel som regel; TESTKLIENT-fältet (nu `fiktiv`) |
+| `annonser.md` | nyskrivet (fanns inte i det arkiverade repot); Google Ads- och Meta Marketing-API:ernas objektformer; verktyget `verktyg/annonsberedning.py` | metodunderlag + körbart verktyg | Steget annonsberedning | live-överföring (kräver åtkomst som saknas) |
+| `uppfoljning.md` | det arkiverade repots spridda mätregler (händelser, Consent Mode, UTM på företagsprofilens länk) @ `e4c8c52`, samlade; verktyget `verktyg/uppfoljning.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget uppfoljning; leveransens bedömningsplan | Vercel Analytics som standardval |
+| `prelaunch.md` | det arkiverade repots `skills/nortropic-prelaunch` (Gate 0–7, lighthouse-targets, security-checklist, legal-requirements-se) @ `e4c8c52`; verktyget `verktyg/prelaunch.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget prelaunch | fixloopens rundräknare, agenterna, Vercel-bypass, Resend-konstanter, `profile.ts`-läsningen |
+| `lansering.md` | det arkiverade repots `workflows/nortropic-cutover.js` (fas 1–3) och `gsc-launch-steps.md` @ `e4c8c52`; verktyget `verktyg/lansering.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget lansering | de aldrig byggda faserna 4–7 som stubbar; operatörsemitterade kommandon |
+| `drift.md` | det arkiverade repots efterförvaltning (steward, retro, final-touches) @ `e4c8c52`, omgjort till driftkontroll utan agenter; verktyget `verktyg/drift_kontroll.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget drift | systemdoktor, nattskift, självförbättringstrappan |
+| `referenser-professionella.md` | det arkiverade repots `skills/nortropic-antislop/references/premium-checklist.md` och `premium-bevis.md` @ `e4c8c52` (exemplar verifierade 2026-07-27) | referensbibliotek (valfritt) | Koncept och kritik: jämförelse med motivering, inte kopiering | PK-poängen, F-filtret som grind, design-blocklistan |
 
 ## D. Koppling per underlag — steg och utförare · när det läses och vilka delar · uppgift eller kontroll · vid konflikt
 
@@ -75,6 +92,24 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `redaktionellt-pass.md` | Redaktionellt pass (kedjedrivaren); granskning D som fråga | Hela (en sida) | Redaktionell kvalitet och kedjans innebörd | Stöd för bedömning, inte förbud |
 | `formularsakerhet.md` | Bygge av formulär (kedjedrivaren); granskning D | Hela (kort) | Honeypot, en klocka, servervalidering, fel | ACCEPT:s demogränser vinner (ingen sändning) |
 | `LARDOMAR.md` | Uppstart av nästa fall (kedjedrivaren) | Hela | P4 | — |
+| P-C Hallmark (`externa/hallmark-SKILL-13ac0ec7.md`) | Kritik (valfritt; följer med manifestet för designkritik och renderingsläsning) | Kritikröstens metod (S5) | En lins bland flera; fynd bedöms mot KVALITET.md | ingen egen stilregel; briefen vinner |
+| P-A design.md (`externa/google-design-md-README-9bf8eae6.md`) | Bygge (valfritt) | "The Format", "lint" | DESIGN.md som riktningsfil i kundrepot; lint med pinnat paket 0.4.0 | formatet beskriver, bestämmer inte |
+| `beredning.md` | Beredning (kontorets beredare och kedjedrivaren) | Hela | Elva svar, proportion, metodval efter problem | ägarens accepterade uppdrag vinner |
+| `research-underlag.md` | Research (kedjedrivaren) | Hela; referensjakt.md för sektion 13 och 7 | Ryggrad, faktadisciplin, kontrollrad | — |
+| `juridikflaggor.md` | Brief §10; prelaunch | Tabellen och reglerna | Flaggor sätts på observation; rapporteras, avgörs av människa | ingen konflikt möjlig: rapport |
+| `brief-mall.md` | Brief (kedjedrivaren) | Hela | Briefens §0–§13 med bevisregel | briefens konfliktrad |
+| `bild.md` | Brief §8; bygge | Anspråk, val och licens, art direction; vid bygget beskärning, storlekar, verktygen | Bildkompetensens sju delar | kundens rättighetsläge vinner |
+| `bygge-referens.md` | Bygge (kedjedrivaren eller Codex) | Hela | Krav på resultatet; mönster med skäl | briefens §9 vinner |
+| `copy-kontroll.md` | Redaktionellt pass | Hela | Rapporten rättas eller motiveras | kundens röst vinner med motivering |
+| `referenser-professionella.md` | Koncept (valfritt); kritik | Jämförelsedimensionerna och urvalet | Jämförelse med motivering | briefen vinner; ett drag kan vara "gäller inte" |
+| `seo.md`, `seo-lokal.md` | Steget seo (kedjedrivaren) | Hela; seo-lokal bara vid lokal/hybrid | Struktur, teknik, strukturerad data; rapport ur seo_kontroll.py | briefens §5 vinner |
+| `sokkonsol.md` | Steget sokkonsol; lansering | Hela | Plan, live med åtkomst, tolkning | fiktiv verksamhet: vägras |
+| `lokal-synlighet.md` | Steget lokal-synlighet | Hela | Datablad, NAP-kontroll | inte tillämpligt utanför lokal räckvidd |
+| `annonser.md` | Steget annonsberedning | Hela | Kanalplan → PAUSED-utkast; resultatläsning | inget mandat: ingen spendering |
+| `uppfoljning.md` | Steget uppfoljning; leverans | Hela | Mätplan, kontroll mot bygget, läsning | samtycke före spårning |
+| `prelaunch.md` | Steget prelaunch | Hela | Åtta grindar som rapport | juridik: människa |
+| `lansering.md` | Steget lansering; drift | Hela | Plan, kontroll, återgång | bara med beställning som namnger lansering |
+| `drift.md` | Steget drift | Hela | Driftkontroll, incident, beroendeunderhåll | ingen självläkning |
 
 **Laddning per steg** (typisk last): research 1 fil (kort) · brief §5 fil 1 (9 KB) + ev. 7 (8 KB) · bygge 1, 6 (17 KB), ev. 5
 (27 KB) och `formularsakerhet.md` · redaktionellt pass `redaktionellt-pass.md` + fil 1:s skrivavsnitt · granskning D 2, 3,

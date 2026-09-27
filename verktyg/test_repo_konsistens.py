@@ -36,6 +36,8 @@ class Konsistens(unittest.TestCase):
         kund.mkdir()
         for name in ('PROJECT-BRIEF.md', 'research.md', 'TESTDATA.md'):
             (kund / name).write_text('syntetisk kundfil\n')
+        for name in ('VERKSAMHET.json', 'DRIFT.json'):
+            (kund / name).write_text('{"schema": 1, "syntetisk": true}\n')
         for name, step in data['steg'].items():
             receipt = ladda_steg.ladda(ROT, name, tmp / name, kund=kund,
                                        bestallning='PROV-BESTALLNING-1' if step['mandat'] == 'bestallning' else None)
@@ -71,9 +73,21 @@ class Konsistens(unittest.TestCase):
             path = ROT / row['fil']
             self.assertTrue(path.is_file(), row['fil'])
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), row['sha256'], row['fil'] + ' har ändrats sedan migreringen')
+        md = (ROT / 'PROVENIENS.md').read_text(encoding='utf-8')
+        for row in prov['filer']:
+            path = ROT / row['fil']
+            self.assertIn('`%s`' % row['fil'], md, row['fil'] + ' saknas i PROVENIENS.md')
+            self.assertIn('`%s…`' % row['sha256'][:16], md, row['fil'] + ': PROVENIENS.md bär inte den gällande hashens första 16 tecken')
+            self.assertEqual(path.stat().st_size, row['byte'], row['fil'] + ': PROVENIENS.json byte stämmer inte med filen')
+            self.assertRegex(md, r'\| `%s` \| [^|]+ \| `[0-9a-f]{16}…`[^|]* \| %d \|' % (re.escape(row['fil']), row['byte']), row['fil'] + ': PROVENIENS.md-raden bär inte gällande byte')
+            if row.get('sha256_vid_flytt'):
+                self.assertIn('(flyttad: `%s…`)' % row['sha256_vid_flytt'][:16], md, row['fil'] + ': PROVENIENS.md-raden saknar den flyttade versionen')
+            self.assertIn('| ' + row['not'] + ' |', md, row['fil'] + ': PROVENIENS.md-radens not skiljer sig från PROVENIENS.json')
+        noter = [r['not'] for r in prov['filer'] if 'ändrad 2026' in r['not']]
+        self.assertEqual(len(noter), len(set(noter)), 'två ändrade filer har identisk ändringsnot: noten ska beskriva filens egen ändring')
 
     def test_inga_hemligheter_eller_skyddade_adresser_i_repot(self):
-        bad = re.compile(r'vercel\.app|VERCEL_AUTOMATION_BYPASS_SECRET=|\.secret\b.*=|dpl_[A-Za-z0-9]{10,}')
+        bad = re.compile(r'[a-z0-9-]{3,}\.vercel\.app|VERCEL_AUTOMATION_BYPASS_SECRET=|\.secret\b.*=|dpl_[A-Za-z0-9]{10,}')  # en förhandsvisningsadress (etikett före suffixet), inte suffixet självt
         for path in ROT.rglob('*'):
             if path.is_file() and '.git' not in path.parts and path.suffix in ('.md', '.json', '.py', '.txt') and path.name != Path(__file__).name:
                 text = path.read_text(encoding='utf-8', errors='replace')

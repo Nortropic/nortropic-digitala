@@ -83,6 +83,16 @@ class B_LackageTillBlindBedomning(Rig):
         self.assertEqual(code, 2, out)
         self.assertIn('inga --parameter', out['skal'])
 
+    def test_avskarmad_vagran_galler_ord_inte_delstrangar(self):
+        filer = self.tmp / 'filer-ordgrans.json'
+        filer.write_text(json.dumps([{'kalla': '/tmp/kritikvy.png', 'plats': 'VYER/kritikvy-390.png', 'vad': 'bild'}]))
+        code, out = self.kritik('femsekunderstest', filer)
+        self.assertEqual(code, 0, out)
+        for plats in ('VYER/kritik-svar.png', 'VYER/briefen.png', 'VYER/researchens-bild.png'):
+            filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': plats, 'vad': 'bild'}]))
+            code, out = self.kritik('femsekunderstest', filer)
+            self.assertEqual(code, 2, (plats, out))
+
     def test_femsekunderstestet_vagrar_bilagor_som_kan_bara_facit(self):
         filer = self.tmp / 'filer-brief.json'
         filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': 'VYER/a.png', 'vad': 'bild'}, {'kalla': '/tmp/PROJECT-BRIEF.md', 'plats': 'KUND/PROJECT-BRIEF.md', 'vad': 'brief'}]))
