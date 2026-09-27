@@ -34,8 +34,9 @@ Regler:
   `verktyg/kor_profil.py matning` eller `provare`; värdet skrivs aldrig ut, och utdata söks efteråt utan utskrift.
 - Ändringar i detta repo: gren, prov gröna (`python3 -B -m unittest discover -s verktyg -p 'test_*.py'`), separat
   granskning genom Runtimes läsarprofil, sedan main genom PR-vägen med `python3 -B verktyg/publicera.py --gren GREN
-  --granskning KATALOG --titel … --kropp FIL` (vägrar utan godkänd granskning bunden till HEAD, grön svit och rena pinnar;
-  rulesetet main-skydd kräver PR, inget manuellt ägargodkännande). Pinnar (`steg/PINNAR.sha256`) och externa texter ändras bara som
+  --granskning KATALOG --titel … --kropp FIL [--ingang DIR]` från en klon eller worktree på kandidatgrenen (vägrar utan
+  godkänd granskning bunden till HEAD eller en commit med identiskt träd, grön svit och rena pinnar; mergeläget verifieras
+  med gh pr view och main hämtas utan checkout; rulesetet main-skydd kräver PR, inget manuellt ägargodkännande). Pinnar (`steg/PINNAR.sha256`) och externa texter ändras bara som
   nytt beslut med ny läsning.
 - Lärande per fall: lärdomspost i `kunskap/LARDOMAR.md`, användningsnoter i fallets `ANVANDNINGSNOTER.md` (skelettet
   skrivs av laddningen), förslagsrad till blocket FÖRSLAG ATT PRÖVA I NÄSTA FALL i kontorets `docs/plan.md`. En lärdom

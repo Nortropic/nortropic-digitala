@@ -142,6 +142,47 @@ class Publicering(unittest.TestCase):
         r = json.loads(out.getvalue()); self.assertEqual(code, 0, r); self.assertTrue(str(r['main']).startswith('fffffff'))
         k = json.loads(Path(r['kvitto']).read_text()); self.assertEqual(k['main'], 'f' * 40); self.assertEqual(k['pr']['nummer'], 7); self.assertTrue(k['fjarrgren_borttagen']); self.assertIn('fanns redan', k['utfall'][1]['not'])
 
+    def _skarp(self, svar, *argv):
+        orig = pb.subprocess.run
+
+        class P:
+            def __init__(self, rc, out, err): self.returncode, self.stdout, self.stderr = rc, out, err
+
+        def falsk(cmd, *a_, **kw):
+            n = tuple(str(x) for x in cmd[:3])
+            if n in svar: return P(*svar[n])
+            return orig(cmd, *a_, **kw)
+        pb.subprocess.run = falsk
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = pb.main(['--rot', str(self.rot), '--gren', 'kandidat', '--granskning', str(self.g), '--titel', 'T', '--kropp', str(self.kropp), *argv])
+        finally:
+            pb.subprocess.run = orig
+        return code, json.loads(out.getvalue())
+
+    def test_mergeutfallet_avgors_av_pr_view_inte_av_gh_exitkod_och_ingangen_snabbspolas(self):
+        env = dict(os.environ, GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@example.com', GIT_COMMITTER_NAME='t', GIT_COMMITTER_EMAIL='t@example.com')
+        ingang = Path(self.tmp.name) / 'ingang'; subprocess.run(['git', 'clone', '-q', str(self.rot), str(ingang)], check=True, env=env)
+        subprocess.run(['git', 'checkout', '-q', 'main'], cwd=ingang, check=True, env=env)
+        bas = {('git', 'push', '-u'): (0, '', ''), ('gh', 'pr', 'create'): (0, 'https://example.invalid/pr/8', ''), ('git', 'fetch', 'origin'): (0, '', ''), ('git', 'push', 'origin'): (0, '', '')}
+        merged = (0, json.dumps({'state': 'MERGED', 'mergeCommit': {'oid': 'e' * 40}, 'number': 8, 'url': 'https://example.invalid/pr/8'}), '')
+        # gh pr merge faller (efterarbete i worktree) men servern har mergat: view avgör → main satt, ingången snabbspolad
+        code, r = self._skarp({**bas, ('gh', 'pr', 'merge'): (1, '', "failed to run git: fatal: 'main' is already used by worktree"), ('gh', 'pr', 'view'): merged}, '--ingang', str(ingang))
+        self.assertEqual(code, 0, r); self.assertEqual(r['main'], 'eeeeeee'); k = json.loads(Path(r['kvitto']).read_text())
+        self.assertEqual(k['utfall'][2]['status'], 1); self.assertIn('pr view', k['utfall'][2]['not']); self.assertTrue(k['ingang']['snabbspolad'], k['ingang'])
+        self.assertNotIn(str(Path.home()), Path(r['kvitto']).read_text(), 'inga privata absoluta sökvägar i kvittot')
+        # view säger OPEN: avbrutet, main None
+        code, r = self._skarp({**bas, ('gh', 'pr', 'merge'): (0, '', ''), ('gh', 'pr', 'view'): (0, json.dumps({'state': 'OPEN', 'mergeCommit': None, 'number': 8, 'url': 'u'}), '')})
+        self.assertEqual(code, 1, r); self.assertIsNone(r['main']); self.assertIn('inte mergad (state OPEN)', r['avbrutet'])
+        # view ger ogiltig JSON: avbrutet med skäl
+        code, r = self._skarp({**bas, ('gh', 'pr', 'merge'): (0, '', ''), ('gh', 'pr', 'view'): (0, 'inte json', '')})
+        self.assertEqual(code, 1, r); self.assertIsNone(r['main']); self.assertIn('inget giltigt svar', r['avbrutet'])
+        # smutsig ingång lämnas orörd
+        (ingang / 'smuts.txt').write_text('x')
+        code, r = self._skarp({**bas, ('gh', 'pr', 'merge'): (0, '', ''), ('gh', 'pr', 'view'): merged}, '--ingang', str(ingang))
+        self.assertEqual(code, 0, r); k = json.loads(Path(r['kvitto']).read_text()); self.assertFalse(k['ingang']['snabbspolad']); self.assertIn('inte ren', k['ingang']['ut'])
+
 
 if __name__ == '__main__':
     unittest.main()

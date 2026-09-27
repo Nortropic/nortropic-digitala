@@ -8,8 +8,9 @@ granskning: granskningskatalogen ligger utanför repot och läses, aldrig skrivs
     python3 -B verktyg/publicera.py --gren helhet/x --granskning GRANSKNINGSKATALOG --titel "…" --kropp KROPP.md [--torr] [--rot DIR]
 
 Kontroller före push: git status rent; HEAD = grenens spets; granskningens review.json har verdict approved och dess
-underlag.json namnger HEAD:s korta sha (kandidaten som granskades); sviten grön; pinnarna stämmer. Sedan: push, gh pr
-create, gh pr merge --squash --delete-branch, main hämtas. --torr gör alla kontroller och skriver planen utan push.
+underlag.json är bundet till HEAD (fältet commit, eller en commit med identiskt träd); sviten grön; pinnarna stämmer.
+Sedan: git push, gh pr create (en befintlig PR återanvänds), gh pr merge --squash, gh pr view (MERGED + mergeCommit
+avgör utfallet, inte gh:s exitkod), git fetch origin main. --torr gör alla kontroller och skriver planen utan push.
 Kvitto: PUBLICERING-<tid>.json i granskningskatalogens förälder (utanför repot).
 
 Körs från en klon eller worktree på kandidatgrenen; main hämtas med fetch utan checkout, så den får vara utcheckad i
@@ -101,17 +102,23 @@ def publicera(rot, gren, granskning, titel, kropp, torr=False, ingang=None):
             kvitto['utfall'].append({'kommando': ' '.join(cmd[:3]), 'status': p.returncode, 'ut': (p.stdout or p.stderr).strip()[-400:]})
             if cmd[:3] == ['gh', 'pr', 'create'] and p.returncode != 0 and 'already exists' in (p.stderr + p.stdout):
                 kvitto['utfall'][-1]['not'] = 'PR fanns redan för grenen: fortsätter med den'; continue
-            if cmd[:3] == ['gh', 'pr', 'view'] and p.returncode == 0:
+            if cmd[:3] == ['gh', 'pr', 'merge']:
+                # gh:s exitkod avgör inte (efterarbetet kan falla fast servern mergat): pr view nedan avgör
+                if p.returncode != 0:
+                    kvitto['utfall'][-1]['not'] = 'exitkod %d bokförd; mergeläget avgörs av gh pr view' % p.returncode
+                continue
+            if cmd[:3] == ['gh', 'pr', 'view']:
                 try:
-                    v = json.loads(p.stdout)
+                    v = json.loads(p.stdout) if p.returncode == 0 else {}
                 except ValueError:
                     v = {}
                 kvitto['pr'] = {'nummer': v.get('number'), 'url': v.get('url'), 'state': v.get('state')}
                 if v.get('state') == 'MERGED' and (v.get('mergeCommit') or {}).get('oid'):
                     kvitto['main'] = v['mergeCommit']['oid']
                 else:
-                    kvitto['avbrutet'] = 'PR inte mergad (state %s)' % v.get('state'); break
-            elif p.returncode != 0:
+                    kvitto['avbrutet'] = 'PR inte mergad (state %s)' % (v.get('state') or 'okänt: gh pr view gav %s' % ('inget giltigt svar' if p.returncode == 0 else 'exitkod %d' % p.returncode)); break
+                continue
+            if p.returncode != 0:
                 kvitto['avbrutet'] = ' '.join(cmd[:3]); break
         if kvitto.get('main'):
             # fjärrgrenen tas bort bäst-möjligt (den lokala grenen är utcheckad här och lämnas); ingången snabbspolas bara om den står ren på main
@@ -127,7 +134,8 @@ def publicera(rot, gren, granskning, titel, kropp, torr=False, ingang=None):
                 else:
                     kvitto['ingang'] = {'snabbspolad': False, 'ut': 'ingången är inte ren på main: lämnad orörd'}
     ut = Path(granskning).resolve().parent / ('PUBLICERING-%s.json' % kvitto['tid'].replace(':', '').replace('-', ''))
-    ut.write_text(json.dumps(kvitto, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    hem = str(Path.home())
+    ut.write_text(json.dumps(kvitto, ensure_ascii=False, indent=1).replace(hem, '~') + '\n', encoding='utf-8')  # inga privata absoluta sökvägar i kvittot
     kvitto['kvitto'] = str(ut)
     return kvitto
 

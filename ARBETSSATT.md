@@ -59,9 +59,10 @@ eller en steglista, `lanseringsmandat` = post-id eller null, `utdrag` ordagrant,
 verksamhet); vägen bokför filens sha256 och en ombindning när den ändras. `python3 -B verktyg/fortsatt.py --kund KUNDMAPP
 --fall FALL [--bestallning POST-ID] --utforare claude|codex` avgör nästa steg i stegens ordning (beställningssteg bara
 inom omfattningen; kanalstegen efter kundmappens `KANALBEHOV.json` ur beredningen; lansering, sokkonsol och drift bara
-med lanseringsmandat, annars slutar vägen vid leverans — kommer mandatet eller ett kanalbehov senare återöppnas stegen
-automatiskt — en utvidgad beställning anger då `omfattning` `helhet` eller en steglista som tar med lansering, sokkonsol
-och drift, inte bara lanseringsmandatet, eftersom verktygets egna markeringar omprövas varje körning), laddar stegets underlag i fallet (ett redan
+med lanseringsmandat, annars slutar vägen vid leverans; verktygets egna markeringar omprövas varje körning, så ett
+lanseringsmandat eller ett kanalbehov som kommer senare återöppnar stegen automatiskt — en utvidgad beställning anger då
+`omfattning` `helhet` eller en steglista som tar med lansering, sokkonsol och drift, inte bara lanseringsmandatet),
+laddar stegets underlag i fallet (ett redan
 laddat steg återupptas utan ny laddning), skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
 per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
@@ -90,8 +91,10 @@ utan att ägaren återberättar.
    `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
    pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
    regressionsprov, avskärmat besökarprov i egen session med efterkontroll av nätverksloggen (`natverk.jsonl`; ingen spårfil).
-   `python3 -B verktyg/publicera.py --gren GREN --granskning KATALOG --titel … --kropp FIL [--torr]` — maskinell integration i
-   main genom PR-vägen, bara med godkänd granskning bunden till HEAD, grön svit och rena pinnar; kvitto utanför repot.
+   `python3 -B verktyg/publicera.py --gren GREN --granskning KATALOG --titel … --kropp FIL [--torr] [--ingang DIR]` — maskinell
+   integration i main genom PR-vägen från en klon eller worktree på kandidatgrenen, bara med godkänd granskning bunden till
+   HEAD (eller en commit med identiskt träd efter rebase), grön svit och rena pinnar; mergeläget verifieras med gh pr view,
+   main hämtas utan checkout, `--ingang` snabbspolar en ren primärutcheckning; kvitto utanför repot.
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.
