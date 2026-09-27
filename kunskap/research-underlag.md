@@ -64,11 +64,7 @@ eller "inte undersökt").
 17. **Öppna frågor** — allt `[OSÄKER]` samt standardfrågorna: vilka omdömen eller referenser får publiceras och med
     vilken attribution; finns högupplösta original och godkännande; domänönskemål; bokningskanal; för nystartade:
     vilka löften vågar verksamheten stå för.
-18. **Kontrollrad** (maskinläsbar, näst sist i filen):
-19. **Intervju och status per uppgift** — skrivs av `verktyg/intervju.py research`: kanal, omgångar, kundens svar
-    ordagrant per område A–H, fakta med status och källa, motsägelser, luckor som påverkar lösningen, följdregler som
-    utlöstes, och svaren på de fyra användbarhetsfrågorna: vilken uppgift är viktigast; vad måste formuläret
-    åstadkomma efter inskick; vilket befintligt system ska ta emot; vad vet vi ännu inte. Testdialoger märks.
+18. **Kontrollrad** (maskinläsbar; blocket nedan):
 
 ```
 RESEARCH-KONTROLL v1 | org=<ja|nej> | kontaktvag=<ja|nej> | erbjudande=<ja|nej> | rackvidd=<ja|nej>
@@ -78,6 +74,12 @@ RESEARCH-KONTROLL v1 | org=<ja|nej> | kontaktvag=<ja|nej> | erbjudande=<ja|nej> 
 
 `status=KOMPLETT` kräver `ja` på org, kontaktvag, erbjudande och rackvidd; `osakra` och `konflikter` nollställs
 aldrig av sig själva; OFULLSTÄNDIG skrivs överst i filen; ett oundersökt fält är `OSÄKER`, aldrig `nej`.
+
+19. **Intervju och status per uppgift** (sist i filen) — skrivs av `verktyg/intervju.py research`: kanal, omgångar,
+    kundens svar ordagrant per område A–H, fakta med status och källa, motsägelser, luckor som påverkar lösningen
+    (även ställda frågor utan svar), följdregler som utlöstes, och svaren på de fyra användbarhetsfrågorna: vilken
+    uppgift är viktigast; vad måste formuläret åstadkomma efter inskick; vilket befintligt system ska ta emot; vad vet
+    vi ännu inte. Testdialoger märks.
 
 ## Användbarhet, inte rubriker
 

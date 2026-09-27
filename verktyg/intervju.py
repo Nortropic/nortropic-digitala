@@ -135,23 +135,35 @@ def fro_verksamhet(kund):
         v = json.loads(p.read_text(encoding='utf-8'))
     except ValueError:
         return []
+    import datetime
+    datum = datetime.datetime.fromtimestamp(p.stat().st_mtime, datetime.timezone.utc).strftime('%Y-%m-%d')
     fakta = []
     if v.get('tjanster'):
-        fakta.append({'nyckel': 'erbjudande', 'varde': ', '.join(v['tjanster']), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json tjanster', 'omrade': 'A', 'datum': nu()[:10]})
+        fakta.append({'nyckel': 'erbjudande', 'varde': ', '.join(v['tjanster']), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json tjanster', 'omrade': 'A', 'datum': datum, 'not': 'status kunden uppger om inte belägget säger annat; datum = filens ändringstid'})
     if v.get('kontaktvagar'):
-        fakta.append({'nyckel': 'kontaktvagar', 'varde': '; '.join('%s: %s' % (k.get('typ'), k.get('varde')) for k in v['kontaktvagar']), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json kontaktvagar (belägg per rad)', 'omrade': 'D', 'datum': nu()[:10]})
+        fakta.append({'nyckel': 'kontaktvagar', 'varde': '; '.join('%s: %s' % (k.get('typ'), k.get('varde')) for k in v['kontaktvagar']), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json kontaktvagar (belägg per rad)', 'omrade': 'D', 'datum': datum})
     if v.get('rackvidd'):
-        fakta.append({'nyckel': 'rackvidd', 'varde': '%s: %s' % (v['rackvidd'].get('typ'), ', '.join(v['rackvidd'].get('orter') or [])), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json rackvidd', 'omrade': 'A', 'datum': nu()[:10]})
+        fakta.append({'nyckel': 'rackvidd', 'varde': '%s: %s' % (v['rackvidd'].get('typ'), ', '.join(v['rackvidd'].get('orter') or [])), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json rackvidd', 'omrade': 'A', 'datum': datum})
     if v.get('oppettider'):
-        fakta.append({'nyckel': 'oppettider', 'varde': json.dumps(v['oppettider'], ensure_ascii=False), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json oppettider', 'omrade': 'C', 'datum': nu()[:10]})
+        fakta.append({'nyckel': 'oppettider', 'varde': json.dumps(v['oppettider'], ensure_ascii=False), 'status': 'kunden uppger', 'kalla': 'VERKSAMHET.json oppettider', 'omrade': 'C', 'datum': datum})
     return fakta
 
 
+def stalld_utan_svar(s, fid):
+    """Omgångar där frågan ställts utan att svar registrerats (kundens uteblivna svar döljs aldrig)."""
+    return [o['nr'] for o in s['omgangar'] for q in o['fragor'] if q['id'] == fid and q['status'] != 'besvarad']
+
+
 def luckor(s):
-    """Grundfrågor vars nyckel varken är besvarad eller känd, i prioritetsordning."""
+    """Grundfrågor vars nyckel varken är besvarad eller känd, i prioritetsordning; en ställd men obesvarad fråga är
+    fortfarande en lucka och ställs igen, märkt med omgångarna den ställts i."""
     kanda = kanda_nycklar(s)
-    stallda = {q['id'] for o in s['omgangar'] for q in o['fragor']}
-    return [g for g in sorted(GRUND, key=lambda g: (g[5], g[0])) if g[2] not in kanda and g[0] not in stallda]
+    ut = []
+    for g in sorted(GRUND, key=lambda g: (g[5], g[0])):
+        if g[2] in kanda:
+            continue
+        ut.append(g + (stalld_utan_svar(s, g[0]),))
+    return ut
 
 
 def ny_omgang(s, fragor, skal):
@@ -205,14 +217,22 @@ def svar(kund, omgang, fil):
     svaren = tolka_svarsfil(text) if fil.endswith('.md') else {x['id']: x['text'] for x in json.loads(text)}
     if not svaren:
         raise Vagrad('inga svar hittades (### <fråge-id> följt av svaret)')
-    nya = 0; foljd = []
-    for q in o['fragor']:
-        if q['id'] in svaren and svaren[q['id']]:
+    nya = 0; foljd = []; okanda = []
+    alla_fragor = {q['id']: (q, oo) for oo in s['omgangar'] for q in oo['fragor']}
+    for fid in svaren:
+        if fid not in alla_fragor:
+            okanda.append(fid)
+    for fid, (q, oo) in alla_fragor.items():
+        if fid in svaren and svaren[fid] and q['status'] != 'besvarad':
             t = svaren[q['id']]
             if HEMLIGT.search(t):
                 raise Vagrad('svaret på %s ser ut att innehålla ett lösenord eller en nyckel; vägras och sparas inte — be kunden ta bort det och använd säker åtkomstväg' % q['id'])
-            s['svar'].append({'fraga_id': q['id'], 'omgang': omgang, 'nyckel': q['nyckel'], 'omrade': q['omrade'], 'text': t, 'mottaget': nu(), 'status': 'kunden uppger'})
-            q['status'] = 'besvarad'; nya += 1
+            s['svar'].append({'fraga_id': q['id'], 'omgang': oo['nr'], 'svarsfil_omgang': omgang, 'nyckel': q['nyckel'], 'omrade': q['omrade'], 'text': t, 'mottaget': nu(), 'status': 'kunden uppger'})
+            for oo2 in s['omgangar']:
+                for q2 in oo2['fragor']:
+                    if q2['id'] == fid:
+                        q2['status'] = 'besvarad'
+            nya += 1
             for namn, rx, fragor, paverkar in FOLJDREGLER:
                 m = rx.search(t)
                 if m and not any(u['regel'] == namn and u['fraga_id'] == q['id'] for u in s['foljdregler_utlosta']):
@@ -226,7 +246,9 @@ def svar(kund, omgang, fil):
         if f['id'] not in kanda_id:
             s['vantande_foljdfragor'].append(f); kanda_id.add(f['id'])
     spara(kund, s)
-    return s, 'omgång %d: %d svar registrerade ordagrant; %d följdfrågor väntar (regler: %s)' % (omgang, nya, len(s['vantande_foljdfragor']), ', '.join(sorted({u['regel'] for u in s['foljdregler_utlosta']})) or 'inga')
+    s.setdefault('okanda_svar', []).extend({'omgang': omgang, 'fraga_id': fid, 'tid': nu()} for fid in okanda)
+    spara(kund, s)
+    return s, 'omgång %d: %d svar registrerade ordagrant; %d följdfrågor väntar (regler: %s)%s' % (omgang, nya, len(s['vantande_foljdfragor']), ', '.join(sorted({u['regel'] for u in s['foljdregler_utlosta']})) or 'inga', ('; VARNING: okända fråge-id ignorerade: ' + ', '.join(okanda)) if okanda else '')
 
 
 def fakta(kund, fil):
@@ -244,6 +266,8 @@ def fakta(kund, fil):
             raise Vagrad('status ska vara en av ' + ', '.join(STATUSAR))
         if r['omrade'] not in OMRADEN:
             raise Vagrad('omrade ska vara A–H')
+        if HEMLIGT.search(str(r['varde'])):
+            raise Vagrad('faktaraden %s ser ut att innehålla ett lösenord eller en nyckel; vägras' % r['nyckel'])
         r.setdefault('datum', nu()[:10])
         bef = next((f for f in s['fakta'] if f['nyckel'] == r['nyckel'] and f.get('varde') != r['varde'] and not f.get('ersatt')), None)
         if bef:
@@ -262,6 +286,7 @@ def avgor(kund, mid, galler, skal):
     if not m:
         raise Vagrad('motsägelsen finns inte')
     m['lage'] = 'avgjord'; m['galler'] = galler; m['skal'] = skal; m['avgjord'] = nu()
+    s['vantande_foljdfragor'] = [f for f in s.get('vantande_foljdfragor', []) if f['id'] != mid]
     for f in s['fakta']:
         if f.get('motsagelse') == mid:
             f['ersatt'] = f['varde'] != galler
@@ -275,7 +300,7 @@ def nasta(kund):
     if oppna:
         return s, 'omgång %d väntar på svar; registrera dem med svar innan nästa omgång' % oppna[0]['nr']
     vantande = s.get('vantande_foljdfragor', [])
-    grund = [{'id': g[0], 'omrade': g[1], 'nyckel': g[2], 'text': g[3], 'paverkar': g[4]} for g in luckor(s)]
+    grund = [{'id': g[0], 'omrade': g[1], 'nyckel': g[2], 'text': (('(ställdes i omgång %s utan svar) ' % ', '.join(map(str, g[6]))) if g[6] else '') + g[3], 'paverkar': g[4]} for g in luckor(s)]
     fragor = (vantande + grund)[:PER_OMGANG]
     if not fragor:
         return s, 'inga luckor som påverkar lösningen kvar; intervjun kan avslutas (research skriver avsnittet)'
@@ -290,7 +315,7 @@ def nasta(kund):
 def status(s):
     return {'kund': s['kund'], 'testdialog': s.get('testdialog', False), 'kanal': s['kanal'], 'omgangar': len(s['omgangar']), 'svar': len(s['svar']), 'fakta': len(s['fakta']),
             'vantar_pa_svar': [o['nr'] for o in s['omgangar'] if o['svar_mottagna'] is None], 'foljdfragor_vantande': len(s.get('vantande_foljdfragor', [])),
-            'luckor_kvar': [g[0] for g in luckor(s)], 'motsagelser_oavgjorda': [m['id'] for m in s['motsagelser'] if m['lage'] == 'oavgjord'], 'uppdaterad': s.get('uppdaterad')}
+            'luckor_kvar': [g[0] + ('(ställd utan svar i omgång %s)' % ','.join(map(str, g[6])) if g[6] else '') for g in luckor(s)], 'motsagelser_oavgjorda': [m['id'] for m in s['motsagelser'] if m['lage'] == 'oavgjord'], 'uppdaterad': s.get('uppdaterad')}
 
 
 def anvandbarhet(s):
@@ -321,7 +346,9 @@ def research_md(s):
         if fk:
             lines += ['| Uppgift | Värde | Status | Källa | Datum |', '|---|---|---|---|---|'] + ['| %s | %s | %s | %s | %s |' % (x['nyckel'], str(x['varde']).replace('|', '/'), x['status'] + (' — motsägelse ' + x['motsagelse'] if x.get('motsagelse') else ''), x['kalla'], x.get('datum', '')) for x in fk] + ['']
     lines += ['### Motsägelser', ''] + (['- %s (%s): "%s" (%s) mot "%s" (%s) — %s%s' % (mm['id'], mm['nyckel'], mm['uppgift_1']['varde'], mm['uppgift_1']['kalla'], mm['uppgift_2']['varde'], mm['uppgift_2']['kalla'], mm['lage'], (': gäller "%s" — %s' % (mm.get('galler'), mm.get('skal'))) if mm['lage'] == 'avgjord' else '') for mm in s['motsagelser']] or ['- inga']) + ['']
-    lines += ['### Luckor som påverkar lösningen', ''] + (['- %s (%s): %s' % (g[2], g[0], g[4]) for g in luckor(s)] or ['- inga öppna grundfrågor']) + ['']
+    lines += ['### Luckor som påverkar lösningen', ''] + (['- %s (%s%s): %s' % (g[2], g[0], (', ställd utan svar i omgång %s' % ','.join(map(str, g[6]))) if g[6] else '', g[4]) for g in luckor(s)] or ['- inga öppna grundfrågor']) + ['']
+    if s.get('okanda_svar'):
+        lines += ['- svar med okända fråge-id ignorerades: ' + ', '.join(x['fraga_id'] for x in s['okanda_svar']), '']
     lines += ['### Kan research.md besvara', ''] + ['- %s: %s' % (k, v) for k, v in anvandbarhet(s).items()] + ['']
     lines += ['### Följdregler som utlöstes', ''] + (['- %s ur %s ("%s") → %s' % (u['regel'], u['fraga_id'], u['traff'], u['paverkar']) for u in s['foljdregler_utlosta']] or ['- inga'])
     return '\n'.join(lines) + '\n'
@@ -358,9 +385,16 @@ def main(argv=None):
             s = las(a.kund)
             if not a.ut:
                 raise Vagrad('research kräver --ut')
+            if Path(a.ut).resolve().is_relative_to(Path(__file__).resolve().parents[1]):
+                raise Vagrad('research-avsnittet skrivs i kundmappen, aldrig i repot')
             Path(a.ut).write_text(research_md(s), encoding='utf-8'); msg = 'avsnitt 19 skrivet till ' + a.ut
     except Vagrad as e:
-        print(json.dumps({'vagrad': e.args[0]}, ensure_ascii=False)); return 2
+        td = False
+        try:
+            td = bool(las(a.kund).get('testdialog')) if Path(a.kund).is_dir() and stig(a.kund).is_file() else False
+        except Vagrad:
+            td = False
+        print(json.dumps({'vagrad': e.args[0], 'testdialog': td}, ensure_ascii=False)); return 2
     print(json.dumps({'kommando': a.kommando, 'meddelande': msg, **status(s)}, ensure_ascii=False))
     return 0
 

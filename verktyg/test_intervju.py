@@ -90,6 +90,37 @@ class Intervju(unittest.TestCase):
         text = ut.read_text()
         self.assertIn('## 19. Intervju', text); self.assertIn('> **A1**', text); self.assertIn('Kan research.md besvara', text); self.assertIn('okänt', text)
 
+    def test_stalld_utan_svar_forblir_lucka_och_stalls_igen(self):
+        kor('start', '--kund', str(self.k), '--kanal', 'e-post')
+        svar = self.k / 's.md'; svar.write_text('### A1\nFler förfrågningar.\n')
+        kor('svar', '--kund', str(self.k), '--omgang', '1', '--fil', str(svar))
+        code, r = kor('status', '--kund', str(self.k))
+        self.assertTrue(any(l.startswith('A3(ställd utan svar i omgång 1)') for l in r['luckor_kvar']), r['luckor_kvar'])
+        code, r = kor('nasta', '--kund', str(self.k))
+        s = iv.las(str(self.k)); o2 = s['omgangar'][1]
+        a3 = next(q for q in o2['fragor'] if q['id'] == 'A3')
+        self.assertTrue(a3['text'].startswith('(ställdes i omgång 1 utan svar)'))
+        md = iv.research_md(s); self.assertIn('nulage (A3, ställd utan svar i omgång 1', md)
+        # svar på en tidigare omgångs fråga registreras; okänt id varnas
+        svar.write_text('### A3\nTelefonen ringer hela tiden.\n### ZZ9\nhittepå\n')
+        code, r = kor('svar', '--kund', str(self.k), '--omgang', '2', '--fil', str(svar))
+        self.assertEqual(code, 0); self.assertIn('okända fråge-id ignorerade: ZZ9', r['meddelande'])
+        s = iv.las(str(self.k)); self.assertEqual([x['fraga_id'] for x in s['svar']], ['A1', 'A3']); self.assertEqual(s['svar'][1]['omgang'], 2)
+        self.assertTrue(all(q['status'] == 'besvarad' for o in s['omgangar'] for q in o['fragor'] if q['id'] == 'A3'))
+        self.assertFalse(any(l.startswith('A3') for l in kor('status', '--kund', str(self.k))[1]['luckor_kvar']))
+
+    def test_avgjord_motsagelse_stalls_inte_och_research_vagrar_repot(self):
+        kor('start', '--kund', str(self.k), '--kanal', 'e-post')
+        f = self.k / 'F.json'; f.write_text(json.dumps([{'nyckel': 'oppettider', 'varde': 'mån–fre 08–17', 'status': 'kunden uppger', 'kalla': 'svar C1', 'omrade': 'C'}]))
+        kor('fakta', '--kund', str(self.k), '--fil', str(f))
+        kor('avgor', '--kund', str(self.k), '--motsagelse', 'MOT1', '--galler', 'mån–fre 08–17', '--skal', 'bekräftat')
+        self.assertEqual(iv.las(str(self.k))['vantande_foljdfragor'], [])
+        f.write_text(json.dumps([{'nyckel': 'x', 'varde': 'lösenord: hemligt123', 'status': 'kunden uppger', 'kalla': 'k', 'omrade': 'D'}]))
+        self.assertEqual(kor('fakta', '--kund', str(self.k), '--fil', str(f))[0], 2)
+        code, r = kor('research', '--kund', str(self.k), '--ut', str(self.repo / 'kunskap' / 'x.md'))
+        self.assertEqual(code, 2); self.assertIn('aldrig i repot', r['vagrad']); self.assertFalse((self.repo / 'kunskap' / 'x.md').exists())
+        self.assertIn('testdialog', r)
+
     def test_hemligheter_i_svar_vagras(self):
         kor('start', '--kund', str(self.k), '--kanal', 'e-post')
         svar = self.k / 's.md'; svar.write_text('### A1\nLösenord: hemligt123 till hemsidan.\n')
