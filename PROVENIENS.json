@@ -6,11 +6,11 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "ca050c6ccf7163f2ab5a44f1a12997e2775c263a42a4e237b270c470361d4873",
-   "byte": 17904,
+   "sha256": "db80aec89b6f4d1ff7adbdf9021e4382bd525a906103687952796d01c9742814",
+   "byte": 17938,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis)",
+   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27",
    "sha256_vid_flytt": "68eac8cc627932bd431d78a7198d13117ccb8c217ba567397fdd9f02fe753034"
   },
   {

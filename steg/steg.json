@@ -5,7 +5,7 @@
     "uppstart": {
       "mandat": "staende",
       "syfte": "Uppstart av ett fall eller en etapp: läs lärdomarna, mandatet och arbetssättet innan något görs.",
-      "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Avstämning av lärdomar sker efter två relevanta tillämpningar, inte nu. Läs KEDJA.md för vad som är mekaniskt skyddat och vad sessionen själv bär.",
+      "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Lärdomar klassas som observation, kundpreferens, hypotes eller dokumenterad felorsak; ingen mängd tillämpningar gör något till praxis (LARDOMAR.md). Läs KEDJA.md för vad som är mekaniskt skyddat och vad sessionen själv bär.",
       "underlag": [
         {"fil": "kunskap/LARDOMAR.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
         {"fil": "MANDAT.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
@@ -38,7 +38,7 @@
     "koncept": {
       "mandat": "bestallning",
       "syfte": "Konceptsteg före bygget: lösningsalternativ utreds internt och en motiverad riktning väljs utan ägarstopp; Design Read och namngivna axlar är metoder, antalet alternativ följer uppgiften, inga universella dial-värden (L16 är en hypotes, inte praxis).",
-      "anvisning": "Läs Taste §0 'Brief Inference' och §1 'The Three Dials' före Design Read; §4.1–4.3 och §4.7–4.8 före komp. Konstanterna ska omfatta det som redan fungerar i produktion; en fjärde axel 'rytm' nedanför vikningen (L16). Taste är råd och mallvarning, inte mall.",
+      "anvisning": "Utred lösningsalternativ internt utifrån briefens problem och målgrupp: läs Taste §0 (Brief Inference) och §4 som metodstöd, gör en Design Read, och pröva ett antal riktningar som uppgiften motiverar på axlar som namnges för just denna kund (inga universella dial-värden, inget fast antal riktningar, ingen obligatorisk axel). Kritisera komparna genom kritikprofilen (designkritik-komp), välj en motiverad riktning utan ägarstopp och redovisa valet och alternativen i leveransen. L16 är en hypotes ur Norrglänta, inte en regel.",
       "underlag": [
         {"fil": "kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md", "klass": "profession", "obligatorisk": true, "delar": "§0 (0.A–0.D); §1 (1.A–1.C); §4.1–4.3; §4.7–4.8 — inte §2, §3, §5, §6–9"},
         {"fil": "kunskap/externa/anthropic-frontend-design-SKILL.md", "klass": "profession", "obligatorisk": true, "delar": "Design principles; Restraint and self-critique"},

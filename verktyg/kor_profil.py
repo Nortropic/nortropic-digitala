@@ -14,7 +14,11 @@ matning/PROFIL.json: tar den aktiva koden dem som parametrar (--vyer, --axe-tagg
 lika med kodens standardvärden, annars vägras körningen. Kritikens fråga och schema kommer ur kritik/; varje
 {{PLATSHÅLLARE}} fylls med --parameter, och en fråga med kvarvarande platshållare vägras. Laddningskvittots hash och
 steg binds till körningen (kritik: i frågan; provare: som --bindning; mätning: i KORNING-posten). Varje körning
-lämnar FALL/KORNING-<tid>-<profil>-<etikett>.json med argv, körkatalog och utfall. --torr visar bara kommandot. I bokförd argv, också i --torr, ersätts undantagsfilens sökväg med <undantag-fil>;
+lämnar FALL/KORNING-<tid>-<profil>-<etikett>.json med argv, körkatalog, utfall och bindning (steg, mandat, beställning,
+utförare, kundmapp, repots revision, verktygens hashar, --bindning K=V). Mätprofil, kritikfråga och schema läses ur den
+LADDADE arbetsytan (kvittots rader), aldrig ur repots levande filer, och varje laddad fil måste fortfarande ha kvittots
+sha256; ett kvitto för fel steg vägras. Kritikens kontextpolicy (KONTEXT) avgör vilka underlag som får följa med: ett
+femsekunderstest är avskärmat och får varken kundunderlag eller professionstexter. --torr visar bara kommandot. I bokförd argv, också i --torr, ersätts undantagsfilens sökväg med <undantag-fil>;
 själva kommandot körs med den riktiga sökvägen.
 """
 import argparse
@@ -31,6 +35,14 @@ ROT = Path(__file__).resolve().parents[1]
 ETIKETT = re.compile(r'\A[a-z0-9][a-z0-9-]{0,39}\Z')
 PLATSHALLARE = re.compile(r'\{\{[A-ZÅÄÖ0-9_]+\}\}')
 KRITIKMALLAR = ('designkritik-komp', 'renderingslasning', 'femsekunderstest')
+# Kontextpolicy per kritikmall (beviskedjans fynd B): vilka laddade underlag som får följa med i manifestet.
+# 'kund' = kundklassens filer (briefen), 'profession' = professionstexter utöver frågan och schemat, 'avskarmad' = en
+# förstagångsbedömning som inte får brief, kod, facit eller tidigare kritik; --filer får då bara bära bilder.
+KONTEXT = {'designkritik-komp': {'kund': True, 'profession': True, 'avskarmad': False},
+           'renderingslasning': {'kund': True, 'profession': True, 'avskarmad': False},
+           'femsekunderstest': {'kund': False, 'profession': False, 'avskarmad': True}}
+AVSKARMAD_FORBJUDET = re.compile(r'(?i)brief|facit|kritik|svar|riktning|research|\.html?$|\.css$|\.jsx?$|\.tsx?$|\.md$|\.json$|\.txt$')
+STEG_FOR_PROFIL = {'matning': 'matning', 'kritik': 'kritik', 'provare': 'provare'}
 
 
 class Vagrad(Exception):
@@ -69,8 +81,49 @@ def laddning(path):
     return receipt, hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def profil():
-    return json.loads((ROT / 'matning/PROFIL.json').read_text(encoding='utf-8'))
+def bind_laddning(receipt, profil):
+    """Beviskedjans fynd A: rätt steg, och varje laddad fil har fortfarande kvittots sha256 (annars vägras körningen)."""
+    if receipt['steg'] != STEG_FOR_PROFIL[profil]:
+        raise Vagrad('laddningskvittot gäller steget %r, profilen %s kräver steget %r' % (receipt['steg'], profil, STEG_FOR_PROFIL[profil]))
+    arbetsyta = Path(receipt.get('arbetsyta') or '')
+    if not arbetsyta.is_dir():
+        raise Vagrad('kvittots arbetsyta finns inte: ' + str(arbetsyta))
+    for r in receipt.get('underlag', []):
+        if r.get('status') != 'laddad':
+            continue
+        path = arbetsyta / r['plats']
+        if not path.is_file():
+            raise Vagrad('laddat underlag saknas i arbetsytan: ' + r['plats'])
+        if r.get('sha256') and hashlib.sha256(path.read_bytes()).hexdigest() != r['sha256']:
+            raise Vagrad('laddat underlag ändrat sedan kvittot: ' + r['plats'])
+    return arbetsyta
+
+
+def laddad_fil(receipt, fil):
+    """En professionsfil ur den laddade arbetsytan, aldrig ur repots levande filer."""
+    for r in receipt.get('underlag', []):
+        if r.get('fil') == fil and r.get('status') == 'laddad':
+            return (Path(receipt['arbetsyta']) / r['plats']).read_text(encoding='utf-8')
+    raise Vagrad('underlaget %s är inte laddat i kvittot (steg %s)' % (fil, receipt.get('steg')))
+
+
+def verktygshashar():
+    return {name: hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() for name in ('kor_profil.py', 'ladda_steg.py', 'kvalitetsbild.py') if (ROT / 'verktyg' / name).is_file()}
+
+
+def bindning_ur(args, receipt, release):
+    extra = {}
+    for b in (getattr(args, 'bindning', None) or []):
+        if '=' not in b:
+            raise Vagrad('--bindning är NYCKEL=VÄRDE: ' + b)
+        key, value = b.split('=', 1)
+        extra[key] = value
+    return {'steg': receipt['steg'], 'mandat': receipt.get('mandat'), 'bestallning': receipt.get('bestallning'), 'utforare': getattr(args, 'utforare', None) or receipt.get('utforare'),
+            'kundmapp': receipt.get('kundmapp'), 'rot_git_head': receipt.get('rot_git_head'), 'aktiv_release_config': release['config_sha256'], 'verktyg': verktygshashar(), **extra}
+
+
+def profil(receipt):
+    return json.loads(laddad_fil(receipt, 'matning/PROFIL.json'))
 
 
 def kodens_matvarden(release, root):
@@ -91,8 +144,8 @@ def vyer_argument(vyer):
     return ','.join(parts)
 
 
-def bygg_matning(args, release, root):
-    valda = profil()
+def bygg_matning(args, release, root, receipt):
+    valda = profil(receipt)
     kod = kodens_matvarden(release, root)
     argv = [release['python'], '-B', '-m', 'runtime.web_measure', '--etikett', args.etikett,
             '--sektioner', str(args.sektioner if args.sektioner is not None else valda['sektioner']),
@@ -119,8 +172,9 @@ def bygg_matning(args, release, root):
 def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.mall not in KRITIKMALLAR:
         raise Vagrad('okänd mall; kända: ' + ', '.join(KRITIKMALLAR))
-    fraga = (ROT / ('kritik/FRAGA-%s.md' % args.mall)).read_text(encoding='utf-8')
-    schema = (ROT / ('kritik/SCHEMA-%s.json' % args.mall)).read_text(encoding='utf-8')
+    fraga = laddad_fil(receipt, 'kritik/FRAGA-%s.md' % args.mall)
+    schema = laddad_fil(receipt, 'kritik/SCHEMA-%s.json' % args.mall)
+    policy = KONTEXT[args.mall]
     parametrar = {}
     for item in args.parameter or []:
         if '=' not in item:
@@ -135,12 +189,18 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     files = json.loads(Path(args.filer).read_text(encoding='utf-8'))
     if not isinstance(files, list) or not files:
         raise Vagrad('--filer är en JSON-lista av {"kalla","plats","vad"}')
+    if policy['avskarmad']:
+        for f in files:
+            if AVSKARMAD_FORBJUDET.search(str(f.get('plats', ''))) or AVSKARMAD_FORBJUDET.search(str(f.get('kalla', ''))):
+                raise Vagrad('avskärmad bedömning (%s): --filer får bara bära bilder av det renderade resultatet, inte %s' % (args.mall, f.get('plats')))
     arbetsyta = Path(receipt['arbetsyta'])
     for r in receipt['underlag']:
-        if r['status'] == 'laddad' and r['klass'] == 'profession':
+        if r['status'] != 'laddad' or r['fil'] in ('kritik/FRAGA-%s.md' % args.mall, 'kritik/SCHEMA-%s.json' % args.mall) or r['fil'].startswith('kritik/'):
+            continue
+        if r['klass'] == 'profession' and policy['profession']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'UNDERLAG/' + Path(r['plats']).name,
                           'vad': 'professionsunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
-        elif r['status'] == 'laddad':
+        elif r['klass'] == 'kund' and policy['kund']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'KUND/' + Path(r['plats']).name,
                           'vad': 'kundunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
     fraga += '\n\nBindning: laddningskvitto %s (steg %s), sha256 %s.\n' % (laddning_sha[:16], receipt['steg'], receipt['sha256_over_underlag'][:16])
@@ -157,7 +217,8 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
             '--schema', str(schema_path), '--utforare', args.utforare, '--modell', args.modell, '--etikett', args.etikett]
     if args.tid:
         argv += ['--tid', str(args.tid)]
-    return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files)}
+    return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files), 'kontext_policy': policy,
+                  'manifest_platser': [f['plats'] for f in files]}
 
 
 def bygg_provare(args, release, root, receipt, laddning_sha):
@@ -190,6 +251,7 @@ def parse(argv):
     common.add_argument('--fall', required=True)
     common.add_argument('--etikett', required=True)
     common.add_argument('--torr', action='store_true')
+    common.add_argument('--bindning', action='append', help='NYCKEL=VÄRDE som bokförs i KORNING-posten (t.ex. revision=, driftsattning=)')
     m = sub.add_parser('matning', parents=[common])
     where = m.add_mutually_exclusive_group(required=True)
     where.add_argument('--mal')
@@ -215,7 +277,6 @@ def parse(argv):
     p.add_argument('--max-handlingar', type=int)
     p.add_argument('--tid', type=int)
     p.add_argument('--undantag-fil')
-    p.add_argument('--bindning', action='append')
     args = parser.parse_args(argv)
     if not ETIKETT.match(args.etikett):
         raise Vagrad('--etikett är [a-z0-9-], högst 40 tecken')
@@ -233,17 +294,18 @@ def run(argv=None):
     if not fall.is_dir():
         raise Vagrad('fallmappen finns inte: ' + str(fall))
     receipt, laddning_sha = laddning(args.laddning)
+    bind_laddning(receipt, args.profil)
     root = runtime_root()
     release = aktiv_release(root)
     if args.profil == 'matning':
-        cmd, extra = bygg_matning(args, release, root)
+        cmd, extra = bygg_matning(args, release, root, receipt)
     elif args.profil == 'kritik':
         cmd, extra = bygg_kritik(args, release, root, receipt, laddning_sha)
     else:
         cmd, extra = bygg_provare(args, release, root, receipt, laddning_sha)
     post = {'schema': 1, 'profil': args.profil, 'etikett': args.etikett, 'laddning': {'fil': str(Path(args.laddning).resolve()),
             'sha256': laddning_sha, 'steg': receipt['steg'], 'sha256_over_underlag': receipt['sha256_over_underlag'],
-            'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], **extra}
+            'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], 'bindning': bindning_ur(args, receipt, release), **extra}
     if args.torr:
         print(json.dumps({**post, 'torr': True}, ensure_ascii=False, indent=1))
         return 0

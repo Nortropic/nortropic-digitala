@@ -32,17 +32,27 @@ def fake_runtime(tmp, viewports, axe_tags, parametrar):
     return root
 
 
-def receipt_file(tmp, steg='kritik'):
-    ws = tmp / 'arbetsyta'
-    (ws / 'underlag/profession/kritik').mkdir(parents=True)
-    (ws / 'underlag/profession/kritik/FRAGA-x.md').write_text('mall')
-    (ws / 'underlag/kund').mkdir()
-    (ws / 'underlag/kund/PROJECT-BRIEF.md').write_text('brief')
-    receipt = {'schema': 1, 'steg': steg, 'arbetsyta': str(ws), 'rot_git_head': 'abc', 'sha256_over_underlag': 'f' * 64,
-               'underlag': [{'plats': 'underlag/profession/kritik/FRAGA-x.md', 'fil': 'kritik/FRAGA-x.md', 'klass': 'profession', 'status': 'laddad', 'delar': 'mallen'},
-                            {'plats': 'underlag/kund/PROJECT-BRIEF.md', 'fil': 'PROJECT-BRIEF.md', 'klass': 'kund', 'status': 'laddad', 'delar': '§5'},
-                            {'plats': None, 'fil': 'x', 'klass': 'kund', 'status': 'saknas (valfri)', 'delar': 'x'}]}
-    path = tmp / 'LADDNING.json'
+def receipt_file(tmp, steg='kritik', profil_text=None, name='LADDNING.json'):
+    """Ett laddningskvitto med arbetsyta: kritik-steget bär repots tre mallar, matning-steget PROFIL.json; varje rad har sha256."""
+    import hashlib
+    ws = tmp / ('arbetsyta-' + steg)
+    rows = []
+    def put(rel, fil, klass, text, delar='hela'):
+        p = ws / rel; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(text)
+        rows.append({'plats': rel, 'fil': fil, 'klass': klass, 'status': 'laddad', 'delar': delar, 'sha256': hashlib.sha256(text.encode()).hexdigest()})
+    if steg == 'kritik':
+        for mall in ('designkritik-komp', 'renderingslasning', 'femsekunderstest'):
+            put('underlag/profession/kritik/FRAGA-%s.md' % mall, 'kritik/FRAGA-%s.md' % mall, 'profession', (ROT / ('kritik/FRAGA-%s.md' % mall)).read_text(), 'mallen')
+            put('underlag/profession/kritik/SCHEMA-%s.json' % mall, 'kritik/SCHEMA-%s.json' % mall, 'profession', (ROT / ('kritik/SCHEMA-%s.json' % mall)).read_text(), 'schemat')
+        put('underlag/profession/kunskap/externa/SKILL.md', 'kunskap/externa/SKILL.md', 'profession', 'kalibrering', 'delar')
+    elif steg == 'matning':
+        put('underlag/profession/matning/PROFIL.json', 'matning/PROFIL.json', 'profession', profil_text or (ROT / 'matning/PROFIL.json').read_text())
+    else:
+        put('underlag/profession/provare/UPPGIFT-MALL.md', 'provare/UPPGIFT-MALL.md', 'profession', 'mall')
+    put('underlag/kund/PROJECT-BRIEF.md', 'PROJECT-BRIEF.md', 'kund', 'brief', '§5')
+    rows.append({'plats': None, 'fil': 'x', 'klass': 'kund', 'status': 'saknas (valfri)', 'delar': 'x'})
+    receipt = {'schema': 1, 'steg': steg, 'mandat': 'staende', 'bestallning': None, 'utforare': 'claude', 'kundmapp': str(tmp / 'kund'), 'arbetsyta': str(ws), 'rot_git_head': 'abc', 'sha256_over_underlag': 'f' * 64, 'underlag': rows}
+    path = tmp / name
     path.write_text(json.dumps(receipt))
     return path
 
@@ -52,7 +62,9 @@ class Rig(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp(prefix='nd-kor-'))
         self.fall = self.tmp / 'fall'
         self.fall.mkdir()
-        self.laddning = receipt_file(self.tmp)
+        self.laddning = receipt_file(self.tmp, 'kritik')
+        self.laddning_matning = receipt_file(self.tmp, 'matning', name='LADDNING-matning.json')
+        self.laddning_provare = receipt_file(self.tmp, 'provare', name='LADDNING-provare.json')
 
     def run_cli(self, root, *args):
         env = dict(os.environ, NR_HOST_ROOT=str(root))
@@ -63,7 +75,7 @@ class Rig(unittest.TestCase):
 class Matning(Rig):
     def test_utan_parametrar_kravs_lika_varden_och_argv_saknar_vyer(self):
         root = fake_runtime(self.tmp, PROFIL['vyer'], PROFIL['axe_taggar'], parametrar=False)
-        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'prov-1', '--mal', 'https://example.test/', '--torr')
+        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.fall), '--etikett', 'prov-1', '--mal', 'https://example.test/', '--torr')
         self.assertEqual(code, 0, out)
         self.assertTrue(out['torr'])
         self.assertIn('runtime.web_measure', out['argv'])
@@ -74,7 +86,7 @@ class Matning(Rig):
 
     def test_med_parametrar_skickas_digitalas_val(self):
         root = fake_runtime(self.tmp, {'annan': {'width': 1, 'height': 1, 'deviceScaleFactor': 1, 'isMobile': False, 'hasTouch': False}}, ['wcag2a'], parametrar=True)
-        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'prov-2', '--fil', '/tmp/x.html', '--torr')
+        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.fall), '--etikett', 'prov-2', '--fil', '/tmp/x.html', '--torr')
         self.assertEqual(code, 0, out)
         argv = out['argv']
         self.assertEqual(argv[argv.index('--vyer') + 1], 'mobil-390=390x844@2m,desktop-1440=1440x900@1d')
@@ -82,15 +94,15 @@ class Matning(Rig):
 
     def test_avvikande_frysta_varden_utan_parametrar_vagras(self):
         root = fake_runtime(self.tmp, PROFIL['vyer'], ['wcag2a'], parametrar=False)
-        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'prov-3', '--mal', 'https://example.test/', '--torr')
+        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.fall), '--etikett', 'prov-3', '--mal', 'https://example.test/', '--torr')
         self.assertEqual(code, 2, out)
         self.assertIn('skiljer sig', out['skal'])
 
     def test_ogiltig_etikett_och_saknad_fallmapp_vagras(self):
         root = fake_runtime(self.tmp, PROFIL['vyer'], PROFIL['axe_taggar'], parametrar=False)
-        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'Stor', '--mal', 'https://x/', '--torr')
+        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.fall), '--etikett', 'Stor', '--mal', 'https://x/', '--torr')
         self.assertEqual(code, 2)
-        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning), '--fall', str(self.tmp / 'finns-inte'), '--etikett', 'ok', '--mal', 'https://x/', '--torr')
+        code, out = self.run_cli(root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.tmp / 'finns-inte'), '--etikett', 'ok', '--mal', 'https://x/', '--torr')
         self.assertEqual(code, 2)
 
 
@@ -107,7 +119,8 @@ class Kritik(Rig):
         code, out = self.run_cli(self.root, *args)
         self.assertEqual(code, 0, out)
         self.assertEqual(out['mall'], 'femsekunderstest')
-        self.assertEqual(out['antal_filer'], 3, 'kundfil och professionsfil ur laddningen läggs till')
+        self.assertEqual(out['antal_filer'], 1, 'femsekunderstestet är avskärmat: varken kundfil eller professionstext följer med')
+        self.assertEqual(out['manifest_platser'], ['VYER/a.png'])
         self.assertIn('runtime.web_critique', out['argv'])
 
     def test_ofyllda_platshallare_vagras(self):
@@ -132,7 +145,7 @@ class Provare(Rig):
     def test_uppgift_med_platshallare_vagras_och_fylld_uppgift_binds(self):
         uppgift = self.tmp / 'UPPGIFT.md'
         uppgift.write_text((ROT / 'provare/UPPGIFT-MALL.md').read_text())
-        base = ['provare', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'p-1', '--start', 'https://x.test/',
+        base = ['provare', '--laddning', str(self.laddning_provare), '--fall', str(self.fall), '--etikett', 'p-1', '--start', 'https://x.test/',
                 '--tillatna', 'https://x.test', '--uppgift', str(uppgift), '--vy', 'mobil', '--utforare', 'claude', '--modell', 'claude-opus-5', '--torr']
         code, out = self.run_cli(self.root, *base)
         self.assertEqual(code, 2, out)
@@ -145,7 +158,7 @@ class Provare(Rig):
         bindningar = [argv[i + 1] for i, a in enumerate(argv) if a == '--bindning']
         self.assertIn('commit=abc', bindningar)
         self.assertTrue(any(b.startswith('laddning=') for b in bindningar))
-        self.assertIn('steg=kritik', bindningar)
+        self.assertIn('steg=provare', bindningar)
 
 
 class HemligVag(unittest.TestCase):
