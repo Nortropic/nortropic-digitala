@@ -69,6 +69,29 @@ class Intervju(unittest.TestCase):
         for text, ska in (('Vi skriver upp besöken i kalendern.', True), ('Vi har tre kalendrar på kontoret.', True), ('Vi gör en redaktionskalender för Facebook.', False)):
             self.assertEqual(bool(iv.FOLJDREGLER[0][1].search(text)), ska, text)
 
+    def test_kundmapp_i_repot_vagras_for_alla_kommandon_och_obesvarade_foljdfragor_ar_luckor(self):
+        """Restnoter ur granskningen av intervjukandidaten (r2): spärren gällde bara research --ut; obesvarade följdfrågor syntes inte."""
+        inne = self.repo / 'kunder' / 'provkund-i-repot'
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(iv.main(['start', '--kund', str(inne), '--kanal', 'e-post', '--testdialog']), 2)
+        self.assertFalse(inne.exists(), 'inget får skapas i repot')
+        code, r = kor('status', '--kund', str(inne)); self.assertEqual(code, 2); self.assertIn('i repot', r['vagrad'])
+        kor('start', '--kund', str(self.k), '--kanal', 'e-post', '--testdialog')
+        svar = self.k / 's.md'; svar.write_text('### C1\nMejl kommer till info@; bokade besök skrivs i en Google-kalender.\n')
+        kor('svar', '--kund', str(self.k), '--omgang', '1', '--fil', str(svar))
+        kor('nasta', '--kund', str(self.k))
+        s = iv.las(str(self.k)); o2 = s['omgangar'][-1]; foljd = [q['id'] for q in o2['fragor'] if q.get('utlost_av')]
+        self.assertTrue(foljd, 'bokningsregeln ska ha gett följdfrågor i omgång 2')
+        tom = self.k / 't.md'; tom.write_text('### %s\nvet inte\n' % foljd[0])
+        kor('svar', '--kund', str(self.k), '--omgang', str(o2['nr']), '--fil', str(tom))
+        code, r = kor('status', '--kund', str(self.k))
+        self.assertTrue(any(x.startswith(foljd[1] + '(följdfråga ställd utan svar') for x in r['luckor_kvar']), r['luckor_kvar'])
+        self.assertFalse(any(x.startswith(foljd[0] + '(') for x in r['luckor_kvar']), 'den besvarade följdfrågan är ingen lucka')
+        code, r = kor('nasta', '--kund', str(self.k)); self.assertEqual(code, 0); self.assertNotIn('inga luckor', r['meddelande'])
+        s = iv.las(str(self.k)); o3 = s['omgangar'][-1]
+        self.assertIn(foljd[1], [q['id'] for q in o3['fragor']], 'den obesvarade följdfrågan ställs igen'); self.assertTrue(any(q['id'] == foljd[1] and 'utan svar' in q['text'] for q in o3['fragor']))
+        self.assertIn(foljd[1], iv.anvandbarhet(s)['vad vi ännu inte vet']); self.assertIn('följdfråga, ställd utan svar', iv.research_md(s))
+
     def test_negerad_regel_ger_ingen_foljdfraga_men_bokfors(self):
         """Iakttagelse från Kundstart (peer 0a): ordbaserade regler såg inte negationer."""
         kor('start', '--kund', str(self.k), '--kanal', 'e-post', '--testdialog')

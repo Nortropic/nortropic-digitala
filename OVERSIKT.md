@@ -1,8 +1,9 @@
 # Så fungerar Digitala i praktiken — daterad översikt
 
 Skriven 2026-09-27 av kedjedrivaren (sessionen nortropic-repos-f0) för ägaren, enligt tilläggen till HELHET-20260927
-(avsnitt 5 respektive 9). Lästa revisioner: Digitala main 3c9e448 (PR 4 intervju, PR 5 webbläsarvägen, PR 6 start/fortsätt-vägen, PR 7 efterarbete
-— alla genom publiceringsvägen); kontoret main 30ebc08; Runtime main 3d74733 med aktiv konfiguration eb102e4e (runtime
+(avsnitt 5 respektive 9). Lästa revisioner: Digitala main 0c5e987 (PR 4 intervju mergad före publiceringsvägen fanns; PR 5 webbläsarvägen, PR 6
+start/fortsätt-vägen, PR 7 efterarbete och PR 8 slutprovets fynd genom publiceringsvägen; PR 9 är Kundstart-uppdragets
+verktyg, inte HELHET:s); kontoret main 8e6ecf8 (HELHET-RESULTAT-20260927); Runtime main 3d74733 med aktiv konfiguration eb102e4e (runtime
 3bea86ef, övergång 18 aktiverad av ägaren 2026-09-27 10:44Z). Två vyer, tydligt skilda: **A** den ordinarie arbetsvägen (vad systemet ska göra, enligt dokumentation och
 kod), **B** en faktiskt genomförd körning (vad systemet gjorde, med belägg). Tekniska referenser står intill i
 kursiv eller i bilagan sist. Inga hemligheter, kunduppgifter eller råspår.
@@ -75,8 +76,8 @@ leverans, lansering bara med mandat. Ingen ny process: samma steg, samma verktyg
 
 Fallet **Provfirma Trädgård (TESTFALL)**: fiktiv verksamhet, syntetisk intervju (testdialog), platshållarbilder märkta
 TESTBILD, beställning märkt `testfall: true`, sajten serverad lokalt (127.0.0.1) och aldrig driftsatt. Allt nedan är
-belagt i kontorets privata kundmapp `evidence/digitala/local/testfall-helhet-20260927/` (fall/LAGE.json: 38 händelser,
-kvitton per steg). Inget av det är kundbevis eller kvalitetsreferens; det visar vad kedjan gör när den körs.
+belagt i kontorets privata kundmapp `evidence/digitala/local/testfall-helhet-20260927/` (fall/LAGE.json: 38 körhändelser
+plus en rättelsehändelse bokförd i efterhand, kvitton per steg). Inget av det är kundbevis eller kvalitetsreferens; det visar vad kedjan gör när den körs.
 
 | # | Steg | Utförare · modell | Vad som gjordes (verktyg) | Kontroll som följde | Belagt genom |
 |---|---|---|---|---|---|
@@ -98,8 +99,9 @@ kvitton per steg). Inget av det är kundbevis eller kvalitetsreferens; det visar
 | 17 | leverans | session | `kvalitetsbild.py` (7 Runtime-körningar, alla ok), användningsnoter, lärdomsposter L24–L27; leveransen = privat lokal förhandsvisning | vägen slutade: "alla tillämpliga steg klara: färdig privat leverans" | KVALITETSBILD.md, LAGE.json |
 
 Integration under provet (samma dag): fyra kandidater publicerade genom `publicera.py` utan manuellt PR-godkännande
-(PR 5–7 plus intervjun PR 4 dessförinnan), varje gång efter separat läsargranskning (Runtime läsarprofil, claude-opus-5;
-sju rundor totalt, tre underkända och rättade). Direkt push till main nekades av rulesetet (bevis i kontoret).
+(PR 5–8; intervjun PR 4 mergades dessförinnan genom PR-vägen innan verktyget fanns), varje gång efter separat
+läsargranskning (Runtime läsarprofil, claude-opus-5; nio rundor på de fyra — webbläsarvägen tre, fortsätt-vägen två, efterarbetet två, slutprovets fynd två — varav fem
+underkända och rättade). Direkt push till main nekades av rulesetet (bevis i kontoret).
 
 ### Resurser i slutprovet — belagt, rapporterat, inte kört, inte tillämpligt (tillägg 1, avsnitt 5)
 
