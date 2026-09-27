@@ -1,9 +1,9 @@
 # Så fungerar Digitala i praktiken — daterad översikt
 
 Skriven 2026-09-27 av kedjedrivaren (sessionen nortropic-repos-f0) för ägaren, enligt tilläggen till HELHET-20260927
-(avsnitt 5 respektive 9). Lästa revisioner: Digitala main df6cf8c (intervjukandidaten mergad som PR 4) med kandidaterna webbläsarvägen (gren
-helhet/webblasare, i PR-vägen) och start/fortsätt-vägen (denna gren); kontoret main 30ebc08; Runtime main 3d74733 med
-aktiv konfiguration eb102e4e (runtime 3bea86ef, övergång 18 aktiverad av ägaren 2026-09-27 10:44Z). Två vyer, tydligt skilda: **A** den ordinarie arbetsvägen (vad systemet ska göra, enligt dokumentation och
+(avsnitt 5 respektive 9). Lästa revisioner: Digitala main 3c9e448 (PR 4 intervju, PR 5 webbläsarvägen, PR 6 start/fortsätt-vägen, PR 7 efterarbete
+— alla genom publiceringsvägen); kontoret main 30ebc08; Runtime main 3d74733 med aktiv konfiguration eb102e4e (runtime
+3bea86ef, övergång 18 aktiverad av ägaren 2026-09-27 10:44Z). Två vyer, tydligt skilda: **A** den ordinarie arbetsvägen (vad systemet ska göra, enligt dokumentation och
 kod), **B** en faktiskt genomförd körning (vad systemet gjorde, med belägg). Tekniska referenser står intill i
 kursiv eller i bilagan sist. Inga hemligheter, kunduppgifter eller råspår.
 
@@ -47,7 +47,7 @@ beslutsposten med omfattning och eventuellt lanseringsmandat), avgör nästa ste
 bokför utfall och sidoeffekter i fallets `LAGE.json`, gör omprov vid underkänt och bokför saknade externa beroenden
 (`vantar`) utan att stoppa resten; en färsk utförare kör `status` och `fortsatt`.
 Integration i Digitala-repot sker genom `verktyg/publicera.py` (PR-vägen, bara med godkänd separat granskning bunden
-till exakt commit). Mekaniskt verkställt: laddningens versionskontroll och kvitton, Runtimes profiler och kvitton,
+till exakt commit eller en commit med identiskt träd efter rebase på identisk bas). Mekaniskt verkställt: laddningens versionskontroll och kvitton, Runtimes profiler och kvitton,
 kontextpolicyn som håller brief och facit borta från den avskärmade bedömaren, ursprungsgränsen i webbläsarvägen,
 fiktiv-spärren i kanalverktygen, rulesetet på main. Sessionsburet: tolkningen av underlagen, valen i brief och koncept,
 bygget, att utfallen rapporteras sant.
@@ -69,15 +69,53 @@ leverans, lansering bara med mandat. Ingen ny process: samma steg, samma verktyg
 | Google-företagsprofil | lokal-synlighet.md, `lokal_synlighet.py` (datablad, NAP-kontroll) | ingen API-väg (profilen skapas av behörig människa) | kundens Google-konto; verifiering |
 | Google Ads, Meta Ads | annonser.md, `annonsberedning.py` (PAUSED-utkast i plattformarnas objektform, resultatläsning ur export) | inte körd: ingen överföringsväg | Google Ads-utvecklartoken + OAuth + kund-id; Meta-app med ads_management + annonskonto; mandat att spendera |
 | Mätning och uppföljning | uppfoljning.md, `uppfoljning.py` (mätplan, kontroll mot bygge, UTM, läsning av export) | beror på kundens verktyg | samtycke; verktygets felsökningsläge |
-| Drift | drift.md, `drift_kontroll.py` (kvitto, exit 1 vid incident) | körs av hand | schemalagd körning genom Runtime (etapp 5, namngivet steg) |
+| Drift | drift.md, `drift_kontroll.py` (kvitto, exit 1 vid incident) | körs av hand | schemalagd körning genom Runtime kräver ett eget Runtime-mandat, release och övergång (AP-10:s schema är hårdkodat till bedömningen; inga generella schemalagda kommandon) — ägarpunkt, inte byggt |
 
-## Vy B — en faktiskt genomförd körning
+## Vy B — en faktiskt genomförd körning (slutprovet 2026-09-27, tydligt märkt testdata)
 
-Skrivs i etapp 6 ur slutprovet med tydligt märkta testunderlag (inget kundfall finns beställt än): vilka resurser som
-verkligen användes, i vilka steg, av vilken utförare och modell, med vilka underlag, vilken kontroll som följde, och
-per resurs om det är belagt (körspår, kvitto), rapporterat, inte kört eller inte tillämpligt. Tills dess gäller
-etapp 4-körningen på Norrglänta (DIGITALA-1-ETAPP4-RESULTAT-20260927) som det senaste verkliga arbetsfallet, med sina
-användningsnoter — Norrglänta är underkänt som kvalitetsresultat och används här bara som belägg för vad som kördes.
+Fallet **Provfirma Trädgård (TESTFALL)**: fiktiv verksamhet, syntetisk intervju (testdialog), platshållarbilder märkta
+TESTBILD, beställning märkt `testfall: true`, sajten serverad lokalt (127.0.0.1) och aldrig driftsatt. Allt nedan är
+belagt i kontorets privata kundmapp `evidence/digitala/local/testfall-helhet-20260927/` (fall/LAGE.json: 38 händelser,
+kvitton per steg). Inget av det är kundbevis eller kvalitetsreferens; det visar vad kedjan gör när den körs.
+
+| # | Steg | Utförare · modell | Vad som gjordes (verktyg) | Kontroll som följde | Belagt genom |
+|---|---|---|---|---|---|
+| 1–2 | uppstart, beredning | session (claude) | `fortsatt.py` laddade stegen; BEREDNING.json (proportion mellan, kanalbehov) | — | LAGE.json, laddningskvitton |
+| 3 | intervju | session · testdialog | `intervju.py start/svar/fakta/nasta/research`: 2 omgångar, 11 svar registrerade (5 svar i omgång 2 med fel fråge-id avvisades), 8 fakta (4 ur verksamhetsuppgifterna, 4 ur svaren), luckor kvar; fallets not från 15:08Z angav fel siffror och är rättad med en rättelsehändelse i LAGE.json | fynd: bokningsregeln missade "bokade … kalender" → rättad (PR 6) | INTERVJU.json, research-intervju.md, LAGE.json |
+| 4–5 | research, brief | session | research.md (19 sektioner, kontrollrad OFULLSTÄNDIG), PROJECT-BRIEF.md §0–§14 | kedjekontroll (del 2) i §14 | kund/ |
+| 6 | koncept | session + **Runtime kritikprofil (claude-sonnet-5)** | två kompar K1/K2 inspekterade (`inspektera.mjs`), kritiserade genom `kor_profil.py kritik` (designkritik-komp) | kritiken avgjorde riktningen "Text och foto sida vid sida" | KORNING kritik-koncept-k1/k2, KONCEPT.md |
+| 7 | bygge | session | statisk sajt + `server.py` (CSP, servervalidering, honeypot, en klocka); DESIGN.md lintad (@google/design.md 0.4.0, 0 fel); `inspektera.mjs` 390/768/1440 | fynd under bygget: inline-stilar bröt CSP → rättat | sajt/, INSPEKTION-bygge-* |
+| 8 | redaktionellt pass | session | `copy_kontroll.py` med briefens fraser och krav ur VERKSAMHET.json: 3 metalängder → 0 | REDAKTIONELLT-PASS-*.md | COPY-2.json |
+| 9 | seo | session | `seo_kontroll.py` (förhandsvisning, LocalBusiness utan adress): 13 fynd → 0 | — | SEO-2.json |
+| 10 | matning | **Runtime mätprofil** (modellfri) | `kor_profil.py matning` mot lokal adress ×3 (D037-parametrar): axe 0, Lighthouse 100/100/100/58 (seo: noindex), handling i vyn, detektor 3 fynd (platshållare, radavstånd) | radavstånd rättat, ommätt | KORNING matning-testfall-bygge(-2,-3) |
+| 11 | kritik | **Runtime kritikprofil (claude-sonnet-5)** | renderingsläsning (godkänd, 4 förbättringar) och femsekunderstest (avskärmat, bara bilder) | "schaktmassor" borttagen, tack-sidan inspekterad | KORNING kritik-testfall-rendering/-femsek |
+| 12 | granskning D | session | kodläsning mot WIG/web-quality-audit/accessibility/mobile-native/formularsakerhet: 4 fynd | till qa-steget | GRANSKNING-D.md |
+| 13 | qa | **Codex (Runtimes pinnade codex-0.155.1, gpt-6-astra)** efter `fortsatt.py --utforare codex` | `utforska.mjs` (5 sidor, 3 fynd, REGRESSION.json); Codex rättade dedupering, tidsfälla, hjälptext, radavstånd (59 s); regressionen omkörd | fynd i sajten: kombinerade robotsignaler gav 400 → rättat; fynd i verktyget: fyllde honeypot som en robot → rättat (L25) | CODEX-qa-2.out, QA-*, QA-regression-* |
+| 14 | provare | **claude-sonnet-5 genom verklig Playwright MCP** (`besok.mjs`, avskärmad) | 13 turer, 67 s, 9 förfrågningar alla inom ursprunget, POST /skicka, lead levererad till mottagaren med exakt testdata | kontrollanten bedömde ur artefakter: lyckat (KONTROLL-besok.md) | BESOK-20260927T160628Z, KONTROLL-besok.json |
+| 15 | uppfoljning | session | MATPLAN.json (verktyg "ingen"), HANDELSEPLAN.md, MATKONTROLL.json (händelser avsiktligt inte i koden) | — | fall/ |
+| — | annonsberedning, lokal-synlighet, lansering, sokkonsol, drift | verktyget | markerade *inte tillämpliga* av `fortsatt.py` (kanalbehov false; inget lanseringsmandat); omprövas om beställningen utvidgas | — | LAGE.json |
+| 16 | prelaunch | session | `prelaunch.py` (rättad i slutprovet, L24): grind 0–5 och 7 PASS; 6 MANNISKA (ingen JURIDIK.json) → inte redo | avsiktligt: juridik avgörs av människa | PRELAUNCH.json |
+| 17 | leverans | session | `kvalitetsbild.py` (7 Runtime-körningar, alla ok), användningsnoter, lärdomsposter L24–L27; leveransen = privat lokal förhandsvisning | vägen slutade: "alla tillämpliga steg klara: färdig privat leverans" | KVALITETSBILD.md, LAGE.json |
+
+Integration under provet (samma dag): fyra kandidater publicerade genom `publicera.py` utan manuellt PR-godkännande
+(PR 5–7 plus intervjun PR 4 dessförinnan), varje gång efter separat läsargranskning (Runtime läsarprofil, claude-opus-5;
+sju rundor totalt, tre underkända och rättade). Direkt push till main nekades av rulesetet (bevis i kontoret).
+
+### Resurser i slutprovet — belagt, rapporterat, inte kört, inte tillämpligt (tillägg 1, avsnitt 5)
+
+- **Verifierat använda med körspår**: `fortsatt.py`, `ladda_steg.py`, `intervju.py`, `kor_profil.py` (mät- och kritikprofilen
+  ×7), `inspektera.mjs`, `utforska.mjs`, `besok.mjs` (verklig MCP), `copy_kontroll.py`, `seo_kontroll.py`, `uppfoljning.py`,
+  `prelaunch.py`, `kvalitetsbild.py`, `publicera.py`, `pinna.py`, `verksamhetsuppgifter.py`; texterna brief-mall, research-
+  underlag, kundintervju, bild, bygge-referens, formularsakerhet, copy-kontroll, seo/seo-lokal, redaktionellt-pass,
+  webblasare, uppfoljning, prelaunch, KVALITET, MANDAT, LARDOMAR; externa: Taste §0/§4, frontend-design, emil-prototype
+  (metod), mobile-native, WIG, web-quality-audit, accessibility, google-design.md (lint körd).
+- **Närvarande men inte använda i provet**: `sokkonsol.py`, `lokal_synlighet.py`, `annonsberedning.py`, `lansering.py`,
+  `drift_kontroll.py` (kanalbehov/mandat saknades — verktygen har egna prov), `bild/treatment.mjs` och `brand.mjs` (inga
+  riktiga foton), Hallmark-linsen och emil-design-eng (inte motiverade av briefen), PICKER (ingen bläddringsyta),
+  Runtimes provarprofil (Playwright-vägen kördes i stället; profilen prövad i Norrglänta samma dag).
+- **Återstående kopplingar (externa aktiveringar, ägarpunkter)**: Google Cloud/OAuth för Search Console, Ads-
+  utvecklartoken och Meta-token, företagsprofil genom behörig människa, schemalagd driftkontroll genom Runtime (eget
+  mandat), verklig skyddad förhandsvisning (Vercel) för webbläsarvägen, juridisk genomgång av människa före lansering.
 
 ## Bilaga — tekniska referenser
 

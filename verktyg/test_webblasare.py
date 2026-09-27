@@ -24,7 +24,7 @@ SIDOR = {
     '/om/': '<!doctype html><html lang="sv"><head><title>Om</title></head><body><h1>Om</h1><h1>Två</h1><a href="/">Hem</a></body></html>',
     '/kontakt/': '<!doctype html><html lang="sv"><head><title>Kontakt</title></head><body><h1>Kontakt</h1>'
                  '<form method="post" action="/skicka"><label>Namn <input name="namn" required></label><label>E-post <input type="email" name="epost" required></label>'
-                 '<label>Meddelande <textarea name="msg" required></textarea></label><button type="submit">Skicka</button></form><a href="/">Hem</a></body></html>',
+                 '<label>Meddelande <textarea name="msg" required></textarea></label><div aria-hidden="true"><label>Webbplats <input name="webbplats"></label></div><input name="fax" tabindex="-1"><input name="telefon2" style="position:absolute;left:-9999px"><button type="submit">Skicka</button></form><a href="/">Hem</a></body></html>',
 }
 
 
@@ -132,9 +132,12 @@ class Webblasare(unittest.TestCase):
         code, out, err = kor('utforska.mjs', '--adress', self.bas + '/kontakt/', '--ut', str(self.d / 'qa2'), '--max-sidor', '1', '--formular-far-skickas', '--testmarkering', 'TEST nortropic')
         self.assertEqual(code, 0, err[-800:])
         self.assertEqual(len(Handler.poster), 2, 'ett inskick plus ett dubbelt inskick'); self.assertIn('TEST+nortropic', Handler.poster[0])
+        for hp in ('webbplats=TEST', 'fax=TEST', 'telefon2=TEST'):
+            self.assertNotIn(hp, Handler.poster[0], 'honeypot-fältet (aria-hidden / tabindex=-1 / utanför synfältet) ska inte fyllas: verktyget provar som en människa')
         r2 = json.loads((self.d / 'qa2' / 'UTFORSKNING.json').read_text())
         f0 = next(s for s in r2['sidor'] if s['url'].endswith('/kontakt/'))['formular'][0]
         self.assertTrue(f0['skickat']); self.assertIn('Tack', f0['besked'] or '')
+        self.assertEqual(f0['falt_dolda'], 3, 'tre dolda fält hoppade över, synligt i rapporten')
         code, out, err = kor('utforska.mjs', '--adress', self.bas + '/', '--ut', str(self.d / 'qa3'), '--regression', str(self.d / 'qa' / 'REGRESSION.json'))
         self.assertEqual(code, 0, err[-800:]); r3 = json.loads((self.d / 'qa3' / 'UTFORSKNING.json').read_text()); self.assertGreaterEqual(len(r3['sidor']), 2)
 

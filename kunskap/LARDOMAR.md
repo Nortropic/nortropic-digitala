@@ -260,3 +260,48 @@ i briefen).
 - **Lokal preferens?** Nej (Vercel-specifikt i detaljerna, generellt i ordningen). **Tillämpning**: rotationsskriptets
   steg; en nyckel per verktyg med etikett. **Kvarvarande osäkerhet**: hur länge en återkallad nyckel cachas vid kanten
   (läsprovet gav 302 direkt). **Läge**: ny.
+
+## L24 — Startposten är inte mätkvittot: läs körkatalogen
+- **Observation**: i slutprovet HELHET-20260927 (testfallet Provfirma Trädgård, 2026-09-27) gav `prelaunch.py` EJ_MATT på
+  prestanda, responsivitet och tillgänglighet fast mätningen var klar: `KORNING-*.json` från `kor_profil.py` är startposten
+  (argv, bindning, verktygsversioner) och pekar på Runtimes körkatalog (`resultat.run`), där `SAMMANFATTNING.json` bär
+  Lighthouse, axe, h1, handling och detektor per vy. Djupsökningen hittade dessutom verktygsversionens `lighthouse`-sträng
+  före mätvärdena. Bevis: `fall/PRELAUNCH-prov.json` och `PRELAUNCH-prov2.json` i testfallets kundmapp.
+- **Möjlig generell lärdom**: ett kvitto som pekar på en annan katalog måste följas dit av verktyget som läser det, och
+  det man letar efter ska läggas först i sökordningen; "saknar" ska skiljas från "finns någon annanstans".
+- **Lokal preferens?** Nej. **Tillämpning**: `prelaunch.py` läser KORNING→run→SAMMANFATTNING/KVITTO, Lighthouse per vy,
+  spill ur `--inspektion` (webbläsarverktyget), SEO-poängen avgör inte i förhandsvisning (noindex). **Kvarvarande
+  osäkerhet**: andra läsare av KORNING (kvalitetsbild läser redan körkatalogen). **Läge**: ny. **Klass**: dokumenterad felorsak.
+
+## L25 — QA-verktyget som fyller alla fält provar som en robot, inte som en besökare
+- **Observation**: `utforska.mjs` fyllde honeypot-fältet (utanför synfältet, aria-hidden, tabindex −1) och skickade inom
+  tidsfällan; servern svarade först 400 med tom fältlista (kombinerade robotsignaler hanterades som fältfel — ett riktigt
+  serverfel som provet hittade) och efter rättningen "tyst tack" utan leverans, vilket verktyget läste som "inget
+  synligt besked" respektive dubblett. Bevis: `fall/QA-20260927T160621Z`, `QA-regression-*` i testfallet.
+- **Möjlig generell lärdom**: ett QA-verktyg ska fylla det en människa ser och når; det som bara en robot når är ett
+  eget prov (honeypot-provet), inte en del av besökarprovet. Ett "tyst tack" är avsiktligt för robotar och måste därför
+  kunna skiljas från utebliven leverans i provet (leveransen är provet, inte svarskoden).
+- **Lokal preferens?** Nej. **Tillämpning**: `manskligaFalt()` i `utforska.mjs` hoppar över dolda fält; provsajten i
+  `test_webblasare.py` har ett honeypot. **Kvarvarande osäkerhet**: fält som döljs med CSS-klass efter sidladdning.
+  **Läge**: ny. **Klass**: dokumenterad felorsak.
+
+## L26 — Publiceringsvägens kvitto måste läsa mergeläget, inte gh:s exitkod; en rebasad kandidat har samma träd
+- **Observation**: vid PR 5 föll `gh pr merge`:s efterarbete i en worktree ('main' is already used by worktree) fast
+  mergen skett, och kvittot sade avbrutet; vid PR 6 gav GitHub mergekonflikt tills grenen rebasats på main, varvid
+  commit-id:t byttes men trädet var identiskt (0e23e3a5…). Bevis: kontorets privata `PUBLICERING-20260927T154812Z.json`,
+  `…155308Z.json`, `…155528Z.json`.
+- **Möjlig generell lärdom**: ett verktyg som verkställer något utanför sig självt ska läsa tillståndet efteråt
+  (`gh pr view`), inte lita på det kommando som utlöste det; en granskning gäller innehållet (trädet), och en rebase
+  på identisk bas ändrar inte innehållet — men verktyget ska säga vilket det band till.
+- **Lokal preferens?** Nej. **Tillämpning**: `publicera.py` (PR 7). **Kvarvarande osäkerhet**: en kandidat vars bas
+  ligger efter main godtas av trädbindningen; PR-vägens mergekonflikt är skyddet. **Läge**: ny. **Klass**: dokumenterad felorsak.
+
+## L27 — Utförarbyte kräver att utförarens binär och modell hör ihop
+- **Observation**: qa-steget laddades som utförare codex; den globalt installerade Codex-CLI:n (0.147.0) vägrade
+  modellen `gpt-6-astra` ("requires a newer version of Codex"), medan Runtimes pinnade `codex-0.155.1` körde uppgiften
+  (dedupering, tröskel, hjälptext, radavstånd; 59 s; `fall/CODEX-qa-2.out`). Bevis: `CODEX-qa.out` (fel) och
+  `CODEX-qa-2.out` (lyckat) i testfallet.
+- **Möjlig generell lärdom**: modellvalet i Runtimes konfiguration förutsätter en binär som kan tala med modellen;
+  ett utförarbyte utanför Runtime ska använda samma pinnade binär som Runtime, inte det som råkar ligga i PATH.
+- **Lokal preferens?** Nej. **Tillämpning**: `ARBETSSATT.md` anger Runtimes pinnade binär för Codex-körningar utanför
+  Runtime. **Kvarvarande osäkerhet**: om ägarens CLI uppdateras försvinner skillnaden. **Läge**: ny. **Klass**: observation.

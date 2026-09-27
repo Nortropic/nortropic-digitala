@@ -5,6 +5,24 @@
 //   node utforska.mjs --adress URL --ut DIR [--max-sidor 15] [--vy 390|1440] [--tillat ORIGIN;…] [--undantag-fil F]
 //        [--formular-far-skickas --testmarkering "TEST nortropic"] [--regression REGRESSION.json]
 import { args, oppna, origin, horisontellSpill, tangentbord, skriv, nu, lasUndantag, hemligheter } from './gemensamt.mjs';
+
+// Fält som en människa ser och når: hoppar över honeypots (aria-hidden-förfader, tabindex=-1, utanför synfältet eller
+// osynliga). Verktyget ska pröva formuläret som en besökare, inte som en robot (fynd ur slutprovet HELHET-20260927:
+// ett ifyllt honeypot-fält gav tyst tack utan leverans och lästes som "inget besked").
+async function manskligaFalt(form) {
+  const alla = await form.locator('input:not([type=hidden]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea').all();
+  const ut = []; ut.dolda = 0;
+  for (const f of alla) {
+    const dolt = await f.evaluate((e) => {
+      if (e.closest('[aria-hidden="true"]') || e.tabIndex === -1) return true;
+      const r = e.getBoundingClientRect(); const st = getComputedStyle(e);
+      if (st.visibility === 'hidden' || st.display === 'none' || st.opacity === '0') return true;
+      return r.width === 0 || r.height === 0 || r.right <= 0 || r.bottom <= 0 || r.left >= (document.documentElement.scrollWidth || innerWidth) + 1;
+    }).catch(() => false);
+    if (!dolt) ut.push(f); else ut.dolda++;
+  }
+  return ut;
+}
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -27,8 +45,8 @@ const LANGT = 'x'.repeat(2000); const SCRIPT = '<script>alert(1)</script>'; cons
 
 async function provaFormular(url, i) {
   const form = page.locator('form').nth(i);
-  const falt = await form.locator('input:not([type=hidden]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea').all();
-  const r = { form: i, falt: falt.length, tomt: null, langt: null, ogiltig_epost: null, script: null, skickat: false };
+  const falt = await manskligaFalt(form);
+  const r = { form: i, falt: falt.length, falt_dolda: falt.dolda || 0, tomt: null, langt: null, ogiltig_epost: null, script: null, skickat: false };
   const konsolFore = b.logg.konsol.length;
   const submit = form.locator('button[type=submit], input[type=submit], button:not([type])').first();
   const klickSubmit = async () => { if (!(await submit.count())) return false; await submit.click({ timeout: 5000, noWaitAfter: true }).catch(() => null); await page.waitForTimeout(600); return true; };
@@ -62,7 +80,7 @@ async function provaFormular(url, i) {
     if (!r.besked) lagg('varning', url, 'inget synligt besked efter inskick (accepterad ≠ skickad ≠ bekräftad ska synas)', { steg: ['fyll i formuläret med testmarkering', 'skicka', 'läs sidans text'] }, { form: i });
     // dubbelt inskick: samma uppgifter en gång till (återförsök); mottagaren ska inte skapa ett andra ärende
     await page.goto(url, { waitUntil: 'load' }).catch(() => null);
-    const form2 = page.locator('form').nth(i); const falt2 = await form2.locator('input:not([type=hidden]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea').all();
+    const form2 = page.locator('form').nth(i); const falt2 = await manskligaFalt(form2);
     for (const f of falt2) { const typ = await f.getAttribute('type'); await f.fill(typ === 'email' ? 'test@example.com' : (markering + ' ' + UNICODE)).catch(() => null); }
     const submit2 = form2.locator('button[type=submit], input[type=submit], button:not([type])').first();
     if (await submit2.count()) { await submit2.click({ timeout: 5000, noWaitAfter: true }).catch(() => null); await page.waitForTimeout(1000); }
