@@ -1,0 +1,13 @@
+{
+  "name": "nortropic-digitala-webblasare",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Digitalas webbläsarväg: utvecklarinspektion, utforskande QA och avskärmat besökarprov med Playwright; pinnade versioner",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "playwright": "1.63.0",
+    "@playwright/mcp": "0.0.82"
+  }
+}

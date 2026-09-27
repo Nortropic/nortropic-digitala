@@ -19,6 +19,7 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | matning | stående | modellfri mätning: vyer, rubrikrader, handling, axe, Lighthouse, detektor | mätprofilen | körkatalog i Runtime, pekare i fallet |
 | kritik | stående | renderingsläsning, designkritik, femsekunderstest | kritikprofilen | körkatalog i Runtime |
 | granskning-d | stående | kodläsning mot gränssnittsregler, tillgänglighet, mobil, formulär | läsare | privat arbetsyta |
+| qa | stående | utforskande QA i riktig webbläsare: fynd med reproduktion, regressionsprov; browsergranskning under bygget | — (utforska.mjs, inspektera.mjs) | fallet (QA-, INSPEKTION-kataloger; spår privata vid undantag) |
 | provare | stående | scenario i riktig webbläsare, kontrollant avgör | provarprofilen | körkatalog i Runtime + KONTROLL.md i fallet |
 | uppfoljning | beställning | mätplan, händelser, konverteringskedja, kampanjmärkning, kontroll mot bygget, läsning | — (uppfoljning.py) | kundmappen (MATPLAN.json) |
 | annonsberedning | beställning | kampanjutkast för Google Ads och Meta Ads, PAUSED; resultatläsning | — (annonsberedning.py) | kundmappen (KANALPLAN.json, ANNONSER/) |
@@ -31,7 +32,7 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 
 Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **intervju, brief, koncept, bygge,
 redaktionellt-pass, seo, uppfoljning, annonsberedning, lokal-synlighet, leverans, lansering, sokkonsol**. Steg inom stående
-mandat: uppstart, beredning, research, matning, kritik, granskning-d, provare, prelaunch, drift. Kanalstegen (seo,
+mandat: uppstart, beredning, research, matning, kritik, granskning-d, qa, provare, prelaunch, drift. Kanalstegen (seo,
 sokkonsol, lokal-synlighet, annonsberedning, uppfoljning) används när kundens uppdrag motiverar dem (beredningens
 kanalbehov); alla kunder får inte alla kanaler.
 
@@ -67,6 +68,9 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
    `node verktyg/bild/treatment.mjs`, `brand.mjs` — bildbehandling och varumärkesfiler i kundrepot (kräver `sharp` där).
    `python3 -B verktyg/intervju.py start|svar|fakta|avgor|nasta|status|research --kund KUNDMAPP …` — kundintervjun (tillstånd i
    kundmappen; verktyget skickar inget, sessionen använder beställningens kanal).
+   `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
+   pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
+   regressionsprov, avskärmat besökarprov i egen session med efterkontroll av spåret.
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.
