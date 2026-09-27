@@ -112,7 +112,36 @@ def stig(kund):
     return Path(kund) / 'INTERVJU.json'
 
 
+REPO = Path(__file__).resolve().parents[1]
+
+
+def kundmapp(kund):
+    """Kundmappen ligger alltid utanför repot (kundklass ≠ professionsklass); gäller varje kommando, inte bara research."""
+    k = Path(kund).resolve()
+    if k == REPO or REPO in k.parents:
+        raise Vagrad('kundmappen får inte ligga i repot: ' + str(k))
+    return k
+
+
+def obesvarade_foljdfragor_objekt(s):
+    """Följdfrågor (utlösta av regler eller motsägelser) som ställts i en avslutad omgång utan att ha fått svar: de är
+    luckor som påverkar lösningen och ställs igen (samma regel som för grundfrågor)."""
+    besvarade = {x['fraga_id'] for x in s['svar']}
+    ut = {}
+    for o in s['omgangar']:
+        for q in o['fragor']:
+            if q.get('utlost_av') and q['id'] not in besvarade and o.get('svar_mottagna') is not None:
+                f = ut.setdefault(q['id'], dict(q, omgangar=[]))
+                f['omgangar'].append(o['nr'])
+    return list(ut.values())
+
+
+def obesvarade_foljdfragor(s):
+    return ['%s(följdfråga ställd utan svar i omgång %s)' % (f['id'], ','.join(map(str, f['omgangar']))) for f in obesvarade_foljdfragor_objekt(s)]
+
+
 def las(kund):
+    kundmapp(kund)
     p = stig(kund)
     if not p.is_file():
         raise Vagrad('ingen intervju startad i %s (kör start)' % kund)
@@ -188,6 +217,7 @@ def omgang_md(s, o):
 
 
 def start(kund, kanal, testdialog=False, om=False):
+    kundmapp(kund)
     p = stig(kund)
     if p.is_file() and not om:
         s = las(kund)
@@ -311,8 +341,10 @@ def nasta(kund):
     if oppna:
         return s, 'omgång %d väntar på svar; registrera dem med svar innan nästa omgång' % oppna[0]['nr']
     vantande = s.get('vantande_foljdfragor', [])
+    igen = [{'id': f['id'], 'omrade': f['omrade'], 'nyckel': f['nyckel'], 'text': '(ställdes i omgång %s utan svar) ' % ', '.join(map(str, f['omgangar'])) + f['text'], 'paverkar': f['paverkar'], 'utlost_av': f.get('utlost_av')}
+            for f in obesvarade_foljdfragor_objekt(s) if f['id'] not in {v['id'] for v in vantande}]
     grund = [{'id': g[0], 'omrade': g[1], 'nyckel': g[2], 'text': (('(ställdes i omgång %s utan svar) ' % ', '.join(map(str, g[6]))) if g[6] else '') + g[3], 'paverkar': g[4]} for g in luckor(s)]
-    fragor = (vantande + grund)[:PER_OMGANG]
+    fragor = (vantande + igen + grund)[:PER_OMGANG]
     if not fragor:
         return s, 'inga luckor som påverkar lösningen kvar; intervjun kan avslutas (research skriver avsnittet)'
     s['vantande_foljdfragor'] = vantande[len([f for f in fragor if f in vantande]):]
@@ -326,7 +358,7 @@ def nasta(kund):
 def status(s):
     return {'kund': s['kund'], 'testdialog': s.get('testdialog', False), 'kanal': s['kanal'], 'omgangar': len(s['omgangar']), 'svar': len(s['svar']), 'fakta': len(s['fakta']),
             'vantar_pa_svar': [o['nr'] for o in s['omgangar'] if o['svar_mottagna'] is None], 'foljdfragor_vantande': len(s.get('vantande_foljdfragor', [])),
-            'luckor_kvar': [g[0] + ('(ställd utan svar i omgång %s)' % ','.join(map(str, g[6])) if g[6] else '') for g in luckor(s)], 'motsagelser_oavgjorda': [m['id'] for m in s['motsagelser'] if m['lage'] == 'oavgjord'], 'uppdaterad': s.get('uppdaterad')}
+            'luckor_kvar': [g[0] + ('(ställd utan svar i omgång %s)' % ','.join(map(str, g[6])) if g[6] else '') for g in luckor(s)] + obesvarade_foljdfragor(s), 'motsagelser_oavgjorda': [m['id'] for m in s['motsagelser'] if m['lage'] == 'oavgjord'], 'uppdaterad': s.get('uppdaterad')}
 
 
 def anvandbarhet(s):
@@ -341,7 +373,7 @@ def anvandbarhet(s):
                 return 'kunden uppger (svar %s): %s' % (sv[-1]['fraga_id'], sv[-1]['text'][:200])
         return 'okänt'
     return {'viktigaste uppgift': hitta('viktigaste_uppgift', 'senaste_forfragan', 'besokare'), 'vad formuläret ska åstadkomma efter inskick': hitta('efter_inskick', 'bokning_bekraftelse'),
-            'vilket befintligt system som ska ta emot': hitta('mottagande_system', 'system', 'bokning_system', 'crm_falt'), 'vad vi ännu inte vet': ', '.join(g[2] for g in luckor(s)) or 'inga öppna grundluckor; se motsägelser'}
+            'vilket befintligt system som ska ta emot': hitta('mottagande_system', 'system', 'bokning_system', 'crm_falt'), 'vad vi ännu inte vet': ', '.join([g[2] for g in luckor(s)] + [f['id'] + ' (följdfråga utan svar)' for f in obesvarade_foljdfragor_objekt(s)]) or 'inga öppna grundluckor eller obesvarade följdfrågor; se motsägelser'}
 
 
 def research_md(s):
@@ -357,7 +389,8 @@ def research_md(s):
         if fk:
             lines += ['| Uppgift | Värde | Status | Källa | Datum |', '|---|---|---|---|---|'] + ['| %s | %s | %s | %s | %s |' % (x['nyckel'], str(x['varde']).replace('|', '/'), x['status'] + (' — motsägelse ' + x['motsagelse'] if x.get('motsagelse') else ''), x['kalla'], x.get('datum', '')) for x in fk] + ['']
     lines += ['### Motsägelser', ''] + (['- %s (%s): "%s" (%s) mot "%s" (%s) — %s%s' % (mm['id'], mm['nyckel'], mm['uppgift_1']['varde'], mm['uppgift_1']['kalla'], mm['uppgift_2']['varde'], mm['uppgift_2']['kalla'], mm['lage'], (': gäller "%s" — %s' % (mm.get('galler'), mm.get('skal'))) if mm['lage'] == 'avgjord' else '') for mm in s['motsagelser']] or ['- inga']) + ['']
-    lines += ['### Luckor som påverkar lösningen', ''] + (['- %s (%s%s): %s' % (g[2], g[0], (', ställd utan svar i omgång %s' % ','.join(map(str, g[6]))) if g[6] else '', g[4]) for g in luckor(s)] or ['- inga öppna grundfrågor']) + ['']
+    luck = ['- %s (%s%s): %s' % (g[2], g[0], (', ställd utan svar i omgång %s' % ','.join(map(str, g[6]))) if g[6] else '', g[4]) for g in luckor(s)] + ['- %s (följdfråga, ställd utan svar i omgång %s): %s' % (f['id'], ','.join(map(str, f['omgangar'])), f['paverkar']) for f in obesvarade_foljdfragor_objekt(s)]
+    lines += ['### Luckor som påverkar lösningen', ''] + (luck or ['- inga öppna grundfrågor eller obesvarade följdfrågor']) + ['']
     if s.get('okanda_svar'):
         lines += ['- svar med okända fråge-id ignorerades: ' + ', '.join(x['fraga_id'] for x in s['okanda_svar']), '']
     lines += ['### Kan research.md besvara', ''] + ['- %s: %s' % (k, v) for k, v in anvandbarhet(s).items()] + ['']
@@ -373,6 +406,7 @@ def main(argv=None):
     p.add_argument('--motsagelse'); p.add_argument('--galler'); p.add_argument('--skal')
     a = p.parse_args(argv)
     try:
+        kundmapp(a.kund)  # aldrig i repot, oavsett kommando
         if not Path(a.kund).is_dir():
             raise Vagrad('kundmappen finns inte: ' + a.kund)
         if a.kommando == 'start':

@@ -124,8 +124,12 @@ session.
 
 ## E. Läge
 
-Alla underlag är **tillgängliga och kopplade** (denna fil). Ingen är **prövad med observerad nytta**; det kan bara
-användningsnoter över fall visa. Mottagarprovet (en färsk läsarsession hittar rätt underlag från ordinarie ingång utan
+Alla underlag är **tillgängliga och kopplade** (denna fil). Användningsnoterna från slutprovet HELHET-20260927 (ett
+märkt testfall, 2026-09-27; kontorets privata kundmapp) bokför för första gången påverkan per underlag: de flesta
+professionsunderlagen påverkade ett konkret val eller fynd; mätprofilen, täckningstexten och uppföljningsunderlaget
+användes som kontroll utan ändring; annons-, lokal synlighet-, sökkonsol-, lanserings- och driftunderlagen nådde inte
+arbetet (kanalbehov och mandat saknades); Hallmark, emil-design-eng och PICKER var inte tillämpliga. Det är observerad **användning i ett testfall**, inte bevis på
+bättre kundresultat: inget jämförande prov är gjort, och ett lyckat testfall är inte praxis. Mottagarprovet (en färsk läsarsession hittar rätt underlag från ordinarie ingång utan
 filnamn) redovisas i `MOTTAGARPROV.md` (kontorets ingång 2026-09-26; repots egen ingång 2026-09-27, Claude och Codex).
 
 ## F. Installerat och registrerat (etapp 1, DIGITALA-1-TILLAGGSMANDAT-BESLUT-20260926, 2026-09-26)

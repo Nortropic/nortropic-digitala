@@ -45,6 +45,8 @@ class Kundstart(unittest.TestCase):
         self.hem = tempfile.TemporaryDirectory(dir=Path.home(), prefix='.kundstart-prov-')
         self.nyckel = Path(self.hem.name) / 'nyckel.secret'; self.nyckel.write_text('x' * 40); os.chmod(self.nyckel, 0o600)
         os.environ['KUNDSTART_HEMLIGHETER'] = str(Path(self.hem.name) / 'hemligheter')
+        import subprocess as _sp  # arbetsträdets läge före provet: 'inget skrivs i repot' jämförs mot detta, inte mot ett tomt träd
+        self.smuts_fore = sorted(r for r in _sp.run(['git', '-C', str(HERE.parent), 'status', '--porcelain', '--', 'verktyg', 'kunskap', 'kunder'], capture_output=True, text=True).stdout.splitlines() if 'test_kundstart' not in r and 'kundstart.py' not in r)
         self.anrop = []
         self.svar_pa = {}
         def fejk(bas, nyckel, metod, vag, kropp=None, bypass=None, rå=False):
@@ -106,7 +108,7 @@ class Kundstart(unittest.TestCase):
         self.assertEqual(len(iv.las(str(self.k))['svar']), 2)
         import subprocess
         smuts = subprocess.run(['git', '-C', str(HERE.parent), 'status', '--porcelain', '--', 'verktyg', 'kunskap', 'kunder'], capture_output=True, text=True).stdout
-        self.assertEqual([r for r in smuts.splitlines() if 'test_kundstart' not in r and 'kundstart.py' not in r], [], 'inget skrivs i repot')
+        self.assertEqual(sorted(r for r in smuts.splitlines() if 'test_kundstart' not in r and 'kundstart.py' not in r), self.smuts_fore, 'inget skrivs i repot (jämfört med trädet före provet: ett smutsigt arbetsträd är inte provets fel)')
 
     def test_sen_tolkning_mot_aldre_revision_ateruppstar_inte_over_kundens_rattelse(self):
         self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'regelstyrd'}

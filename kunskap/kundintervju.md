@@ -27,7 +27,7 @@ Den kontaktväg beställningen anger (e-post, telefon med anteckningar, möte, k
 omgången som en läsbar fil (`INTERVJU/omgang-N.md`) med begripliga, neutrala frågor i hanterbara omgångar (högst åtta);
 sessionen skickar den genom kanalen och registrerar svaren ordagrant (`svar`). En kanal är Kundstart-länken
 (repot `Nortropic/nortropic-kundstart`, KUNDSTART-20260927): kunden svarar i en webbyta som ställer frågorna ur samma
-bank en i taget, och `verktyg/kundstart.py` skapar ärendet ur kundmappen (`skapa`, länken skrivs 0600 i kundmappen och
+bank en i taget, och `verktyg/kundstart.py` skapar ärendet ur kundmappen (`skapa`, länken skrivs 0600 i `~/.nortropic-hemligheter/<kund>/` och
 lämnas genom beställningens kanal) och för in exporten i `INTERVJU.json` genom detta verktygs egna funktioner (`hamta`:
 svar ordagrant, AI-tolkningar som `tolkning`, rättelser som `kunden uppger`, material i kundmappens `KUNDSTART/`);
 kundmappen är det auktoritativa hemmet. Ingen ny kundportal; ingen fråga om
