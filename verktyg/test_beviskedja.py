@@ -144,7 +144,7 @@ class C_KvalitetsbildensGiltighet(unittest.TestCase):
         self.assertTrue(status['fel'].startswith('underkänd'))
         self.assertTrue(status['korrupt'].startswith('korrupt'))
         text = kvalitetsbild.rendera(rows, None, {'revision': 'r1'})
-        self.assertIn('Aktuella leveransbevis: 1. Historik eller brist: 5.', text)
+        self.assertIn('Aktuella leveransbevis: 1. Historik eller utanför kvalitetsgrinden: 5.', text)
         for name in ('gammal', 'trasig', 'borta', 'fel', 'korrupt'):
             self.assertIn(name, text)
         self.assertIn('kritik: INGEN aktuell körning', text)
