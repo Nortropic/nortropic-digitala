@@ -5,7 +5,9 @@ kontorets privata kundmapp (`nortropic-projektkontor/evidence/digitala/local/<ku
 `~/.nortropic-hemligheter/<kund>/` med rättighet 600 och skrivs aldrig ut.
 
 Verktygen tar kundmappen som `--kund SÖKVÄG`; den måste ligga utanför detta repo. Kundfiler laddas i klassen `kund`,
-aldrig i klassen `profession`, och pinnas inte här.
+aldrig i klassen `profession`, och pinnas inte här. Kundmappens styrfiler: `VERKSAMHET.json` (verksamhetsuppgifter),
+`BESTALLNING.json` (utdrag ur beställningens beslutspost, bunden av fortsättningsvägen), `KANALBEHOV.json` (beredningens
+kanalbehov), `TESTDATA.md` (testmarkering och testmottagare); fallets tillstånd i `<fall>/LAGE.json`.
 
 | Kund | Kundmapp | Kundrepo | Status |
 |---|---|---|---|

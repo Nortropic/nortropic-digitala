@@ -42,7 +42,7 @@ tolkningar sammanfattas i dialogen så kunden kan rätta dem, utan något obliga
 | G. Förvaltning och redaktörsarbete | vem uppdaterar, hur ofta, vana; vem hanterar leads, drift, åtkomster; migrering | innehållsmodell, redigeringsväg, drift, omdirigeringar |
 | H. Ramar och osäkerheter | budget, tid, publicering, integritet, verksamhetsgränser; vad kunden inte vet och vem som kan svara | proportion, mandat, luckor med ägare |
 
-Följdfrågor härleds ur svaren med namngivna regler (bokning → tjänster, längder, resurser, tillgänglighet, bekräftelse,
+Följdfrågor härleds ur svaren med namngivna regler — en regel som nämns med negation i samma sats ("inga bokningar via nätet") utlöser ingen följdfråga automatiskt utan bokförs som negerad, och utföraren avgör i fakta om behovet finns i annan form — (bokning → tjänster, längder, resurser, tillgänglighet, bekräftelse,
 ombokning, befintligt system; betalning; kundregister; nyhetsbrev; språk; migrering; osäkerhet → vem kan svara;
 räckvidd; fysiskt besök). Varje följdfråga bär `utlost_av` (fråga och träff) och vad den påverkar. Ett bokningsbehov leder
 till verksamhetsfrågor och leveranskrav (integrationer.md), inte automatiskt till ett kontaktformulär.
