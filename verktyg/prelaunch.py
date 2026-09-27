@@ -222,11 +222,12 @@ def rapport(a):
     m = las_matning(a.matning)
     grindar = [g0_bygg(a.bygge, a.repo), g1_handlingar(a.handlingar), g2_prestanda(m, krav), g3_responsivitet(m), g4_tillganglighet(m), g5_seo(a.bygge, a.lage, a.verksamhet), g6_juridik(a.juridik), g7_sakerhet(a.huvuden, a.adress, a.audit, a.bygge)]
     tekniska = [g for g in grindar if not g['grind'].startswith('6')]
-    redo = all(g['status'] == 'PASS' for g in tekniska) and 'ohanterade: ' not in (grindar[6]['atgard'] or '') or False
-    if 'ohanterade:' in (grindar[6]['atgard'] or '') and not (grindar[6]['atgard'] or '').startswith('inga'):
-        redo = False
+    juridik_lamnad = bool(a.juridik and Path(a.juridik).is_file())
+    ohanterade = (grindar[6]['atgard'] or '').startswith('människa avgör varje flagga; ohanterade:')
+    redo = all(g['status'] == 'PASS' for g in tekniska) and juridik_lamnad and not ohanterade
     return {'schema': 1, 'bygge': a.bygge, 'lage': a.lage, 'krav': krav, 'grindar': grindar, 'redo_for_lansering': bool(redo),
-            'not': 'redo = grind 0–5 och 7 PASS och inga ohanterade juridikflaggor; juridik avgörs av människa; EJ_MATT är inte PASS; gröna verktygsprov bevisar inte mänsklig användbarhet'}
+            'juridik_lamnad': juridik_lamnad,
+            'not': 'redo = grind 0–5 och 7 PASS, JURIDIK.json lämnad (människans genomgång av basen och flaggorna) och inga ohanterade flaggor; juridik avgörs av människa; EJ_MATT är inte PASS; gröna verktygsprov bevisar inte mänsklig användbarhet'}
 
 
 def markdown(r):

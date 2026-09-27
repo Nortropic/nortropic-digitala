@@ -1,5 +1,5 @@
 /**
- * Nortropic — varumärkeslagret (nod 5, körs av content-designer EFTER fetch-images.mjs)
+ * Nortropic — varumärkeslagret (återvunnet ur det arkiverade repot e4c8c52; körs i kundrepots rot, se kunskap/bild.md)
  *
  * Indata:  public/images/raw/brand__*.{png,jpg,jpeg,svg}  — kundens logotyp som den kom.
  *          Går ALDRIG genom treatment.mjs (stageNormalise hoppar brand__ explicit).

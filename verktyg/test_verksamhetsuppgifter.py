@@ -34,10 +34,15 @@ class Validering(unittest.TestCase):
         for bad, ord in ((exempel(fiktiv='ja'), 'fiktiv'), (exempel(orgnr='5566778899'), 'orgnr'), (exempel(kontaktvagar=[]), 'kontaktvagar'),
                          (exempel(adress=dict(exempel()['adress'], postnummer='12345')), 'postnummer'), (exempel(rackvidd={'typ': 'lokal', 'orter': []}), 'orter'),
                          (exempel(tjanster=[]), 'tjanster'), (exempel(oppettider=[{'dag': 'måndag', 'oppnar': '7', 'stanger': '16:00'}]), 'oppettider'),
-                         (exempel(extra=1), 'okända'), (exempel(kontaktvagar=[{'typ': 'telefon', 'varde': '12', 'belagg': 'x'}]), 'telefonnumret')):
+                         (exempel(extra=1), 'okända'), (exempel(sokkonsol_agare=['ingen-adress']), 'sokkonsol_agare'), (exempel(omdomen_kalla={'plattform': 'Google'}), 'omdomen_kalla'),
+                         (exempel(omdomen_kalla={'plattform': 'Google', 'datum': '2026-09-27', 'antal': '12'}), 'antal'), (exempel(kontaktvagar=[{'typ': 'telefon', 'varde': '12', 'belagg': 'x'}]), 'telefonnumret')):
             with self.assertRaises(vu.Vagrad) as cm:
                 vu.validera(bad)
             self.assertTrue(any(ord in f for f in cm.exception.args[0]), (ord, cm.exception.args[0]))
+
+    def test_valfria_falt_for_sokkonsol_och_omdomen_godtas(self):
+        v = exempel(sokkonsol_agare=['kund@example.com'], omdomen_kalla={'plattform': 'Google', 'datum': '2026-09-27', 'betyg': 4.8, 'antal': 12})
+        self.assertEqual(vu.validera(v), [])
 
     def test_fiktiv_verksamhet_sparras_fran_verkliga_atgarder(self):
         with self.assertRaises(vu.Vagrad):

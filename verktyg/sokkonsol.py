@@ -39,7 +39,7 @@ TOKEN_URL = 'https://oauth2.googleapis.com/token'
 SV = 'https://www.googleapis.com/siteVerification/v1'
 WM = 'https://www.googleapis.com/webmasters/v3'
 SC = 'https://searchconsole.googleapis.com/v1'
-FORHANDSVISNINGSSUFFIX = '.' + 'vercel' + '.app'  # sammansatt: repots prov förbjuder förhandsvisningsadresser i klartext
+FORHANDSVISNINGSSUFFIX = '.vercel.app'  # värdplattformens förhandsvisningsdomäner får aldrig bli sökkonsol-egenskaper
 DOK = {'siteverification': 'https://developers.google.com/site-verification/v1/getting_started',
        'searchconsole': 'https://developers.google.com/webmaster-tools/v1/api_reference_index',
        'urlinspection': 'https://developers.google.com/webmaster-tools/v1/urlInspection.index/inspect'}

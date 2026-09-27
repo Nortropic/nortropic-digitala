@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Verksamhetsuppgifter: kundens VERKSAMHET.json — en sanning för namn, adress, telefon (NAP), räckvidd, öppettider,
-kategorier och tjänster, som SEO-kontrollen, lokal synlighet, annonsberedningen och sökkonsolen läser i stället för att
+kategorier, tjänster, sökkonsolens ägare (sokkonsol_agare) och omdömeskällan (omdomen_kalla), som SEO-kontrollen, lokal synlighet, annonsberedningen och sökkonsolen läser i stället för att
 var och en gissa. Filen bor i kundmappen (aldrig i detta repo). `fiktiv: true` spärrar varje verklig extern åtgärd
 (företagsprofil, sökkonsol-egenskap, annonser, citationer): en fiktiv verksamhet får aldrig en verklig profil.
 
@@ -127,7 +127,16 @@ def validera(v):
     webb = v.get('webb')
     if webb is not None and (not isinstance(webb, dict) or any(not isinstance(x, str) for x in webb.values())):
         errors.append('webb ska vara ett objekt med strängvärden (t.ex. doman)')
-    okanda = set(v) - {'schema', 'namn', 'fiktiv', 'orgnr', 'kontaktvagar', 'adress', 'rackvidd', 'oppettider', 'kategorier', 'tjanster', 'sprak', 'webb', 'e_post', 'not'}
+    agare = v.get('sokkonsol_agare')
+    if agare is not None and (not isinstance(agare, list) or not agare or any(not isinstance(a, str) or '@' not in a for a in agare)):
+        errors.append('sokkonsol_agare ska vara en lista med minst en e-postadress (kundens Google-konto som ägare av sökkonsolens egenskap)')
+    ok = v.get('omdomen_kalla')
+    if ok is not None:
+        if not isinstance(ok, dict) or not isinstance(ok.get('plattform'), str) or not ok['plattform'].strip() or not isinstance(ok.get('datum'), str) or not re.match(r'^\d{4}-\d{2}-\d{2}$', ok['datum']):
+            errors.append('omdomen_kalla ska vara {plattform, datum (ÅÅÅÅ-MM-DD), betyg?, antal?, url?}: verklig plattformsdata med datum, annars visas inget betyg')
+        elif ('betyg' in ok and not isinstance(ok['betyg'], (int, float))) or ('antal' in ok and not isinstance(ok['antal'], int)):
+            errors.append('omdomen_kalla.betyg ska vara ett tal och antal ett heltal')
+    okanda = set(v) - {'schema', 'namn', 'fiktiv', 'orgnr', 'kontaktvagar', 'adress', 'rackvidd', 'oppettider', 'kategorier', 'tjanster', 'sprak', 'webb', 'e_post', 'not', 'sokkonsol_agare', 'omdomen_kalla'}
     if okanda:
         errors.append('okända fält: ' + ', '.join(sorted(okanda)))
     if errors:

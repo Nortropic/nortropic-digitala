@@ -285,7 +285,7 @@ export async function stageLook(REF, OUT, presetName, tokens) {
     // skulle förstöras utan varning. Högt fel i stället.
     if (!CROPS[prefix]) throw new Error(
       `Okänt slot-prefix "${prefix}" (fil: ${f}). Giltiga: ${Object.keys(CROPS).join(', ')}. ` +
-      `Filer i raw/ ska bära slot-id enligt slot-schema.md.`)
+      `Filer i raw/ ska bära bildplats-id (hero-, env-, proof-, people-, detail-; se kunskap/bild.md).`)
     const [w, h] = CROPS[prefix]
     const alpha = (prefix === 'hero' ? P.overlay.hero : P.overlay.ovrigt) * alphaFaktor
     const out = join(OUT, `${id}.avif`)

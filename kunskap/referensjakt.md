@@ -42,9 +42,9 @@ tjänster utan prislista?"), med en rad per referens i briefens referensöversä
 
 ## Utdata
 
-Referensöversättningen i briefens §5 (rad per referens) plus sparade skärmbilder i fallets `referenser/`. Konflikter
+Referensöversättningen i briefens §7 (rad per referens) plus sparade skärmbilder i fallets `referenser/`. Konflikter
 mellan referenser (återhållsamhet mot uttryck, rörelse mot budget) skrivs som en rad "kända konflikter och hur de
-avgjordes" i briefens §5.
+avgjordes" i briefens §7.
 
 ## Källtypsregler och bildinventering (HELHET-20260927, ur det arkiverade inspirationsprotokollet 5d)
 

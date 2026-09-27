@@ -15,6 +15,12 @@ Runtime och kunduppdrag, inte till månadsrubriker som kräver att någon minns 
   hos värdplattformen och påverkas inte. När en integration är otillgänglig (sökkonsol, plattform) skriver
   kontrollen incident med felklass; ingen automatisk åtgärd.
 
+## Mandat
+
+Inom stående mandat: kontroll, diagnos och rapport. Ändringar (beroendeuppdatering som driftsätts, återgång,
+ompekning av domän, innehållsrättelser) kräver beställning eller den underhållsform ägaren beslutar (MANDAT.md §2–§3);
+en akut återgång vid incident förbereds som förslag med kommandon och verkställs enligt samma regel.
+
 ## Incident
 
 Kvitto → läs felet → värdplattformens status → återgång enligt lansering.md om innehållet eller driftsättningen är
@@ -22,8 +28,9 @@ orsaken → not i `ARBETSLOGG.md` → kunden informeras enligt avtal. Ingen sjä
 
 ## Beroendeunderhåll
 
-Månadsvis i kundrepot: `npm audit` (high/critical åtgärdas), pinnade versioner uppdateras i egen gren med
-förhandsvisning, prelaunch-grind 0, 2, 4 och 7 körs om före driftsättning; Runtimes egna verktygspinnar byts bara
+Månadsvis i kundrepot (kontroll inom stående mandat, åtgärd enligt Mandat ovan): `npm audit` (high/critical
+rapporteras och åtgärdas när mandat finns), pinnade versioner uppdateras i egen gren med förhandsvisning, prelaunch-grind
+0, 2, 4 och 7 körs om före driftsättning; Runtimes egna verktygspinnar byts bara
 genom Runtimes releaseväg.
 
 ## Kontinuerlig förbättring

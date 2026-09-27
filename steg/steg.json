@@ -294,7 +294,7 @@
   "seo": {
    "mandat": "bestallning",
    "syfte": "Sökintention och informationsstruktur, teknisk och innehållsmässig SEO, crawlning och indexering, canonical, metadata, internlänkning, sitemap, robots och noindex per läge, sanningsenlig strukturerad data, omdirigeringar vid migrering; lokal SEO bara när briefen anger lokal eller hybrid.",
-   "anvisning": "Följ seo.md (och seo-lokal.md vid lokal/hybrid). Bygg sidorna efter sökintentionen i research §15 och briefen §5, aldrig efter en sidmall. Kör verktyg/seo_kontroll.py --bygge BYGGE --lage forhandsvisning|lansering --verksamhet VERKSAMHET.json [--omdirigeringar]; rätta eller motivera varje fynd. Inga rankningslöften i något dokument.",
+   "anvisning": "Följ seo.md (och seo-lokal.md vid lokal/hybrid). Bygg sidorna efter sökintentionen i research §15 och briefen §5, aldrig efter en sidmall. Kör verktyg/seo_kontroll.py --bygge BYGGE --lage forhandsvisning|lansering --verksamhet VERKSAMHET.json [--omdirigeringar FIL] --ut FALL/SEO.json [--md FALL/SEO.md]; rätta eller motivera varje fynd. Inga rankningslöften i något dokument.",
    "underlag": [
     {
      "fil": "kunskap/seo.md",
@@ -491,7 +491,7 @@
   "uppfoljning": {
    "mandat": "bestallning",
    "syfte": "Mätplan med händelser och konverteringskedja, kampanjmärkning, kontroll att bygget bär händelserna och inget spårar före samtycke, felsökning av mätningen, läsning av export och återkoppling till innehåll och upplevelse.",
-   "anvisning": "Följ uppfoljning.md. Skriv MATPLAN.json ur briefen §11; kör verktyg/uppfoljning.py plan, kontrollera --bygge, och las --export vid uppföljning. Skilj affärsnytta från proxy; en händelse i koden är inte en mätt händelse förrän den setts i felsökningsläget eller nätverksloggen.",
+   "anvisning": "Följ uppfoljning.md. Skriv MATPLAN.json ur briefen §11; kör verktyg/uppfoljning.py plan --matplan MATPLAN.json --ut FALL/HANDELSEPLAN.md, kontrollera --matplan MATPLAN.json --bygge BYGGE --ut FALL/MATKONTROLL.json, och las --matplan MATPLAN.json --export FIL --ut FALL/LASNING.json vid uppföljning. Skilj affärsnytta från proxy; en händelse i koden är inte en mätt händelse förrän den setts i felsökningsläget eller nätverksloggen.",
    "underlag": [
     {
      "fil": "kunskap/uppfoljning.md",
@@ -566,7 +566,7 @@
   "prelaunch": {
    "mandat": "staende",
    "syfte": "Åtta grindar före lansering som rapport med belägg: byggintegritet, viktiga handlingar från början till slut, prestanda, responsivitet, tillgänglighet, SEO-beredskap, juridik (människa) och säkerhet; underkännande går till diagnos, åtgärd och omprov.",
-   "anvisning": "Följ prelaunch.md. Kör verktyg/prelaunch.py --bygge BYGGE --lage LÄGE --verksamhet VERKSAMHET.json --matning KORNING --handlingar HANDLINGAR.json --juridik JURIDIK.json --huvuden|--adress --audit; EJ_MATT är inte PASS; juridiken avgörs av människa; grön rapport bevisar inte mänsklig användbarhet.",
+   "anvisning": "Följ prelaunch.md. Kör verktyg/prelaunch.py --bygge BYGGE --lage LÄGE --verksamhet VERKSAMHET.json --matning KORNING --handlingar HANDLINGAR.json --juridik JURIDIK.json --huvuden FIL|--adress https://… --audit npm-audit.json --ut FALL/PRELAUNCH.json --md FALL/PRELAUNCH.md; helheten är redo bara med JURIDIK.json lämnad; EJ_MATT är inte PASS; juridiken avgörs av människa; grön rapport bevisar inte mänsklig användbarhet.",
    "underlag": [
     {
      "fil": "kunskap/prelaunch.md",
@@ -628,7 +628,7 @@
   "lansering": {
    "mandat": "bestallning",
    "syfte": "Lansering enligt gällande mandat: förkontroll, lanseringsdagens kontroll (noindex borta, verifieringstagg, sitemap, robots, kanonisk variant), sökkonsolens steg, oåterkalleligt och återgång; privat förhandsvisning och slutrapport levereras alltid först.",
-   "anvisning": "Följ lansering.md. Kör verktyg/lansering.py plan --mandat POST-ID (beställningen som namnger lansering och domän) och kontrollera --adress efter driftsättning; sökkonsolens skrivande steg med sokkonsol.py --live; ingen lansering för fiktiv verksamhet; återgångsvägen känd före driftsättning.",
+   "anvisning": "Följ lansering.md. Kör verktyg/lansering.py plan --verksamhet VERKSAMHET.json --mandat POST-ID --ut FALL/LANSERING.md (beställningen som namnger lansering och domän) och kontrollera --adress https://… --ut FALL/LANSERING-KONTROLL.json efter driftsättning; sökkonsolens skrivande steg med sokkonsol.py --live; ingen lansering för fiktiv verksamhet; återgångsvägen känd före driftsättning.",
    "underlag": [
     {
      "fil": "kunskap/lansering.md",
@@ -678,7 +678,7 @@
   "drift": {
    "mandat": "staende",
    "syfte": "Övervakning, incidenthantering, beroendeunderhåll, återgång och kontinuerlig förbättring för lanserade sajter, kopplade till Runtime och kunduppdraget; driftkontroll med kvitto.",
-   "anvisning": "Följ drift.md. Kör verktyg/drift_kontroll.py --plan DRIFT.json --ut FALL/DRIFT vid varje rytm (schemalagd körning genom Runtime är ett namngivet återstående steg, etapp 5); vid incident: kvitto, värdstatus, återgång enligt lansering.md, not i ARBETSLOGG.md; månadsvis beroendeunderhåll med prelaunch-delgrindar.",
+   "anvisning": "Följ drift.md. Inom stående mandat: driftkontrollen (verktyg/drift_kontroll.py --plan DRIFT.json --ut FALL/DRIFT) vid varje rytm, diagnos vid incident och rapport till kunden enligt avtal; schemalagd körning genom Runtime är ett namngivet återstående steg (etapp 5). Åtgärder som ändrar sajten eller driftsättningen (beroendeuppdatering som driftsätts, återgång, ompekning av domän) sker enligt MANDAT.md §2–§3: beställning eller den underhållsform ägaren beslutar; not i ARBETSLOGG.md.",
    "underlag": [
     {
      "fil": "kunskap/drift.md",

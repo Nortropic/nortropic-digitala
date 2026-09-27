@@ -45,6 +45,7 @@ class Server(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.srv.shutdown()
+        cls.srv.server_close()
 
     def test_lanseringsplan_kraver_mandat_i_texten(self):
         md = la.plan_md(exempel(fiktiv=False, webb={'doman': 'provfirma.se'}), None)

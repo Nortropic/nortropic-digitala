@@ -7,6 +7,7 @@ externt beroende — inte en mock. Resultatläsning: `rapport` läser en export 
 
     python3 -B verktyg/annonsberedning.py bygg --kanalplan KANALPLAN.json --verksamhet VERKSAMHET.json [--bygge DIR] --ut KATALOG
     python3 -B verktyg/annonsberedning.py rapport --export FIL.csv|.json --ut RAPPORT.json
+    python3 -B verktyg/annonsberedning.py overfor --verksamhet VERKSAMHET.json --ut KVITTO.json   # spärren först; ingen överföringsväg finns
 """
 import argparse
 import csv
@@ -188,10 +189,16 @@ def rapport(export):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog='annonsberedning', description=__doc__.split('\n\n')[0])
-    p.add_argument('kommando', choices=('bygg', 'rapport'))
+    p.add_argument('kommando', choices=('bygg', 'rapport', 'overfor'))
     p.add_argument('--kanalplan'); p.add_argument('--verksamhet'); p.add_argument('--bygge'); p.add_argument('--export'); p.add_argument('--ut', required=True)
     a = p.parse_args(argv)
     try:
+        if a.kommando == 'overfor':
+            if not a.verksamhet:
+                raise Vagrad(['overfor kräver --verksamhet'])
+            v = vu.las(a.verksamhet)
+            vu.kraver_verklig(v, 'överföring av kampanjutkast till annonsplattform')
+            raise Vagrad(['ingen överföringsväg finns (2026-09-27): Google Ads API kräver utvecklartoken, OAuth och kund-id; Meta Marketing API åtkomsttoken och annonskonto — namngivna externa beroenden; utkasten förs över av behörig människa i plattformens gränssnitt, status PAUSED'])
         if a.kommando == 'bygg':
             if not (a.kanalplan and a.verksamhet):
                 raise Vagrad(['bygg kräver --kanalplan och --verksamhet'])
