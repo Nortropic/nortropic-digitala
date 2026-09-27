@@ -12,7 +12,7 @@ eller i överlämningen och ändrar inget av sig självt. (3) Externa texter och
 beslut med ny läsning och ny kontroll. (5) Varje fall lämnar en **användningsnot** per underlag i sin överlämning, med ett
 av fyra utfall: *påverkade ett konkret val, en ändring eller ett fynd (vilket)* · *användes som kontroll, ingen ändring
 behövdes* · *inte tillämpligt* · *nådde inte arbetet*. Ingen rapport per fil, ingen kvot; inga konstruerade bidrag.
-(6) Avstämning enligt `LARDOMAR.md` efter två relevanta tillämpningar; avslutad användning = raden märks "laddas inte",
+(6) Uppföljning enligt `LARDOMAR.md` (klassning och användningsnoter; ingen automatisk praxis); avslutad användning = raden märks "laddas inte",
 filen och noterna bevaras.
 (7) Formen per underlag (läsfil, registrerad skill, installerad plugin, metod) är ett nyttoval per resurs, inte en
 regel: att prototype används som metod beror på dess egen anropsspärr och tillför inget krav på att andra skills
@@ -56,7 +56,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `referensjakt.md` | webbgrundens `skills/nortropic-plan/references/inspirationskallor.md` @ `e4c8c52` (rad 1–60), Norrgläntas brief §5 och jämförelsens §3.3 | Research: kandidater, budget som frågor, sedd/läst, betyg som filter |
 | `redaktionellt-pass.md` | copy-blocklistens strukturregler och content-designerns sidregler (webbgrunden @ `e4c8c52`), frontend-design "More on writing in design" (fil 1), Norrgläntas fynd | Redaktionellt pass (P2) och fråga i granskning D |
 | `formularsakerhet.md` | webbgrundens `skills/nortropic-prelaunch/references/security-checklist.md` @ `e4c8c52` §3 (rad 70–82), Norrgläntas brief §3 och den riktade kontrollens område 2 | Bygge av formulär; kodläsningsfrågor i granskning D |
-| `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | Uppstart av nästa fall (P4); avstämningsregeln |
+| `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | Uppstart av nästa fall (P4); klassning och uppföljning |
 
 ## D. Koppling per underlag — steg och utförare · när det läses och vilka delar · uppgift eller kontroll · vid konflikt
 
@@ -70,7 +70,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | 5 emil-design-eng | Bygge, bara när briefens motion-nivå är över `ingen` | "The Animation Decision Framework" 1–4, "Component Building Principles"; inte "Initial Response" eller "Review Format" (skill-krom) | Rörelse med avsikt vid signaturelement; komponentkänsla | Briefens motion-nivå vinner |
 | 6 mobile-native | Bygge (kedjedrivaren); granskning D | "The Symptom Table", "The Fixes" 1–11, "Baseline", "Never Ship"; inte "Initial Response", "Output", "Tone" | Mobilkontroll bortom målytor och viewport | — |
 | 7 prototype (+ PICKER.md) | Variantsteget P1 (kedjedrivaren), när det görs | "Operating Posture", "Hard Rules" 1–3, "Workflow" fas 1–5; inte "Invocation Variants" (ingen skill) och inte fas 6 (befordran sker genom det vanliga bygget); PICKER.md bara om en live-bläddringsyta efterfrågas | Divergens på namngiven axel, riktigt innehåll, isolerad yta | Briefens fasta mål vinner; varianter rör bara prövbara detaljer |
-| 8 Taste | Konceptsteget och komps (kedjedrivaren), etapp 2 och nästa fall | Vid Design Read: §0 "Brief Inference" (0.A–0.D) och §1 "The Three Dials" (1.A–1.C); före komp: §4.1–4.3 (typografi, färg, layoutdiversifiering) och §4.7–4.8 (layoutdisciplin, bild); inte §2 (designsystemkarta), §3 (stackkonventioner), §5 (kanoniska skelett), §6–9 (dubblerar fil 1, 2 och 4) | En rad "Design Read" och tre dial-värden ur briefen före komparna; biaskorrigering mot mallmönster | Briefen och ACCEPT vinner; Taste är råd och mall-varning, inte mall |
+| 8 Taste | Konceptsteget och komps (kedjedrivaren), etapp 2 och nästa fall | Vid Design Read: §0 "Brief Inference" (0.A–0.D) och §1 "The Three Dials" (1.A–1.C) som en metod bland flera, inte universella värden; före komp: §4.1–4.3 (typografi, färg, layoutdiversifiering) och §4.7–4.8 (layoutdisciplin, bild); inte §2 (designsystemkarta), §3 (stackkonventioner), §5 (kanoniska skelett), §6–9 (dubblerar fil 1, 2 och 4) | En Design Read ur briefen före komparna; axlar och värden efter uppgiften, inga universella; biaskorrigering mot mallmönster | Briefen och ACCEPT vinner; Taste är råd och mall-varning, inte mall |
 | `referensjakt.md` | Research (kedjedrivaren) | Hela (kort) | Kandidater, budget som frågor, sedd/läst | — |
 | `redaktionellt-pass.md` | Redaktionellt pass (kedjedrivaren); granskning D som fråga | Hela (en sida) | Redaktionell kvalitet och kedjans innebörd | Stöd för bedömning, inte förbud |
 | `formularsakerhet.md` | Bygge av formulär (kedjedrivaren); granskning D | Hela (kort) | Honeypot, en klocka, servervalidering, fel | ACCEPT:s demogränser vinner (ingen sändning) |

@@ -41,7 +41,10 @@ class Kvalitetsbild(unittest.TestCase):
         (run_k / 'svar.json').write_text(json.dumps({'verdict': 'approved', 'blocking_findings': [], 'summary': 'bra'}))
         korning(self.fall, 'KORNING-1-matning-m1.json', 'matning', 'm1', run_m)
         korning(self.fall, 'KORNING-2-kritik-k1.json', 'kritik', 'k1', run_k, outcome='svar_giltigt')
-        korning(self.fall, 'KORNING-3-provare-p1.json', 'provare', 'p1', None, outcome='klar')
+        run_p = self.tmp / 'run-provare'
+        run_p.mkdir()
+        (run_p / 'KVITTO.json').write_text(json.dumps({'profile': 'provare', 'outcome': 'klar'}))
+        korning(self.fall, 'KORNING-3-provare-p1.json', 'provare', 'p1', run_p, outcome='klar')
         text, out = self.build('--ej-observerat', 'säsongsvariation')
         self.assertEqual(out['korningar'], 3)
         self.assertIn('## 1. Tekniskt prövat', text)

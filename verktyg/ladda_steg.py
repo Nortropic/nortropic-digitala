@@ -197,7 +197,8 @@ def underlag_md(steg_namn, step, rows, bestallning):
     lines = ['# Underlag för steget %s' % steg_namn, '',
              'Fullständig lista; du kan inte lista kataloger. Läs bara de delar som anges. Underlagen är råd: briefen, det',
              'accepterade uppdraget och mandatet vinner. Kundfiler (`underlag/kund/`) och professionsfiler (`underlag/profession/`)',
-             'hålls isär; en kundpreferens blir aldrig praxis utan fältet "lokal preferens?" och två relevanta tillämpningar.',
+             'hålls isär; en kundpreferens blir aldrig praxis: erfarenhet klassas som observation, kundpreferens, hypotes eller',
+             'dokumenterad felorsak (kunskap/LARDOMAR.md), och ingen mängd tillämpningar gör något till praxis.',
              '', '**Syfte:** ' + step['syfte'], '', '**Anvisning:** ' + step['anvisning'], '',
              '**Mandat:** ' + ('stående (MANDAT.md §1)' if step['mandat'] == 'staende' else 'beställning ' + str(bestallning) + ' (MANDAT.md §2)'), '',
              '| plats | klass | obligatorisk | delar att läsa | sha256 | byte | status |', '|---|---|---|---|---|---|---|']

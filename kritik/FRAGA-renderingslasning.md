@@ -2,7 +2,7 @@ Renderingsläsning {{NUMMER}} (av {{ANTAL}} oberoende) av {{VAD}} för {{KUND}}.
 
 BEDÖM det renderade resultatet, var och en med skäl och hänvisning till bild/del eller mätfil:
 1. Första vyn på 1440 och 390: uppfyller den den beslutade riktningen och listan över det som skulle föras vidare?
-2. Hierarki och handling: exakt en primär handling per vy (bortsett från headerns beständiga knapp)? Rubrikrad på högst två rader, stödraden läsbar, inget som konkurrerar?
+2. Hierarki och handling: är den handling briefen anger tydlig och nåbar i vyn, och konkurrerar något med den? Är rubriken läsbar och begriplig i vyn? Briefens krav gäller; inga generella tal om antal handlingar eller rader.
 3. Läsbarhet: textstorlekar, kontraster, tappytor, hur täta block läses på mobil.
 4. Rytmen nedanför vikningen: fungerar sektionsföljden, finns tomrum eller upprepningar?
 5. Reglerna som de syns: märkning, inga riktiga uppgifter där sådana inte får finnas, formulärets besked, länkregler, bildkällor.

@@ -1,18 +1,43 @@
 {
   "schema": 1,
-  "beskrivning": "Digitalas val för Runtimes mätprofil (runtime.web_measure). Vyerna och axe-taggarna är Digitalas kvalitetsval: WCAG 2.2 AA är kvalitetskrav (DIGITALA-1-ACCEPT-20260925 §3, PRODUCT.md), läsförhållandena är mobil utomhus och dator. Värdena är i dag lika med Runtimes standardvärden (D034); när Runtime tar dem som parametrar (D037) skickas de härifrån, annars kontrollerar kor_profil.py att de är lika och vägrar annars.",
+  "beskrivning": "Digitalas val för Runtimes mätprofil (runtime.web_measure). Vyerna och axe-taggarna är Digitalas kvalitetsval: WCAG 2.2 AA är kvalitetskrav (DIGITALA-1-ACCEPT-20260925 §3, PRODUCT.md), läsförhållandena är mobil utomhus och dator. Värdena är i dag lika med Runtimes standardvärden (D034); när Runtime tar dem som parametrar (D037) skickas de härifrån, annars kontrollerar kor_profil.py att de är lika och vägrar annars. Kraven är uppgiftsmotiverade: briefen kan skärpa eller ändra dem; inga generella stilregler ur en tidigare leverans.",
   "vyer": {
-    "mobil-390": {"width": 390, "height": 844, "deviceScaleFactor": 2, "isMobile": true, "hasTouch": true},
-    "desktop-1440": {"width": 1440, "height": 900, "deviceScaleFactor": 1, "isMobile": false, "hasTouch": false}
+    "mobil-390": {
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 2,
+      "isMobile": true,
+      "hasTouch": true
+    },
+    "desktop-1440": {
+      "width": 1440,
+      "height": 900,
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false
+    }
   },
-  "axe_taggar": ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"],
-  "delar": ["skarm", "rubrik", "axe", "lighthouse", "detektor"],
+  "axe_taggar": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa",
+    "best-practice"
+  ],
+  "delar": [
+    "skarm",
+    "rubrik",
+    "axe",
+    "lighthouse",
+    "detektor"
+  ],
   "sektioner": 2,
   "krav": {
     "axe_violations": "0 i varje vy (uppmätt); incomplete redovisas, inte tolkas som fel",
     "lighthouse": "prestanda, tillgänglighet och best practices över kundens kravnivå i briefen; SEO är omätbar på en noindex-demo och redovisas som sådan",
-    "h1": "högst två rader i båda vyerna om briefen inte säger annat; stödrad egen p",
-    "handling": "exakt en primär handling helt inom första vyn",
+    "h1": "rubriken mäts (antal rader per vy) och redovisas; ett krav på antal rader finns bara om briefen anger det",
+    "handling": "den handling briefen anger, om briefen anger en, är synlig i första vyn; utan sådant krav redovisas bara vad som syns",
     "detektor": "antalet varningar är ett golv att inte försämra, ingen rangordning (L16)"
   }
 }
