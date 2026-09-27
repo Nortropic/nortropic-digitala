@@ -1,44 +1,52 @@
 # Externa professionella referenser — jämförelse med motivering, inte kopiering
 
 Professionsfil (HELHET-20260927, avsnitt 5), återvunnen ur det arkiverade repots premiumchecklista och
-exemplarlista (verifierade renderbara 2026-07-27; adresserna kan ha ändrats). Laddas i steget `koncept` och vid
-kritik. Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet: referenserna används för att
-jämföra ett konkret drag i kandidaten med hur ett erkänt professionellt exempel löser samma sak, med skäl.
+exemplarlista (verifierade renderbara 2026-07-27; adresserna kan ha ändrats), omgjord från kriterier med poäng till
+jämförelsedimensioner utan poäng. Valfritt underlag i steget `koncept` och vid kritik: används när briefen motiverar
+en jämförelse. Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet; kriterierna är
+KVALITET.md:s, kund- och uppgiftsmotiverade.
 
-## Åtta drag att jämföra mot (PK-1…PK-8)
+## Åtta jämförelsedimensioner — inga kriterier
 
-1. **Hållning, inte mall** — går sajten att beskriva i en mening; är den igenkännbar utan logotyp; finns ett medvetet,
-   motiverat avsteg från branschens standard.
-2. **Typografi som arbetar** — få typsnitt med tydliga roller; hierarki genom vikt, spärrning och färg, inte bara
-   storlek; radlängd 45–75 tecken; kontrollerade radbrytningar.
-3. **Återhållet färgsystem** — en accent bär handlingarna genom hela sajten; varje färgad yta har en funktion;
-   neutraler med temperatur.
-4. **Hierarki som andas** — den viktigaste handlingen är visuellt ensam-dominant; sektionsövergångar bärs av avsiktlig
-   luft; det viktigaste elementet är också det mest luftomgivna, även på mobil.
-5. **Substans direkt** — innehåll utan intro-ridå eller laddare; första vyn svarar på vad, för vem och hur.
-6. **Verkliga förtroendesignaler** — riktiga kunder, case, priser, kontaktbarhet, inte dekorativa märken.
-7. **Mobil ergonomi** — träffytor, tumvänliga handlingar, formulär som går att fylla i, meny som fungerar.
-8. **Konsekvens** — draget håller genom första vyn, minst en sektion till och sidfoten.
+Dimensionerna är frågor att ställa till ett konkret drag i kandidaten, bredvid ett exempel som löst samma sak.
+Ingen av dem är ett krav: vilka som gäller för en kund väljs i konceptsteget ur briefens §1–§2 och §7 med skäl, och
+ett drag som inte gäller (en informationssida utan handling, en portfölj där bilden bär) skrivs som "gäller inte"
+med skäl. Där en dimension strider mot briefen vinner briefen och avvikelsen står i konfliktraden. Kvantiteter i
+parentes är exemplens vanliga lägen, inte gränser.
 
-## Filter innan ett exempel får användas (F1–F6)
+1. **Hållning** — kan sajten beskrivas i en mening; känns den igen utan logotyp; finns ett motiverat avsteg från
+   branschens förväntade uttryck?
+2. **Typografi** — bär typsnittens roller hierarkin, eller bara storleken; är radlängden läsbar (exempel: 45–75
+   tecken); är radbrytningarna avsiktliga?
+3. **Färg** — har varje färgad yta en funktion; bär en eller flera accenter handlingarna konsekvent, om handlingar
+   finns; har neutralerna temperatur?
+4. **Luft och hierarki** — hjälper luften läsaren att se vad som är viktigast på just denna sida; håller det på
+   mobil?
+5. **Substans** — får besökaren innehåll direkt, eller en ridå; svarar första vyn på vad, för vem och hur, när
+   uppgiften kräver det?
+6. **Förtroende** — är signalerna verkliga (kunder, arbeten, priser, kontaktbarhet) eller dekorativa märken?
+7. **Mobil ergonomi** — går handlingar, formulär och meny att använda med tummen; är träffytorna tillräckliga?
+8. **Konsekvens** — håller draget genom första vyn, en sektion till och sidfoten?
 
-F1 primär handling identifierbar i första vyn inom fem sekunder (dator och 390 px) · F2 substans direkt · F3 minst en
-verklig förtroendesignal · F4 draget överlever flytt till kundens sajt utan att bryta prestanda- eller
-tillgänglighetskrav · F5 källnivå: erkänt professionellt (studio, premiumvarumärke, kuraterat galleri), inte
-branschkonkurrent · F6 konsekvens genom sajten. Prisgallerier är filtrerat sällskap, aldrig huvudreferens.
+## Urval av exempel att jämföra med
+
+Ett exempel duger som jämförelse när det är erkänt professionellt (studio, premiumvarumärke, kuraterat galleri;
+inte en branschkonkurrent, som är research), när draget går att flytta till kundens sajt utan att bryta
+tillgänglighets- eller prestandakrav, och när draget håller genom sajten. Prisgallerier är filtrerat sällskap, aldrig
+huvudreferens. Att ett exempel visar en handling i första vyn säger inget om vad kundens uppgift kräver.
 
 ## Exemplar (ett drag per sajt; kontrollera renderingen på nytt innan de används)
 
-| Drag | Exempel | Vad det visar |
+| Dimension | Exempel | Vad det visar |
 |---|---|---|
-| PK-1 | oatly.com | hållningen är total; sajten är omisskännlig utan logotyp |
-| PK-2 | grillitype.com | typografin bär hela hierarkin själv; hårlinjer i stället för kort |
-| PK-3 | klarna.com/se | en ägd accent bär varje handling, aldrig som dekor |
-| PK-4 | apple.com/se | varje vy säljer en sak; det viktigaste elementet är mest luftomgivet, även på 390 px |
-| PK-5 | koto.studio | substans direkt: arbetet syns utan ridå |
-| PK-6 | aman.com | förtroende genom verkliga platser och detaljer, inte märken |
-| PK-8 | notion.com | konsekvens: samma system i första vyn, sektioner och sidfot |
+| 1 | oatly.com | hållningen är total; sajten är omisskännlig utan logotyp |
+| 2 | grillitype.com | typografin bär hela hierarkin själv; hårlinjer i stället för kort |
+| 3 | klarna.com/se | en ägd accent bär varje handling, aldrig som dekor |
+| 4 | apple.com/se | varje vy säljer en sak; det viktigaste elementet är mest luftomgivet, även på 390 px |
+| 5 | koto.studio | substans direkt: arbetet syns utan ridå |
+| 6 | aman.com | förtroende genom verkliga platser och detaljer, inte märken |
+| 8 | notion.com | konsekvens: samma system i första vyn, sektioner och sidfot |
 
-PK-7 (mobil ergonomi) saknar exemplar i källan; hämta ett per fall ur mönsterbibliotek (t.ex. mobbin.com) med
+Dimension 7 (mobil ergonomi) saknar exempel i källan; hämta ett per fall ur mönsterbibliotek (t.ex. mobbin.com) med
 motivering. Jämförelsen skrivs som: kandidatens drag · exemplarets lösning · vad som skiljer · vad som ändras eller
 behålls, och varför. Aldrig kopiering av layout, palett eller typsnitt.

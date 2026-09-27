@@ -42,16 +42,17 @@ class Rapport(unittest.TestCase):
         self.assertNotIn(('index.html', 'telefon'), saknade)
         self.assertTrue(any(x['text'] == 'trivs med det' for x in r['fynd']))
 
-    def test_cli_skriver_rapport_och_strikt_ger_1(self):
+    def test_cli_skriver_rapport_och_fynd_andrar_inte_exitkoden(self):
         ut = self.d / 'R.json'; md = self.d / 'R.md'
         import io, contextlib
         with contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(ck.main(['--kalla', str(self.d), '--ut', str(ut), '--md', str(md), '--strikt']), 1)
+            self.assertEqual(ck.main(['--kalla', str(self.d), '--ut', str(ut), '--md', str(md)]), 0)
         self.assertTrue(ut.is_file() and md.is_file())
         self.assertIn('| Fil |', md.read_text())
         ren = self.d / 'ren'; ren.mkdir(); (ren / 'a.md').write_text('# Trädgård i Provstad\n\nAnläggning och skötsel. Ring 070-123 45 67.\n')
         with contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(ck.main(['--kalla', str(ren), '--ut', str(ut), '--strikt']), 0)
+            self.assertEqual(ck.main(['--kalla', str(ren), '--ut', str(ut)]), 0)
+        self.assertEqual(json.loads(ut.read_text())['fynd'], [])
 
 
 if __name__ == '__main__':

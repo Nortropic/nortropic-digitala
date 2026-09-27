@@ -6,11 +6,11 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "ac1d789e96d7a8c6dfeb83b75eeb764945781cafa960bed818bc599476f8f3fe",
-   "byte": 21257,
+   "sha256": "8ab078a87826fd97b1044a9ba210bf5e1f4aaa84f7440f60a37a5e661eaebd52",
+   "byte": 26701,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella)",
+   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med)",
    "sha256_vid_flytt": "68eac8cc627932bd431d78a7198d13117ccb8c217ba567397fdd9f02fe753034"
   },
   {

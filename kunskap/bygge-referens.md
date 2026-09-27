@@ -41,6 +41,13 @@ kundens förvaltning och driftmiljön. Det som följer är krav på resultatet o
 - **GitHub-först**: kundrepot privat under organisationen; huvudgren skyddad; driftsättning från huvudgren;
   förhandsvisning per gren.
 
+## Riktningsfil och lint
+
+Briefens §7 skrivs som `DESIGN.md` i kundrepot (formatet `@google/design.md`, README i `kunskap/externa/`), så att
+tokens, typografi, färg och komponentregler är läsbara för varje utförare; `npx -p @google/design.md@0.4.0 designmd lint
+--format json DESIGN.md` hittar föräldralösa tokens och kontrastvarningar (etapp 4 fann två tokens och en varning).
+Formatet beskriver riktningen; det bestämmer den inte.
+
 ## Browsergranskning under bygget
 
 Rendera och interagera i riktig webbläsare medan du bygger, inte bara efteråt: första vyn i 390 och 1440,

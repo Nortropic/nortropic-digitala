@@ -13,15 +13,26 @@ tvingas igenom en stor uppgifts process; en stor uppgift får inte hoppa över d
 | brief | beställning | samlad brief, riktning, kedjekontroll på briefen | läsare för granskning | kundmappen (PROJECT-BRIEF.md); inget ägarstopp |
 | koncept | beställning | lösningsalternativ utreds internt, en motiverad riktning väljs utan ägarstopp (antal alternativ efter uppgiften; Design Read och namngivna axlar är metoder, inte universella värden) | kritikprofilen (designkritik-komp) | privat etappmapp |
 | bygge | beställning | bygget i kundrepot | — (dagens byggväg) | kundrepot |
-| redaktionellt-pass | beställning | faktatrohet och redaktionell kvalitet | läsare | kundrepot (content) |
+| redaktionellt-pass | beställning | faktatrohet och redaktionell kvalitet; copykontrollens rapport | läsare | kundrepot (content) |
+| seo | beställning | sökintention, struktur, teknisk och innehållsmässig SEO, strukturerad data; lokal SEO bara vid lokal/hybrid | — (seo_kontroll.py) | kundrepot; rapport i fallet |
 | matning | stående | modellfri mätning: vyer, rubrikrader, handling, axe, Lighthouse, detektor | mätprofilen | körkatalog i Runtime, pekare i fallet |
 | kritik | stående | renderingsläsning, designkritik, femsekunderstest | kritikprofilen | körkatalog i Runtime |
 | granskning-d | stående | kodläsning mot gränssnittsregler, tillgänglighet, mobil, formulär | läsare | privat arbetsyta |
 | provare | stående | scenario i riktig webbläsare, kontrollant avgör | provarprofilen | körkatalog i Runtime + KONTROLL.md i fallet |
+| uppfoljning | beställning | mätplan, händelser, konverteringskedja, kampanjmärkning, kontroll mot bygget, läsning | — (uppfoljning.py) | kundmappen (MATPLAN.json) |
+| annonsberedning | beställning | kampanjutkast för Google Ads och Meta Ads, PAUSED; resultatläsning | — (annonsberedning.py) | kundmappen (KANALPLAN.json, ANNONSER/) |
+| lokal-synlighet | beställning | datablad för företagsprofil och citationer; NAP-kontroll | — (lokal_synlighet.py) | kundmappen; profilen hos behörig människa |
+| prelaunch | stående | åtta grindar som rapport (juridik avgörs av människa) | mät- och provarkvitton in | fallet (PRELAUNCH.json/.md) |
 | leverans | beställning | kvalitetsbild, överlämning, lärdomspost, användningsnoter, förslagsrad | — | kontorspost + privat fall |
+| lansering | beställning (namnger lansering och domän) | plan, lanseringsdagens kontroll, sökkonsolens steg, återgång | — (lansering.py, sokkonsol.py) | produktionsdomänen; kvitto i fallet |
+| sokkonsol | beställning | anropsplan, ägarskap, egenskap, sitemap, inspektion, sökdata, tolkning | — (sokkonsol.py) | kundmappen (kvitton); egenskapen hos Google |
+| drift | stående | driftkontroll med kvitto, incident, beroendeunderhåll, förbättring | schemaläggning genom Runtime återstår (etapp 5) | fallet (DRIFT/) |
 
 Steg som kräver en beställnings beslutspost (`mandat: bestallning` i `steg/steg.json`): **brief, koncept, bygge,
-redaktionellt-pass, leverans**. Steg inom stående mandat: uppstart, beredning, research, matning, kritik, granskning-d, provare.
+redaktionellt-pass, seo, uppfoljning, annonsberedning, lokal-synlighet, leverans, lansering, sokkonsol**. Steg inom stående
+mandat: uppstart, beredning, research, matning, kritik, granskning-d, provare, prelaunch, drift. Kanalstegen (seo,
+sokkonsol, lokal-synlighet, annonsberedning, uppfoljning) används när kundens uppdrag motiverar dem (beredningens
+kanalbehov); alla kunder får inte alla kanaler.
 
 ## Proportion — tre storlekar
 
@@ -50,9 +61,12 @@ problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.
 3. `python3 -B verktyg/kvalitetsbild.py --fall FALL --ut FALL/KVALITETSBILD.md` — samlar körningarnas kvitton till
    kvalitetsbilden (tekniskt prövat · professionellt bedömt · ej observerat hos verkliga användare).
 4. `python3 -B verktyg/verksamhetsuppgifter.py kontrollera|nap|krav VERKSAMHET.json` — kundens verksamhetsuppgifter (NAP, räckvidd,
-   öppettider; `fiktiv: true` spärrar verkliga externa åtgärder); `python3 -B verktyg/copy_kontroll.py --kalla … --ut RAPPORT.json`
+   öppettider; `fiktiv: true` spärrar de verkliga externa åtgärder som verktygen `sokkonsol.py` och `lokal_synlighet.py` gör eller förbereder, och kontrolleras av annonsberedningen); `python3 -B verktyg/copy_kontroll.py --kalla … --ut RAPPORT.json`
    — copykontrollens rapport (fraser, strukturer, platshållare, metalängder, obligatoriska element; ingen poäng);
    `node verktyg/bild/treatment.mjs`, `brand.mjs` — bildbehandling och varumärkesfiler i kundrepot (kräver `sharp` där).
+   Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
+   `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
+   inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.
 5. Bygget görs i kundrepot med dagens byggväg (Claude Code eller Codex, Vercel CLI); det ingår i kedjan genom att
    laddningskvittot, mätningarna och kritiken binds till commit och driftsättning (L9).
 

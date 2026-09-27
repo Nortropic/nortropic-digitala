@@ -194,15 +194,15 @@
     {
      "fil": "kunskap/referenser-professionella.md",
      "klass": "profession",
-     "obligatorisk": true,
-     "delar": "de åtta dragen och filtret; exemplaren vid jämförelse"
+     "obligatorisk": false,
+     "delar": "jämförelsedimensionerna och urvalet, när briefen motiverar en jämförelse"
     }
    ]
   },
   "bygge": {
    "mandat": "bestallning",
    "syfte": "Bygge i kundrepot enligt brief och vald riktning.",
-   "anvisning": "Följ bygge-referens.md (krav på resultatet, mönster med skäl, browsergranskning under bygget, arbetslogg). frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21).",
+   "anvisning": "Följ bygge-referens.md (krav på resultatet, mönster med skäl, browsergranskning under bygget, arbetslogg). frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21). Skriv kundrepots DESIGN.md (formatet i externa/google-design-md-README) ur briefens §7 och håll den i takt med bygget; kör linten i kundrepot (`npx -p @google/design.md@0.4.0 designmd lint --format json DESIGN.md`, paketet pinnat 0.4.0; installationen är kundrepots beroende, inget abonnemang).",
    "underlag": [
     {
      "fil": "kunskap/bygge-referens.md",
@@ -245,6 +245,12 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "hela"
+    },
+    {
+     "fil": "kunskap/externa/google-design-md-README-9bf8eae6.md",
+     "klass": "profession",
+     "obligatorisk": false,
+     "delar": "\"The Format\" och \"lint\": DESIGN.md som riktningsfil i kundrepot och lint av den"
     }
    ]
   },
@@ -285,6 +291,37 @@
     }
    ]
   },
+  "seo": {
+   "mandat": "bestallning",
+   "syfte": "Sökintention och informationsstruktur, teknisk och innehållsmässig SEO, crawlning och indexering, canonical, metadata, internlänkning, sitemap, robots och noindex per läge, sanningsenlig strukturerad data, omdirigeringar vid migrering; lokal SEO bara när briefen anger lokal eller hybrid.",
+   "anvisning": "Följ seo.md (och seo-lokal.md vid lokal/hybrid). Bygg sidorna efter sökintentionen i research §15 och briefen §5, aldrig efter en sidmall. Kör verktyg/seo_kontroll.py --bygge BYGGE --lage forhandsvisning|lansering --verksamhet VERKSAMHET.json [--omdirigeringar]; rätta eller motivera varje fynd. Inga rankningslöften i något dokument.",
+   "underlag": [
+    {
+     "fil": "kunskap/seo.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/seo-lokal.md",
+     "klass": "profession",
+     "obligatorisk": false,
+     "delar": "hela, när briefen §5 anger lokal eller hybrid"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "§3 och §5"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela (strukturerad data prövas mot den)"
+    }
+   ]
+  },
   "matning": {
    "mandat": "staende",
    "syfte": "Modellfri mätning av en adress eller fil genom Runtimes mätprofil med Digitalas profilval.",
@@ -313,7 +350,7 @@
   "kritik": {
    "mandat": "staende",
    "syfte": "Kritik genom Runtimes kritikprofil: designkritik av komp, renderingsläsning eller femsekunderstest, med Digitalas fråga och schema.",
-   "anvisning": "Välj mall i kritik/ (designkritik-komp, renderingslasning, femsekunderstest). Fyll varje {{PLATSHÅLLARE}} med --parameter; femsekunderstestet är avskärmat och tar inga parametrar, inga kundunderlag och inga textbilagor (verktyget vägrar). Kalibrera med frontend-designs klusterlista. Bedömaren får skärmbilder, aldrig facit; varje bild ska öppnas. Skriv 'okänt' där underlaget inte räcker.",
+   "anvisning": "Välj mall i kritik/ (designkritik-komp, renderingslasning, femsekunderstest). Fyll varje {{PLATSHÅLLARE}} med --parameter; femsekunderstestet är avskärmat och tar inga parametrar, inga kundunderlag och inga textbilagor (verktyget vägrar). Kalibrera med frontend-designs klusterlista; Hallmark-linsen (externa) är en kritikröst bland flera, vald när briefen motiverar en formmässig granskning, inte ett extra godkännande. Bedömaren får skärmbilder, aldrig facit; varje bild ska öppnas. Skriv 'okänt' där underlaget inte räcker.",
    "underlag": [
     {
      "fil": "kritik/FRAGA-designkritik-komp.md",
@@ -362,6 +399,12 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "§5 designriktning (läggs i bedömarens underlag som utdrag)"
+    },
+    {
+     "fil": "kunskap/externa/hallmark-SKILL-13ac0ec7.md",
+     "klass": "profession",
+     "obligatorisk": false,
+     "delar": "kritikröstens metod (S5) som en lins bland flera i designkritik; följer med i manifestet för designkritik-komp och renderingslasning, aldrig till det avskärmade femsekunderstestet"
     }
    ]
   },
@@ -445,6 +488,112 @@
     }
    ]
   },
+  "uppfoljning": {
+   "mandat": "bestallning",
+   "syfte": "Mätplan med händelser och konverteringskedja, kampanjmärkning, kontroll att bygget bär händelserna och inget spårar före samtycke, felsökning av mätningen, läsning av export och återkoppling till innehåll och upplevelse.",
+   "anvisning": "Följ uppfoljning.md. Skriv MATPLAN.json ur briefen §11; kör verktyg/uppfoljning.py plan, kontrollera --bygge, och las --export vid uppföljning. Skilj affärsnytta från proxy; en händelse i koden är inte en mätt händelse förrän den setts i felsökningsläget eller nätverksloggen.",
+   "underlag": [
+    {
+     "fil": "kunskap/uppfoljning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "§4 och §11"
+    }
+   ]
+  },
+  "annonsberedning": {
+   "mandat": "bestallning",
+   "syfte": "Kanal- och kampanjberedning för Google Ads och Meta Ads: mål, målgrupp, budskap, kreativa tillgångar, landningssidans överensstämmelse, spårning, konverteringsdefinitioner, budgetvillkor, utkast/pausade objekt och resultatläsning; aldrig start eller spendering utan uttryckligt mandat.",
+   "anvisning": "Följ annonser.md. Skriv KANALPLAN.json ur beredningen och briefen §5; kör verktyg/annonsberedning.py bygg --bygge BYGGE; rätta fynden (textlängder, landningssida, budskap). Utkasten är PAUSED; överföring kräver plattformsåtkomst (namngivet externt beroende) och mandat med budget. Resultat läses med rapport --export.",
+   "underlag": [
+    {
+     "fil": "kunskap/annonser.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/copy-kontroll.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "fraser och regler (gäller annonstext)"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "§2, §5, §6, §11"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela"
+    }
+   ]
+  },
+  "lokal-synlighet": {
+   "mandat": "bestallning",
+   "syfte": "Google-företagsprofil och citationer: tillämplighet, behörig åtkomstväg, korrekta verksamhetsuppgifter, kategorier, öppettider, serviceområde, bilder, länkar och uppföljning; NAP-kontroll mot sajten.",
+   "anvisning": "Följ lokal-synlighet.md. Kör verktyg/lokal_synlighet.py datablad (ur VERKSAMHET.json; beskrivning ur briefen) och kontrollera --bygge. Profilen skapas och verifieras av behörig människa; skapa aldrig en profil för en fiktiv verksamhet; tvinga inte lokala krav på icke-lokala uppdrag.",
+   "underlag": [
+    {
+     "fil": "kunskap/lokal-synlighet.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "§1 och §6 (beskrivning)"
+    }
+   ]
+  },
+  "prelaunch": {
+   "mandat": "staende",
+   "syfte": "Åtta grindar före lansering som rapport med belägg: byggintegritet, viktiga handlingar från början till slut, prestanda, responsivitet, tillgänglighet, SEO-beredskap, juridik (människa) och säkerhet; underkännande går till diagnos, åtgärd och omprov.",
+   "anvisning": "Följ prelaunch.md. Kör verktyg/prelaunch.py --bygge BYGGE --lage LÄGE --verksamhet VERKSAMHET.json --matning KORNING --handlingar HANDLINGAR.json --juridik JURIDIK.json --huvuden|--adress --audit; EJ_MATT är inte PASS; juridiken avgörs av människa; grön rapport bevisar inte mänsklig användbarhet.",
+   "underlag": [
+    {
+     "fil": "kunskap/prelaunch.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/juridikflaggor.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "basen och tabellen"
+    },
+    {
+     "fil": "kunskap/formularsakerhet.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela (grind 7)"
+    },
+    {
+     "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "§4, §9, §10, §11"
+    }
+   ]
+  },
   "leverans": {
    "mandat": "bestallning",
    "syfte": "Leverans av ett bygge eller en etapp: kvalitetsbild (tekniskt prövat, professionellt bedömt, ej observerat), överlämning med begränsningar, lärdomspost, användningsnoter och förslagsrad.",
@@ -470,6 +619,81 @@
     },
     {
      "fil": "PROJECT-BRIEF.md",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela"
+    }
+   ]
+  },
+  "lansering": {
+   "mandat": "bestallning",
+   "syfte": "Lansering enligt gällande mandat: förkontroll, lanseringsdagens kontroll (noindex borta, verifieringstagg, sitemap, robots, kanonisk variant), sökkonsolens steg, oåterkalleligt och återgång; privat förhandsvisning och slutrapport levereras alltid först.",
+   "anvisning": "Följ lansering.md. Kör verktyg/lansering.py plan --mandat POST-ID (beställningen som namnger lansering och domän) och kontrollera --adress efter driftsättning; sökkonsolens skrivande steg med sokkonsol.py --live; ingen lansering för fiktiv verksamhet; återgångsvägen känd före driftsättning.",
+   "underlag": [
+    {
+     "fil": "kunskap/lansering.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/sokkonsol.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "åtkomstväg och ordning på lanseringsdagen"
+    },
+    {
+     "fil": "MANDAT.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "gränserna för lansering"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela"
+    }
+   ]
+  },
+  "sokkonsol": {
+   "mandat": "bestallning",
+   "syfte": "Sökkonsolens ägarskapsväg, egenskap, sitemap, URL-inspektion och sökdata, med tolkning till åtgärder; anropsplan utan åtkomst, kvitto per anrop med åtkomst.",
+   "anvisning": "Följ sokkonsol.md. Kör verktyg/sokkonsol.py plan (alltid) och token/verifiera/inspektera/sokdata --live bara med åtkomstfil (0600) för en skarp verksamhet efter att lansering.py kontrollera visat noll fynd; fiktiva verksamheter och förhandsvisningsdomäner vägras. Skriv tolkningen (observation → åtgärd) i fallets uppföljning; hitta aldrig på data för en oindexerad sajt.",
+   "underlag": [
+    {
+     "fil": "kunskap/sokkonsol.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hela (fiktiv, domän, ägare)"
+    }
+   ]
+  },
+  "drift": {
+   "mandat": "staende",
+   "syfte": "Övervakning, incidenthantering, beroendeunderhåll, återgång och kontinuerlig förbättring för lanserade sajter, kopplade till Runtime och kunduppdraget; driftkontroll med kvitto.",
+   "anvisning": "Följ drift.md. Kör verktyg/drift_kontroll.py --plan DRIFT.json --ut FALL/DRIFT vid varje rytm (schemalagd körning genom Runtime är ett namngivet återstående steg, etapp 5); vid incident: kvitto, värdstatus, återgång enligt lansering.md, not i ARBETSLOGG.md; månadsvis beroendeunderhåll med prelaunch-delgrindar.",
+   "underlag": [
+    {
+     "fil": "kunskap/drift.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/lansering.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "återgång"
+    },
+    {
+     "fil": "DRIFT.json",
      "klass": "kund",
      "obligatorisk": true,
      "delar": "hela"

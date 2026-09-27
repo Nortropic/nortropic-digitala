@@ -33,6 +33,8 @@ högt, inte en regel om vissa ord.
 
 ## Vad kontrollen inte gör
 
+Rapporten är ingen grind: verktyget har ingen flagga som gör fynd till ett underkännande, och ingen byggkedja får
+göra den till en. 
 Den bedömer inte röst, ton eller sanningshalt; den mäter inte läsbarhet; den ersätter inte faktakontrollen i
 `redaktionellt-pass.md` del 1 eller kedjekontrollen i del 2. Ett fynd som motiveras i kundens röst står kvar med
 motivering i det redaktionella passets not.

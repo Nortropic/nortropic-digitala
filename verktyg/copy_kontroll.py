@@ -4,9 +4,9 @@ levererad text. Ingen poäng, ingen stil: fynden är att läsa, rätta eller mot
 (kunskap/copy-kontroll.md). Bransch- och kundspecifika fraser kommer från briefen (--fraser), obligatoriska element
 från verksamhetsuppgifterna (--krav ur verktyg/verksamhetsuppgifter.py krav), inte från en inbyggd branschmall.
 
-    python3 -B verktyg/copy_kontroll.py --kalla KATALOG|FIL [...] [--fraser FIL] [--krav KRAV.json] --ut RAPPORT.json [--md RAPPORT.md] [--strikt]
+    python3 -B verktyg/copy_kontroll.py --kalla KATALOG|FIL [...] [--fraser FIL] [--krav KRAV.json] --ut RAPPORT.json [--md RAPPORT.md]
 
-Exit 0 (rapport skriven); med --strikt exit 1 när fynd finns. Läser .html/.htm/.md/.mdx/.txt/.tsx/.jsx/.ts/.js/.astro/.vue/.svelte.
+Exit 0 när rapporten är skriven; fynd ändrar aldrig exitkoden (rapporten är ingen grind). Läser .html/.htm/.md/.mdx/.txt/.tsx/.jsx/.ts/.js/.astro/.vue/.svelte.
 """
 import argparse
 import html
@@ -172,14 +172,13 @@ def main(argv=None):
     p.add_argument('--krav')
     p.add_argument('--ut', required=True)
     p.add_argument('--md')
-    p.add_argument('--strikt', action='store_true')
     a = p.parse_args(argv)
     r = rapport(a.kalla, a.fraser, a.krav)
     Path(a.ut).write_text(json.dumps(r, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     if a.md:
         Path(a.md).write_text(markdown(r), encoding='utf-8')
     print(json.dumps({'filer': r['filer'], 'fynd': len(r['fynd']), 'sammanfattning': r['sammanfattning'], 'ut': a.ut}, ensure_ascii=False))
-    return 1 if a.strikt and r['fynd'] else 0
+    return 0
 
 
 if __name__ == '__main__':
