@@ -15,6 +15,7 @@ Runtime main `b603d91` (aktiv release `03e776bd`), kontoret och detta repo 2026-
 | Separat granskning | Runtimes läsarprofil (bara Read); kontorets publicerare kräver granskningskvitto för samma commit och byte | vad granskaren får läsa; samma modellfamilj = separat läsning, inte oberoende omdöme |
 | Publicering av kontorsposter och Runtime-ändringar | `publish_construction`: hela sviten på exakt kandidat, granskningskvitto, värdkontrollkvitto (Runtime), skyddad main, exakt squash | postens innehåll |
 | Ändringar i detta repo | git-historik; prov (`verktyg/test_*.py`); **grenskydd saknas** (privat repo på organisationens gratisplan: GitHub vägrade skyddet med 403) | branch + granskning före main enligt `AGENTS.md`; granskningskvittot bokförs i kontorets post |
+| Beställnings-id vid laddning | `ladda_steg.py` prövar bara att id:t finns och har rätt form | att posten finns i kontorets `docs/decisions.md` och ger mandatet läser utföraren själv; verktyget läser inte kontorets repo |
 | Modell- och utförarval | Runtime: `development.models`/`executors` i frysta releasen, identitetskontroll, fråga vid kapacitetsbrist; profilerna tar modellen som parameter | byggsessionens modell är operatörens CLI-inställning, utanför Runtime |
 | Kontinuitet | Runtime: motorns historik för uppgifter | kontorets plan, privata `LAGE.md`, laddningskvitton, `KORNING-*.json`; ny session läser och tar över |
 | Lärande | — | `LARDOMAR.md`, `ANVANDNINGSNOTER.md`, förslagsraden; rytmen i kontoret |

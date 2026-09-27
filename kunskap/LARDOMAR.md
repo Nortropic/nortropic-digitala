@@ -1,6 +1,7 @@
 # Lärdomar över fall (P4) — Digitala
 
-Privat fil i `evidence/digitala/local/kunskap/`. Läses vid uppstart av nästa fall. En post per lärdom med fälten
+Professionsfil i Digitala-repots `kunskap/` (flyttad hit 2026-09-27 från kontorets `evidence/digitala/local/kunskap/`; se
+`PROVENIENS.md`). Läses vid uppstart av nästa fall. En post per lärdom med fälten
 **observation** (vad hände, fall, bevispekare) · **möjlig generell lärdom** (formulerad som hypotes) · **lokal
 preferens?** · **tillämpning** (fall och vad som gjordes) · **kvarvarande osäkerhet** · **läge**. Lägen: *observerad en
 gång (fall)* · *återfunnen i ett andra fall (fall)* · *använd med konkret resultat (fall: vad)*. Två fall bekräftar inte

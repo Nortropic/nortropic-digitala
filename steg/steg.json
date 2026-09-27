@@ -5,11 +5,12 @@
     "uppstart": {
       "mandat": "staende",
       "syfte": "Uppstart av ett fall eller en etapp: läs lärdomarna, mandatet och arbetssättet innan något görs.",
-      "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Avstämning av lärdomar sker efter två relevanta tillämpningar, inte nu.",
+      "anvisning": "Läs LARDOMAR.md helt (P4). Läs MANDAT.md för vad som ryms i stående mandat. Avstämning av lärdomar sker efter två relevanta tillämpningar, inte nu. Läs KEDJA.md för vad som är mekaniskt skyddat och vad sessionen själv bär.",
       "underlag": [
         {"fil": "kunskap/LARDOMAR.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
         {"fil": "MANDAT.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
         {"fil": "ARBETSSATT.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
+        {"fil": "KEDJA.md", "klass": "profession", "obligatorisk": true, "delar": "hela"},
         {"fil": "PROJECT-BRIEF.md", "klass": "kund", "obligatorisk": false, "delar": "läsanvisningen och §1 om briefen finns"}
       ]
     },

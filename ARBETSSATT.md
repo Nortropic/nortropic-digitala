@@ -30,6 +30,9 @@ redaktionellt-pass, leverans**. Steg inom stående mandat: uppstart, research, m
 | **Mellan** (ny sida eller ny sektion inom gällande riktning) | ny landningssida | uppstart → [beställning] → brief-avsnitt → bygge → redaktionellt-pass → matning → kritik (renderingsläsning) → granskning-d → provare (ett scenario) → leverans | koncept, om riktningen är beslutad |
 | **Stor** (ny riktning, ny informationsarkitektur, ny kund) | omformning, ny kund | alla steg, med koncept före bygge och kontorets beredning (behov, osäkerheter, metodval, beslutsunderlag) | — |
 
+Också en liten uppgift på en levererad sajt kräver en beställnings beslutspost: underhåll mellan beställningar är en
+namngiven saknad gräns i `MANDAT.md` §3, inte stående mandat.
+
 Kontoret bidrar vid mellan och stor uppgift med problemformulering, osäkerheter, proportionerligt metodval och
 beslutsunderlag genom sin beredning (AP-06, fältet `forvaltning`); Digitalas sakkunskap får påverka både
 problemformuleringen och metodvalet. Vid liten uppgift behövs inget av det.

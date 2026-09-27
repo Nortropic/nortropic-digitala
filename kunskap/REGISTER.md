@@ -1,7 +1,9 @@
 # Kunskapsstöd för dagens Digitala — register (P3 i JAMFORELSE-DIGITALA-20260926 v4; DIGITALA-1-GENOMFORANDE-20260926)
 
-Privat mapp: `evidence/digitala/local/kunskap/`. Skapad 2026-09-26 inom paketets del 1. Detta register är den ordinarie
-ingången till underlagen: AGENTS.md → `docs/plan.md` (Digitala-planens rad om kunskapsstödet) → denna fil → underlaget.
+Professionsfil i Digitala-repots `kunskap/` (flyttad hit 2026-09-27 från kontorets `evidence/digitala/local/kunskap/`,
+skapad 2026-09-26 inom paketets del 1; se `PROVENIENS.md`). Repots ordinarie ingång är `AGENTS.md` → `MANDAT.md` →
+`ARBETSSATT.md` → `steg/steg.json` genom `verktyg/ladda_steg.py`; detta register beskriver underlagen och deras koppling
+per steg.
 
 **Regler.** (1) Ladda per steg enligt kopplingstabellen, aldrig hela mappen. (2) Underlagen är råd; briefen, ACCEPT och
 gällande mandat vinner alltid. Ett råd som strider mot ett accepterat krav redovisas som förslag i briefens konfliktrad
@@ -82,12 +84,13 @@ session.
 
 Alla underlag är **tillgängliga och kopplade** (denna fil). Ingen är **prövad med observerad nytta**; det kan bara
 användningsnoter över fall visa. Mottagarprovet (en färsk läsarsession hittar rätt underlag från ordinarie ingång utan
-filnamn) redovisas i `MOTTAGARPROV.md` när det är gjort.
+filnamn) redovisas i `MOTTAGARPROV.md` (kontorets ingång 2026-09-26; repots egen ingång 2026-09-27, Claude och Codex).
 
 ## F. Installerat och registrerat (etapp 1, DIGITALA-1-TILLAGGSMANDAT-BESLUT-20260926, 2026-09-26)
 
 Formen per resurs är ett nyttoval (regel 7). Hemvistfrågan (kontoret, ett eget repo eller operatörens användarnivå)
-är öppen; tills den är avgjord ligger skills på användarnivå och Impeccable i kundrepot. Versioner byts bara som nytt
+var öppen vid installationen och är avgjord genom OMBYGGNAD-20260927: detta repo. Skills på användarnivå och Impeccable i
+kundrepot ligger kvar som leveransformer tills en förslagsrad prövar dem. Versioner byts bara som nytt
 beslut med ny läsning (regel 4). Råmaterial: `../genomforande-20260926/etapp1/`.
 
 | Resurs | Form | Version eller revision | Plats | Licens | Kontroll |

@@ -27,3 +27,15 @@ laddas inte automatiskt på den uppgiften (L14). 160 s, 0,50 USD; en modellsessi
 Råmaterial: `../genomforande-20260926/etapp1/mottagarprov-1/` (prompt i `launch.json`, `stream.jsonl`, `UTFALL.md`,
 arbetsytans `index.html`).
 
+
+## Repots egen ingång — 2026-09-27 (två utförare, samma institutionella innehåll)
+
+- **Claude som session:** Runtimes läsarprofil (bara Read, claude-opus-5) i en kopia av repot med repots egen `AGENTS.md`
+  som systeminstruktion, fyra frågor utan filnamn (steget för mätning och dess mandat, beställningsstegen, kvittots roll,
+  lärdomens plats). Godkänt; fem anmärkningar om vad ingången inte namngav (kundmappens plats, undantagsfilens form,
+  kontorets lärdomsfil, förslagsradens plats, beställningsstegen samlat) rättade i `6726fd8`. Protokoll i kontorets privata
+  `evidence/nasta-uppdrag/local/ombyggnad-20260927/mottagarprov-digitala-r1/`.
+- **Codex som session:** Runtimes Codex-profil (skrivskyddad sandlåda, inget nät, gpt-6-astra) i en kopia av repot; Codex
+  läste repots egen `AGENTS.md` som instruktion, samma frågor, samma svarsschema. Godkänt på 56 sekunder; tre anmärkningar
+  (ingen laddning kördes eftersom uppgiften var läsande; `LARDOMAR.md`:s huvud talade om det gamla hemmet, rättat här;
+  laddaren läser inte beställningsposten, bokfört i `KEDJA.md`). Protokoll i `…/mottagarprov-digitala-codex-r1/`.

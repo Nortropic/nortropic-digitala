@@ -11,7 +11,8 @@ proportionen) → ladda stegets underlag med `python3 -B verktyg/ladda_steg.py -
 Regler:
 - Laddningen är ordinarie väg. Urval och versioner sköts av verktyget, inte av minnet; kvittot `LADDNING.json` säger
   vilka obligatoriska underlag och versioner en körning fick. Saknat obligatoriskt underlag eller fel version vägras.
-- Steg märkta `bestallning` i `steg/steg.json` kräver en beställnings beslutspost (kontorets `docs/decisions.md`);
+- Steg märkta `bestallning` i `steg/steg.json` kräver en beställnings beslutspost (kontorets `docs/decisions.md`;
+  verktyget prövar bara id:ts form, posten läser utföraren själv);
   steg märkta `staende` ryms i det stående mandatet enligt `MANDAT.md`.
 - Runtimes profiler (mätning, kritik, provare) körs genom `verktyg/kor_profil.py`, som tar Digitalas val ur
   `matning/PROFIL.json` och binder körningen till laddningskvittot. Runtime prövar form och kör; innehållet är vårt.

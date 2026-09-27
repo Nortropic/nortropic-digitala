@@ -22,7 +22,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -222,13 +221,16 @@ def parse(argv):
     return args
 
 
+def utan_hemlig_vag(cmd):
+    """Bokförd argv: undantagsfilens sökväg ersätts med en platshållare, så att evidensen inte pekar ut hemlighetsfilen."""
+    return [('<undantag-fil>' if i > 0 and cmd[i - 1] == '--undantag-fil' else a) for i, a in enumerate(cmd)]
+
+
 def run(argv=None):
     args = parse(sys.argv[1:] if argv is None else argv)
     fall = Path(args.fall)
     if not fall.is_dir():
         raise Vagrad('fallmappen finns inte: ' + str(fall))
-    if not shutil.which('git'):
-        pass
     receipt, laddning_sha = laddning(args.laddning)
     root = runtime_root()
     release = aktiv_release(root)
@@ -240,7 +242,7 @@ def run(argv=None):
         cmd, extra = bygg_provare(args, release, root, receipt, laddning_sha)
     post = {'schema': 1, 'profil': args.profil, 'etikett': args.etikett, 'laddning': {'fil': str(Path(args.laddning).resolve()),
             'sha256': laddning_sha, 'steg': receipt['steg'], 'sha256_over_underlag': receipt['sha256_over_underlag'],
-            'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': cmd, 'cwd': release['kod'], **extra}
+            'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], **extra}
     if args.torr:
         print(json.dumps({**post, 'torr': True}, ensure_ascii=False, indent=1))
         return 0
