@@ -105,6 +105,13 @@ class Vagrad(Exception):
     pass
 
 
+class Intervjutillstand(dict):
+    """Kundfilens sökväg i minnet, aldrig ett självdeklarerat JSON-bevisfält."""
+    def __init__(self, data, kund):
+        super().__init__(data)
+        self.kund = Path(kund)
+
+
 def nu():
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
@@ -146,7 +153,7 @@ def las(kund):
     p = stig(kund)
     if not p.is_file():
         raise Vagrad('ingen intervju startad i %s (kör start)' % kund)
-    return json.loads(p.read_text(encoding='utf-8'))
+    return Intervjutillstand(json.loads(p.read_text(encoding='utf-8')), kund)
 
 
 def spara(kund, s):
@@ -160,7 +167,7 @@ def spara(kund, s):
 def okand(uppgift):
     # An explicit intake status wins. Only a complete short answer is recognised
     # from free text; "jag vet inte priset, men vi behöver bokning" remains intact.
-    kort_svar = r"\s*(?:(?:jag )?vet (?:inte|ej)|(?:jag har )?ingen aning|(?:jag är )?(?:osäker|inte säker)|okänt|okant|(?:i )?(?:don['’]t|do not) know)\s*[.!]?\s*"
+    kort_svar = r"\s*(?:(?:(?:jag|vi) )?vet (?:inte|ej)|(?:(?:jag|vi) har )?ingen aning|(?:(?:jag|vi) är )?(?:osäker|osäkra|inte säker|inte säkra)|okänt|okant|(?:(?:i|we) )?(?:don['’]t|do not) know)\s*[.!]?\s*"
     return uppgift.get('vet_inte') is True or uppgift.get('status') == 'okänt' or bool(re.fullmatch(kort_svar, str(uppgift.get('text', uppgift.get('varde', ''))), re.I))
 
 
@@ -177,9 +184,22 @@ def aktuella_uppgifter(s):
             continue  # Keep the source current; interpretations remain in fakta for review.
         if (current and not okand(current)
                 and (current.get('status') == 'kunden uppger' or current.get('kalla') == 'kundstart')
-                and okand(x) and x.get('status') != 'kunden uppger'
-                and not str(x.get('kalla', '')).startswith('kundstart')):
-            continue  # An unconfirmed performer note cannot withdraw the customer's answer.
+                and okand(x)):
+            if str(x.get('kalla', '')).startswith('kundstart'):
+                # Prefix/status räcker inte för att dra tillbaka ett kundsvar.
+                # Sökvägen kommer från las(), inte från JSON eller FAKTA-filen.
+                import kundstart
+                kund = getattr(s, 'kund', None)
+                if kund is None or not (kund / 'KUNDSTART.json').is_file():
+                    continue
+                try:
+                    belagd = kundstart.kundrad_belagd(kund, x)
+                except kundstart.Vagrad as e:
+                    raise Vagrad(str(e)) from None
+                if not belagd:
+                    continue
+            elif x.get('status') != 'kunden uppger':
+                continue  # En utföraranteckning drar inte tillbaka kundens ord.
         rows[x['nyckel']] = x
     return rows
 

@@ -244,6 +244,51 @@ class Kundstart(unittest.TestCase):
         code, r = self.kor('hamta', '--kund', str(self.k))
         self.assertEqual(code, 2); self.assertIn('fakta_ai', r['vagrad'])
 
+    def test_defekta_exportformer_vagras_fore_kundfilsmutation(self):
+        ks.spara_kundstart(self.k, {'arende_id': 'ar_test12345678', 'bas_url': 'http://kundstart.test', 'hamtat': []})
+        # CLI tar ett nödvändigt importlås före transporten; jämför kunddata,
+        # inte skapandet av den tomma låsfilen vid allra första användningen.
+        with ks.konsumtionslas(self.k):
+            pass
+        def snapshot():
+            return {str(p.relative_to(self.k)): p.read_bytes() for p in self.k.rglob('*') if p.is_file()}
+        for existing in (False, True):
+            if existing:
+                ks.hamta(self.k, 'http://kundstart.test', 'synthetic', None, False, paket=paket())
+            before = snapshot()
+            bad = [None, [], dict(paket(), arende=[]), dict(paket(), omgangar={}),
+                   dict(paket(), fakta_ai=[None]), dict(paket(), material=['not-an-object']),
+                   dict(paket(), rattelser=[{'nyckel': 'ton', 'varde': []}]),
+                   dict(paket(), tackning=None)]
+            p = paket(); p['omgangar'][0]['nr'] = '1'; bad.append(p)
+            p = paket(); p['omgangar'][0]['svar'] = [None]; bad.append(p)
+            p = paket(); p['omgangar'][0]['svar'][0]['mottaget'] = None; bad.append(p)
+            p = paket(); p['omgangar'][0]['svar'][0]['revision'] = True; bad.append(p)
+            p = paket(); p['material'][0]['extraktion'] = {'text': ['wrong']}; bad.append(p)
+            p = paket(); p['arende']['testdialog'] = 'false'; bad.append(p)
+            for i, data in enumerate(bad):
+                with self.subTest(existing=existing, shape=i):
+                    self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = data
+                    code, result = self.kor('hamta', '--kund', str(self.k))
+                    self.assertEqual(code, 2, result)
+                    self.assertIn('fel form', result['vagrad'])
+                    self.assertEqual(snapshot(), before)
+
+    def test_ny_export_metadata_samma_revision_bevarar_tidigare_exportbytes(self):
+        ks.spara_kundstart(self.k, {'arende_id': 'ar_test12345678', 'bas_url': 'http://kundstart.test', 'hamtat': []})
+        first = paket()
+        ks.hamta(self.k, 'http://kundstart.test', 'synthetic', None, False, paket=first)
+        old = self.k / 'KUNDSTART/export-rev7.json'; original = old.read_bytes()
+        second = paket(); second['exporterad'] = '2026-09-28T00:00:00Z'
+        ks.hamta(self.k, 'http://kundstart.test', 'synthetic', None, False, paket=second)
+        self.assertEqual(old.read_bytes(), original)
+        receipts = ks.las_kundstart(self.k)['hamtat']
+        self.assertEqual(len(receipts), 2)
+        self.assertNotEqual(receipts[0]['export_fil'], receipts[1]['export_fil'])
+        self.assertEqual(ks._senast_importerade_paket(self.k), second)
+        self.assertEqual(receipts[0]['export_sha256'], ks.json_sha(first))
+        self.assertEqual(len(iv.las(self.k)['svar']), 2)
+
     def test_export_ar_data_inte_instruktion(self):
         self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'regelstyrd'}
         self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')

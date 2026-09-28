@@ -228,24 +228,123 @@ def intagsutdrag(s, paket):
     return research
 
 
+def validera_export(paket, arende_id):
+    """Pröva de former konsumenterna använder innan kundfiler ändras.
+
+    Semantiskt ogiltiga fråge-/faktarader får fortsatt ett synligt
+    ej_registrerade-utfall. Trasiga behållare och typer vägras atomärt.
+    """
+    def krav(ok, field):
+        if not ok:
+            raise Vagrad('exportpaketet saknar fältet %s eller har fel form' % field)
+    krav(isinstance(paket, dict), 'export')
+    if paket.get('schema') != 'kundstart-export/1':
+        raise Vagrad('okänt exportschema: %s' % paket.get('schema'))
+    ar = paket.get('arende')
+    krav(isinstance(ar, dict), 'arende')
+    krav(isinstance(ar.get('id'), str), 'arende.id')
+    if ar['id'] != arende_id:
+        raise Vagrad('exporten gäller ett annat ärende')
+    krav(type(ar.get('revision')) is int and ar['revision'] >= 1, 'arende.revision')
+    krav(isinstance(ar.get('kanal'), str) and bool(ar['kanal'].strip()), 'arende.kanal')
+    krav(type(ar.get('testdialog')) is bool, 'arende.testdialog')
+    if 'inlamningar' in ar:
+        krav(isinstance(ar['inlamningar'], list), 'arende.inlamningar')
+    def rows(obj, field, parent='', optional=False):
+        values = obj.get(field, [] if optional else None)
+        krav(isinstance(values, list) and all(isinstance(x, dict) for x in values), parent + field)
+        return values
+    def strings(row, fields, prefix, required=False):
+        for field in fields:
+            if required or field in row:
+                krav(isinstance(row.get(field), str), prefix + field)
+    def answer(row, prefix, full=True):
+        strings(row, ('fraga_id',), prefix, True)
+        strings(row, ('text', 'mottaget'), prefix, full)
+        krav(type(row.get('revision')) is int and 1 <= row['revision'] <= ar['revision'], prefix + 'revision')
+        strings(row, ('nyckel', 'omrade', 'typ'), prefix)
+    for field in ('omgangar', 'svar', 'rattelser', 'fakta_ai', 'rattelser_fakta', 'material'):
+        rows(paket, field)
+    for field in ('behov', 'tackning', 'returfragor'):
+        rows(paket, field, optional=True)
+    if 'signal' in paket:
+        krav(isinstance(paket['signal'], dict), 'signal')
+    for i, o in enumerate(paket['omgangar']):
+        prefix = 'omgangar[%d].' % i
+        krav(type(o.get('nr')) is int and o['nr'] >= 1, prefix + 'nr')
+        for q in rows(o, 'fragor', prefix):
+            strings(q, ('id', 'nyckel', 'omrade', 'text'), prefix + 'fraga.')
+        for sv in rows(o, 'svar', prefix):
+            answer(sv, prefix + 'svar.')
+    for sv in paket['svar']:
+        answer(sv, 'svar.', full=False)
+    for field in ('rattelser', 'fakta_ai', 'rattelser_fakta'):
+        for f in paket[field]:
+            strings(f, ('nyckel', 'varde', 'status', 'kalla', 'omrade', 'datum'), field + '.')
+            if 'revision' in f:
+                krav(type(f['revision']) is int and 1 <= f['revision'] <= ar['revision'], field + '.revision')
+    for m in paket['material']:
+        strings(m, ('id', 'typ', 'filnamn', 'sha256', 'mime'), 'material.')
+        ex = m.get('extraktion')
+        if ex is not None:
+            krav(isinstance(ex, dict), 'material.extraktion')
+            strings(ex, ('text', 'kalla_sha256', 'varning'), 'material.extraktion.')
+    return paket
+
+
 def _senast_importerade_paket(kund):
     """Läs bara bevarad export som matchar importkvittots ärende/revision/hash."""
     d = las_kundstart(kund)
     if not d.get('hamtat'):
         return None
     last = d['hamtat'][-1]
+    # Äldre kvitto utan bindning kan inte självcertifieras genom att fylla hash.
+    # Ingen metadata normaliseras från det; en ny vanlig import får fortsätta.
+    if not re.fullmatch(r'[a-f0-9]{64}', str(last.get('export_sha256', ''))):
+        return None
     raw = Path(kund) / 'KUNDSTART' / ('signal-%s' % last['revision']) / 'EXPORT.json'
     canonical = Path(kund) / 'KUNDSTART' / ('export-rev%s.json' % last['revision'])
-    path = raw if raw.is_file() else canonical
-    if not path.is_file():
-        return None
-    data = path.read_bytes()
-    paket = json.loads(data)
-    digest = hashlib.sha256(data).hexdigest() if path == raw else json_sha(paket)
-    if (digest != last.get('export_sha256') or paket.get('arende', {}).get('id') != d['arende_id']
-            or paket.get('arende', {}).get('revision') != last['revision']):
+    candidates = [(raw, 'raw_sha256'), (canonical, 'json_sha256')]
+    if last.get('export_fil'):
+        bound = (Path(kund) / last['export_fil']).resolve()
+        if (Path(kund) / 'KUNDSTART').resolve() not in bound.parents:
+            raise Vagrad('importkvittots exportfil ligger utanför kundens KUNDSTART')
+        if last.get('export_hashmetod') not in ('raw_sha256', 'json_sha256'):
+            raise Vagrad('importkvittots hashmetod saknas eller är okänd')
+        candidates = [(bound, last['export_hashmetod'])]
+    found = False
+    for path, mode in candidates:
+        if not path.is_file():
+            continue
+        found = True
+        data = path.read_bytes()
+        try:
+            paket = json.loads(data)
+            validera_export(paket, d['arende_id'])
+        except (ValueError, UnicodeError, Vagrad):
+            continue
+        digest = hashlib.sha256(data).hexdigest() if mode == 'raw_sha256' else json_sha(paket)
+        if (digest == last['export_sha256'] and paket['arende']['revision'] == last['revision']
+                and last.get('export_hashmetod', mode) == mode):
+            return paket
+    if found:
         raise Vagrad('bevarad export matchar inte importkvittot; bevara filen och återställ verifierad export före metadataomprov')
-    return paket
+    return None
+
+
+def kundrad_belagd(kund, uppgift):
+    """Ett källprefix är bara en pekare; jämför mot hashbunden kundexport."""
+    paket = _senast_importerade_paket(kund)
+    if not paket:
+        return False
+    source = str(uppgift.get('kalla', ''))
+    match = re.fullmatch(r'kundstart ändrat svar ([A-Z0-9_]+) rev ([1-9][0-9]*)', source)
+    if match:
+        return _kundsvar_finns(paket, uppgift['nyckel'], match, uppgift)
+    match = re.fullmatch(r'kundstart rättelse rev ([1-9][0-9]*)', source)
+    return bool(match and any(r.get('nyckel') == uppgift.get('nyckel')
+                             and r.get('revision') == int(match[1]) and r.get('varde') == uppgift.get('varde')
+                             and iv.okand(r) == iv.okand(uppgift) for r in paket['rattelser']))
 
 
 def _kundsvar_finns(paket, key, match, uppgift):
@@ -314,6 +413,14 @@ def _avgor_aldre_okant(kund):
         if not any(r.get('fore_sha256') == digest for r in history):
             history.append({'typ': 'aldre_okant_ej_sakmotsagelse', 'motsagelser': [mid for mid, _ in val], 'tid': nu(), 'fore': str(historik), 'fore_sha256': digest})
         task['research'] = str(kund / 'research-intervju.md')
+        task['aktuellt_intag'] = {'fil': 'research-intervju.md',
+                                 'sha256': hashlib.sha256((kund / 'research-intervju.md').read_bytes()).hexdigest(),
+                                 'roll': 'aktuellt underlag efter spårad metadatarättning'}
+        signal_copy = kund / 'KUNDSTART' / ('signal-%s' % task.get('exportrevision')) / 'research-intervju.md'
+        if signal_copy.is_file():
+            task.setdefault('historiskt_intag', {'fil': str(signal_copy.relative_to(kund)),
+                                                'sha256': hashlib.sha256(signal_copy.read_bytes()).hexdigest(),
+                                                'roll': 'fryst signalögonblick; inte aktuellt efter metadatarättningen'})
         privat_json(task_path, task)
     iv.spara(kund, s)
     return [mid for mid, _ in val]
@@ -326,23 +433,13 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
     d = las_kundstart(kund)
     bunden(d, bas)
     paket = paket if paket is not None else anrop(bas, nyckel, 'GET', '/api/intern/arenden/%s/export' % d['arende_id'], None, bypass)
-    if (paket.get('arende') or {}).get('id') != d['arende_id']:
-        raise Vagrad('exporten gäller ett annat ärende')
-    if paket.get('schema') != 'kundstart-export/1':
-        raise Vagrad('okänt exportschema: %s' % paket.get('schema'))
-    for f in ('arende', 'omgangar', 'svar', 'rattelser', 'fakta_ai', 'rattelser_fakta', 'material'):
-        if f not in paket or not isinstance(paket[f], (list, dict)):
-            raise Vagrad('exportpaketet saknar fältet %s eller har fel form' % f)
-    for f in ('id', 'revision', 'kanal', 'testdialog'):
-        if f not in paket['arende']:
-            raise Vagrad('exportpaketet saknar arende.%s' % f)
-    for o in paket['omgangar']:
-        for sv in o.get('svar', []):
-            if not all(k in sv for k in ('fraga_id', 'text', 'mottaget', 'revision')):
-                raise Vagrad('ett svar i omgång %s saknar fraga_id, text, mottaget eller revision' % o.get('nr'))
+    validera_export(paket, d['arende_id'])
+    if export_sha256 is not None:
+        raw = Path(kund) / 'KUNDSTART' / ('signal-%s' % paket['arende']['revision']) / 'EXPORT.json'
+        if (not raw.is_file() or hashlib.sha256(raw.read_bytes()).hexdigest() != export_sha256
+                or json.loads(raw.read_bytes()) != paket):
+            raise Vagrad('given exporthash saknar motsvarande frysta exportbytes')
     digest = export_sha256 or json_sha(paket)
-    if type(paket['arende']['revision']) is not int or paket['arende']['revision'] < 1:
-        raise Vagrad('exportrevision måste vara ett positivt heltal')
     sista = d['hamtat'][-1]['revision'] if d['hamtat'] else 0
     if paket['arende']['revision'] < sista:
         raise Vagrad('äldre export får inte skriva över senare importerad revision')
@@ -359,7 +456,21 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         raise Vagrad('exporten är en testdialog men intervjun i kundmappen är det inte; blanda inte')
     mapp = Path(kund) / 'KUNDSTART'
     mapp.mkdir(exist_ok=True)
-    (mapp / ('export-rev%d.json' % paket['arende']['revision'])).write_text(json.dumps(paket, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    exportfil = mapp / ('export-rev%d.json' % paket['arende']['revision'])
+    if exportfil.exists():
+        try:
+            samma = json.loads(exportfil.read_bytes()) == paket
+        except (ValueError, UnicodeError):
+            samma = False
+        if not samma:
+            # Även samma revision kan få ny exportmetadata. Föregångaren är
+            # fortsatt bevis och skrivs aldrig över av en ny hämtning.
+            exportfil = mapp / ('export-rev%d-%s.json' % (paket['arende']['revision'], json_sha(paket)))
+    if exportfil.exists():
+        if json.loads(exportfil.read_bytes()) != paket:
+            raise Vagrad('bevarad exportkopia har ändrats; skriver inte över historiken')
+    else:
+        privat_json(exportfil, paket)
     nya_svar = 0; nya_fakta = 0; nya_omg = 0; andrade_svar = []; ej_registrerade = []
     registrerade = {(x['fraga_id'], x.get('kundstart_revision')) for x in s['svar'] if x.get('kalla') == 'kundstart'}
     def giltig_fraga(f):
@@ -509,7 +620,10 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
             if hashlib.sha256(data).hexdigest() != m['sha256']:
                 raise Vagrad('materialets kontrollsumma stämmer inte: ' + m['id'])
             mal.write_bytes(data); hamtade_filer.append(str(mal))
-    d['hamtat'].append({'tid': nu(), 'revision': paket['arende']['revision'], 'export_sha256': digest, 'svar': nya_svar, 'andrade_svar': len(andrade_svar), 'fakta': nya_fakta, 'omgangar': nya_omg, 'material': len(hamtade_filer), 'inlamningar': len(paket['arende'].get('inlamningar', [])), 'ej_registrerade': ej_registrerade, 'forkastade_tolkningar': forkastade})
+    d['hamtat'].append({'tid': nu(), 'revision': paket['arende']['revision'], 'export_sha256': digest,
+                      'export_hashmetod': 'raw_sha256' if export_sha256 else 'json_sha256',
+                      'export_fil': str((raw if export_sha256 else exportfil).relative_to(Path(kund))),
+                      'svar': nya_svar, 'andrade_svar': len(andrade_svar), 'fakta': nya_fakta, 'omgangar': nya_omg, 'material': len(hamtade_filer), 'inlamningar': len(paket['arende'].get('inlamningar', [])), 'ej_registrerade': ej_registrerade, 'forkastade_tolkningar': forkastade})
     spara_kundstart(kund, d)
     msg = 'revision %d hämtad: %d omgångar, %d svar ordagrant, %d ändrade svar som kundens uppgift, %d faktarader, %d filer; kundens material ligger i %s (aldrig i repot)' % (paket['arende']['revision'], nya_omg, nya_svar, len(andrade_svar), nya_fakta, len(hamtade_filer), mapp)
     if ej_registrerade:
@@ -550,30 +664,34 @@ def konsumera(kund, bas, nyckel, bypass, utforare, avvikelseplan=None):
     with konsumtionslas(kund):
         d = las_kundstart(kund)
         bunden(d, bas)
-        metadata_korrigeringar = _avgor_aldre_okant(kund)
         aktuella = [r for r in signaler(bas, nyckel, bypass) if r.get('arende_id') == d['arende_id']]
         if not aktuella:
             # The server may have committed an ack whose response was lost. Reconcile exactly that ack.
             pending = [json.loads(p.read_text()) for p in (Path(kund) / 'KUNDSTART').glob('signal-*/KONSUMTION.json')]
             aktuella = [p['signal'] for p in pending if p.get('lage') == 'importerad']
             if not aktuella:
+                metadata_korrigeringar = _avgor_aldre_okant(kund)
                 return d, {'lage': 'inget nytt', 'arende_id': d['arende_id'],
                            **({'metadata_korrigeringar': metadata_korrigeringar} if metadata_korrigeringar else {})}
         signal = max(aktuella, key=lambda r: r.get('revision', -1))
-        if signal.get('id') != '%s:%s' % (d['arende_id'], signal.get('revision')) or not isinstance(signal.get('revision'), int):
+        if signal.get('id') != '%s:%s' % (d['arende_id'], signal.get('revision')) or type(signal.get('revision')) is not int or signal['revision'] < 1:
             raise Vagrad('signalens id/revision har fel form')
-        base = Path(kund) / 'KUNDSTART' / ('signal-' + str(signal['revision'])); base.mkdir(exist_ok=True)
+        base = Path(kund) / 'KUNDSTART' / ('signal-' + str(signal['revision']))
         raw = base / 'EXPORT.json'; progress = base / 'KONSUMTION.json'
         if raw.is_file():
             paket = json.loads(raw.read_text())
+            validera_export(paket, d['arende_id'])
         else:
             raw_bytes = anrop(bas, nyckel, 'GET', '/api/intern/arenden/%s/export' % d['arende_id'], None, bypass, rå=True)
             paket = json.loads(raw_bytes)
+            validera_export(paket, d['arende_id'])
             if paket.get('signal', {}).get('id') != signal['id']:
                 raise Vagrad('signalen ändrades före export; gör ny full scan nästa tick')
             privat_skriv(raw, raw_bytes.decode('utf-8'))
-        if paket.get('signal', {}).get('id') != signal['id'] or paket.get('arende', {}).get('id') != d['arende_id']:
+        if (paket.get('signal', {}).get('id') != signal['id'] or paket['arende']['id'] != d['arende_id']
+                or paket['arende']['revision'] != signal['revision']):
             raise Vagrad('sparad export gäller annat ärende/signal')
+        _avgor_aldre_okant(kund)
         digest = hashlib.sha256(raw.read_bytes()).hexdigest()
         state = json.loads(progress.read_text()) if progress.exists() else {'schema': 'digitala-konsumtion/1', 'signal': signal, 'export_sha256': digest, 'ansvarig': utforare, 'startad': nu(), 'lage': 'export sparad'}
         if state['export_sha256'] != digest:
@@ -618,11 +736,17 @@ def konsumera(kund, bas, nyckel, bypass, utforare, avvikelseplan=None):
             privat_skriv(Path(kund) / 'research-intervju.md', research)
             task = {'schema': 'digitala-intagsarbete/1', 'arende_id': d['arende_id'], 'signal_id': signal['id'], 'exportrevision': paket['arende']['revision'], 'ansvarig': utforare, 'import_sha256': digest, 'research': str(base / 'research-intervju.md'), 'behov': paket.get('behov', []), 'tackning': paket.get('tackning', []), 'returfragor': paket.get('returfragor', []), 'material': [{'id': m.get('id'), 'sha256': m.get('sha256'), 'lasstatus': m.get('lasstatus', 'mottagen')} for m in paket.get('material', [])], 'lage': 'importerat; forskningssyntes, sakbeslut och eventuell returfråga återstår', 'nasta': 'läs kundens ord/material och research-utdrag; uppdatera research.md med källor; returfrågor skickas i samma ärende'}
             task.update(importstatus=state['importstatus'], ej_registrerade=avvikelser, avvikelseplan=plan,
-                        material=materialunderlag, export={'fil': str((base / 'EXPORT.json').relative_to(Path(kund))), 'sha256': digest})
+                        material=materialunderlag, export={'fil': str((base / 'EXPORT.json').relative_to(Path(kund))), 'sha256': digest},
+                        historiskt_intag={'fil': str((base / 'research-intervju.md').relative_to(Path(kund))),
+                                          'sha256': hashlib.sha256(research.encode()).hexdigest(),
+                                          'roll': 'fryst signalögonblick; ändras inte vid senare metadatarättning'},
+                        aktuellt_intag={'fil': 'research-intervju.md',
+                                        'sha256': hashlib.sha256(research.encode()).hexdigest(),
+                                        'roll': 'aktuellt underlag; kan få spårad metadatarättning'})
             if avvikelser:
                 task.update(lage='delvis importerat; importavvikelser öppna enligt namngiven plan; research återstår', nasta=plan['nasta'], avvikelseansvarig=plan['ansvarig'])
             privat_json(base / 'ARBETSUPPGIFT.json', task)
-            privat_json(Path(kund) / 'KUNDSTART-ARBETSUPPGIFT.json', task)
+            privat_json(Path(kund) / 'KUNDSTART-ARBETSUPPGIFT.json', dict(task, research=str(Path(kund) / 'research-intervju.md')))
             state.update(lage='importerad', avvikelseplan=plan, research_sha256=hashlib.sha256(research.encode()).hexdigest()); privat_json(progress, state)
         if state['lage'] == 'importerad':
             ack = anrop(bas, nyckel, 'POST', '/api/intern/arenden/%s/kvittens' % d['arende_id'], {'signal_id': signal['id'], 'revision': signal['revision'], 'utforare': state['ansvarig'], 'import_sha256': digest}, bypass)

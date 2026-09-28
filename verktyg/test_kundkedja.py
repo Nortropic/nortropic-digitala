@@ -371,6 +371,79 @@ class Kundkedja(unittest.TestCase):
         self.assertIn('viktigaste_uppgift', iv.okanda_uppgifter(s))
         self.assertEqual(s['motsagelser'], [])
 
+    def test_missvisande_kundstartprefix_kraver_faktiskt_kundsvar_i_exporten(self):
+        self._okant_till_kant()
+        original = iv.stig(self.k).read_bytes()
+        for source in ('kundstart anteckning', 'kundstart ändrat svar A1 rev 4',
+                       'kundstart ändrat svar A1 rev 2', 'kundstart rättelse rev 3'):
+            for status in ('okänt', 'kunden uppger'):
+                with self.subTest(source=source, status=status):
+                    iv.stig(self.k).write_bytes(original)
+                    facts = self.k / 'anteckning.json'
+                    facts.write_text(json.dumps([{'nyckel': 'viktigaste_uppgift', 'varde': 'Vi vet inte.',
+                                                 'status': status, 'kalla': source, 'omrade': 'A'}]))
+                    s, _ = iv.fakta(self.k, facts)
+                    self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift']['varde'],
+                                     'Besökaren ska jämföra och avsluta avtal.')
+                    self.assertTrue(any(f['kalla'] == source and f['varde'] == 'Vi vet inte.' for f in s['fakta']))
+        # Samma kortform i en verklig senare inlämning är fortfarande okänd.
+        iv.stig(self.k).write_bytes(original)
+        self.ny_revision()
+        self.packet['omgangar'][0]['svar'].append({'fraga_id': 'A1', 'text': 'Vi vet inte.',
+                                                  'revision': 4, 'mottaget': '2026-09-28T00:03:00Z'})
+        self.importera()
+        self.assertTrue(iv.okand(iv.aktuella_uppgifter(iv.las(self.k))['viktigaste_uppgift']))
+        self.assertEqual(set(json.loads(iv.stig(self.k).read_text())), set(json.loads(original)))
+
+    def test_aldre_canonical_hash_soks_aven_nar_rakopia_finns(self):
+        self._aldre_okant_konflikt()
+        d = ks.las_kundstart(self.k)
+        last = d['hamtat'][-1]
+        last['export_sha256'] = ks.json_sha(self.packet)
+        last.pop('export_fil', None); last.pop('export_hashmetod', None)
+        ks.spara_kundstart(self.k, d)
+        original = {str(p): p.read_bytes() for p in (self.k / 'KUNDSTART').glob('signal-*/EXPORT.json')}
+        self.assertEqual(ks._senast_importerade_paket(self.k), self.packet)
+        self.assertEqual(self.importera()[1]['metadata_korrigeringar'], ['MOT1'])
+        self.assertEqual(len(self.acks), 3)
+        self.assertTrue(all(Path(p).read_bytes() == b for p, b in original.items()))
+
+    def test_hashlos_aldre_import_sjalvcertifieras_inte_och_ny_import_kan_fortsatta(self):
+        self._aldre_okant_konflikt()
+        d = ks.las_kundstart(self.k)
+        d['hamtat'][-1].pop('export_sha256')
+        ks.spara_kundstart(self.k, d)
+        before = iv.stig(self.k).read_bytes()
+        self.assertIsNone(ks._senast_importerade_paket(self.k))
+        self.assertNotIn('metadata_korrigeringar', self.importera()[1])
+        self.assertEqual(iv.stig(self.k).read_bytes(), before)
+        self.assertNotIn('export_sha256', ks.las_kundstart(self.k)['hamtat'][-1])
+        self.assertEqual(len(self.acks), 3)
+        self.ny_revision(); self.importera()
+        self.assertEqual(len(self.acks), 4)
+        self.assertNotIn('export_sha256', ks.las_kundstart(self.k)['hamtat'][-2])
+        self.assertEqual(ks.las_kundstart(self.k)['hamtat'][-1]['revision'], 4)
+
+    def test_signalhistorik_och_aktuellt_intag_har_separata_sanna_bindningar(self):
+        self._aldre_okant_konflikt()
+        frozen = self.k / 'KUNDSTART/signal-3/ARBETSUPPGIFT.json'
+        original = frozen.read_bytes()
+        self.importera()
+        self.assertEqual(frozen.read_bytes(), original)
+        task = json.loads((self.k / 'KUNDSTART-ARBETSUPPGIFT.json').read_text())
+        self.assertEqual(Path(task['research']), self.k / 'research-intervju.md')
+        for field in ('historiskt_intag', 'aktuellt_intag'):
+            row = task[field]
+            self.assertEqual(row['sha256'], hashlib.sha256((self.k / row['fil']).read_bytes()).hexdigest())
+        self.assertNotEqual(task['historiskt_intag']['sha256'], task['aktuellt_intag']['sha256'])
+
+    def test_given_exporthash_utan_lasta_bytes_vagras_fore_import(self):
+        before = (self.k / 'KUNDSTART.json').read_bytes()
+        with self.assertRaisesRegex(ks.Vagrad, 'frysta exportbytes'):
+            ks.hamta(self.k, self.base, 'synthetic', None, False, paket=self.packet, export_sha256='a' * 64)
+        self.assertFalse(iv.stig(self.k).exists())
+        self.assertEqual((self.k / 'KUNDSTART.json').read_bytes(), before)
+
     def test_senare_okant_bevaras_utan_falsk_konflikt_men_kanda_konflikter_kvarstar(self):
         self._okant_till_kant()
         self.ny_revision()

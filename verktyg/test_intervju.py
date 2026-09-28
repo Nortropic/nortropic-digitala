@@ -237,8 +237,12 @@ class Intervju(unittest.TestCase):
                 self.assertNotIn('A1', [q['id'] for q in s['omgangar'][-1]['fragor']], 'frågan upprepas inte som obesvarad')
 
     def test_okant_kortform_helmatchar_inte_blandat_svar_eller_nej(self):
+        for text in ('Vi vet inte.', 'Vi vet ej!', 'Vi har ingen aning.', 'Vi är inte säkra.', "We don't know."):
+            with self.subTest(text=text):
+                self.assertTrue(iv.okand({'text': text}))
         for text in ('Vet ej priset, men vi behöver bokning.', 'Ingen aning om verktyget; ta emot i kundregistret.',
                      'Inte säker på datumet. Vi erbjuder två tjänster.', 'Nej, vi behöver ingen betalning.',
+                     'Vi vet inte priset, men vi behöver kunna betala.',
                      "I don't know the cost, but we need bookings."):
             with self.subTest(text=text):
                 self.assertFalse(iv.okand({'text': text}))
