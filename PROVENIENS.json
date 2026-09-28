@@ -6,11 +6,11 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "adf5326f8489ad11fb6e261f30caa22eb2873e056febe6c2e175714b6a842719",
-   "byte": 29368,
+   "sha256": "3956ac90c811cdfb4adf5a2352c6b6d4c33cbd63bd6eef829fe3b175921583ed",
+   "byte": 30089,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med); ändrad igen 2026-09-27 (tillägg 2: rader för kundintervju och integrationer i C och D); ändrad igen 2026-09-27 (etapp 4: rad för webbläsarvägen i C och D) 2026-09-27 (efterarbete 2): §E omskriven efter slutprovets användningsnoter.",
+   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med); ändrad igen 2026-09-27 (tillägg 2: rader för kundintervju och integrationer i C och D); ändrad igen 2026-09-27 (etapp 4: rad för webbläsarvägen i C och D) 2026-09-27 (efterarbete 2): §E omskriven efter slutprovets användningsnoter.; ändrad 2026-09-27 (bedömningskontrakt v2: referensjämförelse och behovens företräde i konsumentanvisningarna).; ändrad 2026-09-28 (kriteriegranskning r1: laddningstabellens designhänvisning §7).; ändrad 2026-09-28 (kriteriegranskning r2: tillägg till §D för maskinell kvalitetskedja och fast täckning).",
    "sha256_vid_flytt": "68eac8cc627932bd431d78a7198d13117ccb8c217ba567397fdd9f02fe753034"
   },
   {
@@ -26,11 +26,11 @@
   {
    "fil": "kunskap/referensjakt.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/referensjakt.md",
-   "sha256": "7326dc0c27d970d213c23e76bec746409881b527bd044320fd1f45c2125dad1d",
-   "byte": 5037,
+   "sha256": "9a49b6f147b1b6bdb0e0d154966a6678dcdbab8e23f8f522b8504ab0ce6c1572",
+   "byte": 5211,
    "kallans_mtime_utc": "2026-09-26T13:47:12Z",
    "status": "GÄLLANDE",
-   "not": "härledd text; ändrad 2026-09-27 (HELHET etapp 3: nytt avsnitt \"Källtypsregler och bildinventering\" ur det arkiverade inspirationsprotokollet 5d; §-hänvisningen till referensöversättningen rättad till briefens §7)",
+   "not": "härledd text; ändrad 2026-09-27 (HELHET etapp 3: nytt avsnitt \"Källtypsregler och bildinventering\" ur det arkiverade inspirationsprotokollet 5d; §-hänvisningen till referensöversättningen rättad till briefens §7); ändrad 2026-09-27 (nytt bedömningskontrakt v2: behov och mandat över intern designhypotes; historisk numrering bibehållen).",
    "sha256_vid_flytt": "7e5bf20c32007148dd464082764fae40e3432f4df88329965f6fca0763f17506"
   },
   {

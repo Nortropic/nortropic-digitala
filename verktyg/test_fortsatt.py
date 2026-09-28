@@ -12,6 +12,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import fortsatt as fs  # noqa: E402
+from test_stegbevis import bevis
+from test_kritikbevis import bildfixture
 
 
 def kor(*args):
@@ -31,6 +33,7 @@ def bestallning(kund, post='DIGITALA-2-BESTALLNING-20260927', omfattning='privat
 class Vagen(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.k = Path(self.tmp.name) / 'kund'; self.k.mkdir(); self.f = str(Path(self.tmp.name) / 'fall')
+        bildfixture(self.k)
         for n in ('PROJECT-BRIEF.md', 'research.md', 'TESTDATA.md'):
             (self.k / n).write_text('syntetisk kundfil\n')
         for n in ('DRIFT.json', 'INTERVJU.json'):
@@ -41,7 +44,7 @@ class Vagen(unittest.TestCase):
         self.tmp.cleanup()
 
     def klar(self, steg, utforare='claude', **extra):
-        args = ['--fall', self.f, 'klart', '--steg', steg, '--utfall', 'klar', '--not', 'gjort', '--utforare', utforare]
+        args = ['--bevis', str(bevis(self.f, self.k, steg)), '--fall', self.f, 'klart', '--steg', steg, '--utfall', 'klar', '--not', 'gjort', '--utforare', utforare]
         for k, v in extra.items():
             for x in (v if isinstance(v, list) else [v]):
                 args += ['--' + k, x]
@@ -125,7 +128,8 @@ class Vagen(unittest.TestCase):
         code, r = kor('--fall', self.f)
         self.assertEqual((r['nasta'], r['lage']), ('seo', 'blockerad')); self.assertIn('KANALBEHOV.json saknas', r['meddelande'])
         (self.k / 'KANALBEHOV.json').write_text(json.dumps({'seo': True, 'sokkonsol': False, 'lokal-synlighet': False, 'annonsberedning': False, 'uppfoljning': True}))
-        self.fram_till('seo', 'matning', 'kritik', 'granskning-d', 'qa', 'provare', 'uppfoljning', 'prelaunch')
+        # Newly established channel facts invalidate the earlier brief and its descendants.
+        self.fram_till('brief', 'koncept', 'bygge', 'redaktionellt-pass', 'seo', 'matning', 'kritik', 'granskning-d', 'qa', 'provare', 'uppfoljning', 'prelaunch')
         code, r = kor('--fall', self.f); self.assertEqual(r['nasta'], 'leverans'); self.klar('leverans', kvitto=str(self.k / 'VERKSAMHET.json'))
         code, r = kor('--fall', self.f)
         self.assertEqual(r['lage'], 'slut'); self.assertIn('färdig privat leverans', r['meddelande']); self.assertNotIn('lansering', r['meddelande'].split('leverans')[-1])
@@ -134,12 +138,15 @@ class Vagen(unittest.TestCase):
         self.assertEqual(s['steg']['leverans']['kvitton'], [str((self.k / 'VERKSAMHET.json').resolve())])
         # lanseringsmandatet kommer EFTER färdig privat leverans (normalfallet): lansering, sokkonsol och drift återöppnas
         bestallning(self.k, omfattning='helhet', lanseringsmandat='DIGITALA-3-LANSERING-20260927')
+        self.fram_till('brief', 'koncept', 'bygge', 'redaktionellt-pass', 'seo', 'matning', 'kritik', 'granskning-d', 'qa', 'provare', 'uppfoljning', 'prelaunch', 'leverans')
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('lansering', 'påbörjat'))
         s = fs.las(self.f); self.assertEqual(s['steg']['sokkonsol']['status'], 'inte tillämpligt', 'kanalbehovet säger fortfarande false'); self.assertIn('återöppnat', [x['handling'] for x in s['logg']])
         self.klar('lansering')
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('drift', 'påbörjat'))
         (self.k / 'KANALBEHOV.json').write_text(json.dumps({'seo': True, 'sokkonsol': True, 'lokal-synlighet': True, 'annonsberedning': False, 'uppfoljning': True}))
+        self.fram_till('brief', 'koncept', 'bygge', 'redaktionellt-pass', 'seo', 'matning', 'kritik', 'granskning-d', 'qa', 'provare', 'uppfoljning')
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('lokal-synlighet', 'påbörjat')); self.klar('lokal-synlighet')
+        self.fram_till('prelaunch', 'leverans', 'lansering')
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('sokkonsol', 'påbörjat'))
         # ett verkligt saknat externt beroende: vantar, allt annat fortsätter, omprova öppnar igen
         code, r = kor('--fall', self.f, 'klart', '--steg', 'sokkonsol', '--utfall', 'vantar', '--not', 'ingen Google-åtkomst', '--beroende', 'Search Console-egenskap verifierad av kunden')
@@ -147,7 +154,7 @@ class Vagen(unittest.TestCase):
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('drift', 'påbörjat')); self.assertIn('redan laddat', r['meddelande'])
         self.assertIn('Search Console-egenskap verifierad av kunden', Path(r['nasta_md']).read_text()); self.assertEqual(len([x for x in Path(self.f).iterdir() if x.name.startswith('laddning-drift-')]), 1)
         self.klar('drift')
-        code, r = kor('--fall', self.f); self.assertEqual(r['lage'], 'slut'); self.assertIn('väntar på externt beroende: sokkonsol', r['meddelande']); self.assertIn('och lansering', r['meddelande'])
+        code, r = kor('--fall', self.f); self.assertEqual(r['lage'], 'blockerad'); self.assertIn('sokkonsol', r['meddelande']); self.assertNotIn('färdig', r['meddelande'])
         code, r = kor('--fall', self.f, 'omprova', '--steg', 'sokkonsol', '--not', 'egenskapen verifierad'); self.assertEqual(r['var'], fs.STATUS_VANTAR)
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('sokkonsol', 'påbörjat'))
         self.assertEqual(fs.las(self.f)['steg']['annonsberedning']['status'], 'inte tillämpligt')

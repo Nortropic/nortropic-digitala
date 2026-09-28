@@ -7,7 +7,7 @@ externt beroende — inte en mock. Resultatläsning: `rapport` läser en export 
 
     python3 -B verktyg/annonsberedning.py bygg --kanalplan KANALPLAN.json --verksamhet VERKSAMHET.json [--bygge DIR] --ut KATALOG
     python3 -B verktyg/annonsberedning.py rapport --export FIL.csv|.json --ut RAPPORT.json
-    python3 -B verktyg/annonsberedning.py overfor --verksamhet VERKSAMHET.json --ut KVITTO.json   # spärren först; ingen överföringsväg finns
+    python3 -B verktyg/annonsberedning.py overfor --verksamhet VERKSAMHET.json --ut KVITTO.json   # kräver även explicit kanalplan, bygge och privat kontokonfiguration
 """
 import argparse
 import csv
@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import verksamhetsuppgifter as vu  # noqa: E402
+import annonsadapter as adapter
 
 GRANSER = {'google': {'rubrik': 30, 'beskrivning': 90, 'min_rubriker': 3, 'min_beskrivningar': 2},
            'meta': {'primar_text': 125, 'rubrik': 40, 'beskrivning': 30}}
@@ -170,7 +171,10 @@ def beredning_md(ut):
 def rapport(export):
     """Resultatläsning ur plattformsexport: affärsnytta (konverteringar) skilt från proxyvärden (klick, visningar)."""
     p = Path(export)
-    rows = json.loads(p.read_text(encoding='utf-8')) if p.suffix == '.json' else list(csv.DictReader(p.open(encoding='utf-8-sig')))
+    if p.suffix == '.json':
+        rows = json.loads(p.read_text(encoding='utf-8'))
+    else:
+        with p.open(encoding='utf-8-sig') as f: rows = list(csv.DictReader(f))
     per = {}
     for r in rows:
         namn = r.get('campaign') or r.get('Campaign') or r.get('campaign_name') or r.get('Kampanj') or '(okänd)'
@@ -189,8 +193,8 @@ def rapport(export):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog='annonsberedning', description=__doc__.split('\n\n')[0])
-    p.add_argument('kommando', choices=('bygg', 'rapport', 'overfor'))
-    p.add_argument('--kanalplan'); p.add_argument('--verksamhet'); p.add_argument('--bygge'); p.add_argument('--export'); p.add_argument('--ut', required=True)
+    p.add_argument('kommando', choices=('bygg', 'rapport', 'overfor', 'aterlas'))
+    p.add_argument('--kanal', choices=('google', 'meta')); p.add_argument('--konfiguration'); p.add_argument('--kanalplan'); p.add_argument('--verksamhet'); p.add_argument('--bygge'); p.add_argument('--export'); p.add_argument('--ut', required=True)
     a = p.parse_args(argv)
     try:
         if a.kommando == 'overfor':
@@ -198,7 +202,15 @@ def main(argv=None):
                 raise Vagrad(['overfor kräver --verksamhet'])
             v = vu.las(a.verksamhet)
             vu.kraver_verklig(v, 'överföring av kampanjutkast till annonsplattform')
-            raise Vagrad(['ingen överföringsväg finns (2026-09-27): Google Ads API kräver utvecklartoken, OAuth och kund-id; Meta Marketing API åtkomsttoken och annonskonto — namngivna externa beroenden; utkasten förs över av behörig människa i plattformens gränssnitt, status PAUSED'])
+            if not (a.kanalplan and a.konfiguration and a.kanal and a.bygge):
+                raise Vagrad(['overfor kräver --kanal google|meta --kanalplan --bygge och privat --konfiguration; inga standardhemligheter läses'])
+            kp=json.loads(Path(a.kanalplan).read_text()); ut=bygg(kp,v,a.bygge)
+            result=adapter.overfor(a.kanal,kp,v,ut,adapter.las_config(a.konfiguration),a.ut)
+            print(json.dumps({'lage':result['lage'],'niva':result['niva'],'ut':a.ut})); return 0
+        if a.kommando == 'aterlas':
+            if not a.konfiguration: raise Vagrad(['aterlas kräver privat --konfiguration och befintligt --ut kvitto'])
+            result=adapter.aterlas(adapter.las_config(a.konfiguration),a.ut)
+            print(json.dumps({'lage':result['lage'],'niva':result['niva'],'ut':a.ut})); return 0
         if a.kommando == 'bygg':
             if not (a.kanalplan and a.verksamhet):
                 raise Vagrad(['bygg kräver --kanalplan och --verksamhet'])
@@ -217,7 +229,7 @@ def main(argv=None):
             r = rapport(a.export)
             Path(a.ut).write_text(json.dumps(r, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
             print(json.dumps({'kampanjer': len(r['kampanjer']), 'ut': a.ut}))
-    except (Vagrad, vu.Vagrad) as e:
+    except (Vagrad, vu.Vagrad, adapter.Vagrad) as e:
         print(json.dumps({'vagrad': e.args[0]}, ensure_ascii=False))
         return 2
     return 0

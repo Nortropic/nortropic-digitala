@@ -1,0 +1,6 @@
+# Beslutad domlogik; nytt beslut vid ändring.
+130fd5cfef0261b8f8ae92b8b6bcb6208e626cf03b37b9fb1b1ed005a5b3485f  verktyg/kor_profil.py
+a13fbf4ca541fbd333136326c7ce6302e048cf345755b15db2c41ddaef31e764  verktyg/kritikbevis.py
+5d3fef069265428a956168bdb4da16c23f9e586621aa0026532853a31b703f5a  verktyg/kvalitetsbild.py
+a7b1f607880d5b4048df6c40348ce417ec610f116bff57d4e2fff47f608d7be8  verktyg/ladda_steg.py
+de77dd945a6b847ec059cd66eab169a67f17a731b2a62e16b39109246f0b0af8  verktyg/stegbevis.py

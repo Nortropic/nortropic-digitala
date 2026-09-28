@@ -3,7 +3,8 @@
 Härlett underlag (kedjedrivaren, 2026-09-26). Källor: webbgrundens `skills/nortropic-plan/references/inspirationskallor.md`
 @ `e4c8c52` rad 1–60 (källvärdering, "guldgruvan", receptet), Norrgläntas `PROJECT-BRIEF.md` §5 (referensöversättningen,
 budgetöverskridandet 21 mot 10) och jämförelsens §3.3 (gallerierna 2026-09-26). Det gamla protokollets maskineri
-(5d-stegen, stewardregeln, kandidattak som tvingande grind) följer inte med; briefen och ACCEPT vinner över allt här.
+(5d-stegen, stewardregeln, kandidattak som tvingande grind) följer inte med; styrkta kundbehov och ägarens mandat är överordnade råd och intern brief; designhypoteser får omprövas
+med skäl enligt kritik/BEDOMNING-v2.md. Historiska §-hänvisningar nedan avser den källans briefversion.
 
 ## Vad jakten ska ge
 

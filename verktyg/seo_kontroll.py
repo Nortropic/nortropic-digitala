@@ -204,7 +204,7 @@ def rapport(bygge, lage, verksamhet_fil=None, doman=None, omdirigeringar=None):
     sajt = granska_sajt(root, lage, doman, omdirigeringar)
     antal = sum(len(p['fynd']) for p in pages) + len(sajt)
     return {'schema': 1, 'bygge': str(root), 'lage': lage, 'doman': doman, 'sidor': len(pages), 'fynd_totalt': antal,
-            'sajt': sajt, 'per_sida': pages, 'verksamhet': verksamhet['namn'] if verksamhet else None,
+            'sajt': sajt, 'per_sida': pages, 'uppgiftsvarningar': vu.validera(verksamhet) if verksamhet else ['verksamhetsuppgifter ej lämnade; teknisk räckvidd'], 'kontaktberedskap': 'ofullständig' if verksamhet is not None and not verksamhet.get('kontaktvagar') else 'faktisk kontaktresa ej prövad', 'verksamhet': verksamhet['namn'] if verksamhet else None,
             'not': 'rapport över teknisk och innehållsmässig SEO-beredskap; inga rankningslöften; strukturerad data prövas mot verksamhetsuppgifterna, inte mot Googles verktyg'}
 
 

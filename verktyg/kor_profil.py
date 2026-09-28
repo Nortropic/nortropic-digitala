@@ -31,6 +31,7 @@ import re
 import subprocess
 import sys
 import time
+import kritikbevis
 
 ROT = Path(__file__).resolve().parents[1]
 ETIKETT = re.compile(r'\A[a-z0-9][a-z0-9-]{0,39}\Z')
@@ -111,7 +112,7 @@ def laddad_fil(receipt, fil):
 
 
 def verktygshashar():
-    return {name: hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() for name in ('kor_profil.py', 'ladda_steg.py', 'kvalitetsbild.py') if (ROT / 'verktyg' / name).is_file()}
+    return {name: hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() for name in kritikbevis.DOMKOD if (ROT / 'verktyg' / name).is_file()}
 
 
 def bindning_ur(args, receipt, release):
@@ -172,6 +173,67 @@ def bygg_matning(args, release, root, receipt):
     return argv, {'profil_val': valda, 'kodens_varden': kod, 'hur': hur}
 
 
+def bind_bildschema(schema_text, bilddata):
+    """Begränsa den laddade mallen till det verifierade manifestet, före Runtime-start.
+
+    Runtime stöder enum men inte villkorliga scheman. Proveniensvärden begränsas
+    därför per roll; kritikbevis.dom kontrollerar fortsatt att de hör till SAMMA bild.
+    Inga modellsvar eller kvalitetskriterier ändras här.
+    """
+    schema = json.loads(schema_text)
+
+    def bind_enum(node, values):
+        values = sorted(set(values))
+        if (node.get('type') != 'string' or not values
+                or any(not isinstance(v, str) or len(v) > node.get('maxLength', len(v)) for v in values)
+                or ('enum' in node and not set(values) <= set(node['enum']))):
+            raise Vagrad('bildmanifestet ryms inte i den laddade schemamallen')
+        node['enum'] = values
+
+    try:
+        candidates = [b['plats'] for b in bilddata['bilder'] if b['roll'] == 'kandidat']
+        for field, role, image_key in (('referensjamforelser', 'referens', 'referensbild'),
+                                        ('dagensjamforelser', 'dagens', 'dagensbild')):
+            array = schema['properties'][field]
+            if array.get('type') != 'array' or array['items'].get('type') != 'object':
+                raise Vagrad('den laddade schemamallen saknar jämförelseobjekt')
+            props = array['items']['properties']
+            bind_enum(props['kandidatbild'], candidates)
+            images = [b for b in bilddata['bilder'] if b['roll'] == role]
+            if not images:
+                # Inga DAGENS-bilder: tom lista, aldrig en påhittad bild eller tom enum.
+                if role != 'dagens' or array.get('minItems', 0) > 0:
+                    raise Vagrad('den laddade schemamallen kräver saknade jämförelsebilder')
+                array['maxItems'] = 0
+                continue
+            bind_enum(props[image_key], [b['plats'] for b in images])
+            for key in ('kalla', 'tid', 'vy'):
+                bind_enum(props[key], [b[key] for b in images])
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar bild-/proveniensfält') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
+def bind_sedda_filer(schema_text, files):
+    """Exakta paketplatser, inte bevis på läsning. Körs efter hela underlagsbygget.
+
+    Runtime web_critique.build_workspace tillför FILES.md och AGENTS.md;
+    load_manifest reserverar samma namn. Inga andra automatiska filer antas.
+    """
+    schema = json.loads(schema_text)
+    try:
+        node = schema['properties']['seen_files']['items']
+        places = sorted({f['plats'] for f in files} | {'FILES.md', 'AGENTS.md'})
+        if (not isinstance(node, dict) or node.get('type') != 'string'
+                or any(not isinstance(p, str) or len(p) > node.get('maxLength', len(p)) for p in places)
+                or ('enum' in node and not set(places) <= set(node['enum']))):
+            raise Vagrad('paketplatserna ryms inte i den laddade seen_files-mallen')
+        node['enum'] = places
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar seen_files-items') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
 def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.mall not in KRITIKMALLAR:
         raise Vagrad('okänd mall; kända: ' + ', '.join(KRITIKMALLAR))
@@ -192,22 +254,49 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     if rest:
         raise Vagrad('frågan har ofyllda platshållare: ' + ', '.join(rest))
     files = json.loads(Path(args.filer).read_text(encoding='utf-8'))
-    if not isinstance(files, list) or not files:
+    if not isinstance(files, list) or (not files and policy['avskarmad']):
         raise Vagrad('--filer är en JSON-lista av {"kalla","plats","vad"}')
     if policy['avskarmad']:
         for f in files:
             if AVSKARMAD_FORBJUDET.search(str(f.get('plats', ''))) or AVSKARMAD_FORBJUDET.search(str(f.get('kalla', ''))):
                 raise Vagrad('avskärmad bedömning (%s): --filer får bara bära bilder av det renderade resultatet, inte %s' % (args.mall, f.get('plats')))
     arbetsyta = Path(receipt['arbetsyta'])
+    bilddata = None; bildmap = {}; expected = None
+    if not policy['avskarmad']:
+        bildtext = laddad_fil(receipt, kritikbevis.BILDFIL)
+        bilddata = json.loads(bildtext)
+        try:
+            kritikbevis.manifest(bilddata, arbetsyta / 'underlag/kund')
+        except kritikbevis.Vagrad as e:
+            raise Vagrad(str(e)) from e
+        kontrakt = laddad_fil(receipt, kritikbevis.KONTRAKT)
+        if bilddata['kriterier_sha256'] != hashlib.sha256(kontrakt.encode()).hexdigest():
+            raise Vagrad('bildmanifestet gäller annan kriteriefrysning än laddat BEDOMNING-v2')
+        schema = bind_bildschema(schema, bilddata)
+        bildmap = {b['fil']: b for b in bilddata['bilder']}
+        expected = kritikbevis.bindning(bilddata, hashlib.sha256(bildtext.encode()).hexdigest())
+        # Inputs cannot silently substitute unbound images for the required set.
+        if any(Path(f.get('plats', '')).suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp') for f in files):
+            raise Vagrad('kvalificerad kritik laddar bilder ur BEDOMNINGSUNDERLAG; --filer är kompletterande text/mätbevis')
     for r in receipt['underlag']:
-        if r['status'] != 'laddad' or r['fil'] in ('kritik/FRAGA-%s.md' % args.mall, 'kritik/SCHEMA-%s.json' % args.mall) or r['fil'].startswith('kritik/'):
+        if r['status'] != 'laddad' or r['fil'] in ('kritik/FRAGA-%s.md' % args.mall, 'kritik/SCHEMA-%s.json' % args.mall) or (r['fil'].startswith('kritik/') and r['fil'] != 'kritik/BEDOMNING-v2.md'):
             continue
         if r['klass'] == 'profession' and policy['profession']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'UNDERLAG/' + Path(r['plats']).name,
                           'vad': 'professionsunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
+        elif r['klass'] == 'kund' and policy['kund'] and r['fil'] in bildmap:
+            files.append({'kalla': str(arbetsyta / r['plats']), 'plats': bildmap[r['fil']]['plats'], 'vad': bildmap[r['fil']]['drag']})
         elif r['klass'] == 'kund' and policy['kund']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'KUND/' + Path(r['plats']).name,
                           'vad': 'kundunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
+    if expected:
+        bind_path = Path(args.fall) / ('kritik-' + args.etikett + '-bindning.json')
+        if not args.torr:
+            if bind_path.exists():raise Vagrad('kritiketiketten har redan en bindning; använd ny etikett för omprov')
+            with bind_path.open('x', encoding='utf-8') as out:
+                json.dump(expected, out, ensure_ascii=False, indent=1)
+        files.append({'kalla': str(bind_path), 'plats': 'UNDERLAG/BEDOMNINGSBINDNING.json', 'vad': 'exakt bedömningsbindning, kopieras till svaret'})
+        schema = bind_sedda_filer(schema, files)
     fraga += '\n\nBindning: laddningskvitto %s (steg %s), sha256 %s.\n' % (laddning_sha[:16], receipt['steg'], receipt['sha256_over_underlag'][:16])
     fall = Path(args.fall)
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
@@ -223,7 +312,8 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.tid:
         argv += ['--tid', str(args.tid)]
     return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files), 'kontext_policy': policy,
-                  'manifest_platser': [f['plats'] for f in files]}
+                  'schema_sha256': hashlib.sha256(schema.encode()).hexdigest(),
+                  'manifest_platser': [f['plats'] for f in files], 'bedomningsbindning': expected, 'bildbedomningsunderlag': bilddata}
 
 
 def bygg_provare(args, release, root, receipt, laddning_sha):
@@ -324,13 +414,28 @@ def run(argv=None):
         post['resultat'] = json.loads(last)
     except ValueError:
         post['resultat'] = {'ra': last[:500]}
+    run_path = Path(post['resultat'].get('run') or '.')
+    digest_path=run_path/'KVITTO.sha256'; receipt_path=run_path/'KVITTO.json'
+    if digest_path.is_file() and receipt_path.is_file():
+        digest=digest_path.read_text().split()[0]
+        if digest==hashlib.sha256(receipt_path.read_bytes()).hexdigest():post['runtime_kvitto_sha256']=digest
+    if args.profil == 'kritik' and extra.get('bedomningsbindning'):
+        run_path = Path(post['resultat'].get('run') or '.')
+        try:
+            answer = json.loads((run_path / 'svar.json').read_text())
+            runtime_receipt = json.loads((run_path / 'KVITTO.json').read_text())
+            if not post.get('runtime_kvitto_sha256'):raise ValueError('Runtime-kvittots hash saknas/avviker')
+            post['bildbelagg']=kritikbevis.bildbelagg(runtime_receipt)
+            post['kvalitetsstatus'] = kritikbevis.dom(answer, extra['bedomningsbindning'], extra['bildbedomningsunderlag'], runtime_receipt)
+        except (OSError, ValueError):
+            post['kvalitetsstatus'] = 'ej bedömbart: saknat faktiskt svar eller Runtime-kvitto'
     post['stderr_sista'] = done.stderr.strip()[-500:]
     name = 'KORNING-%s-%s-%s.json' % (time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()), args.profil, args.etikett)
     with (fall / name).open('x', encoding='utf-8') as stream:
         json.dump(post, stream, indent=1, ensure_ascii=False)
         stream.write('\n')
-    print(json.dumps({'korning': str(fall / name), 'exit': done.returncode, 'resultat': post['resultat']}, ensure_ascii=False))
-    return 0 if done.returncode == 0 else 1
+    print(json.dumps({'korning': str(fall / name), 'exit': done.returncode, 'resultat': post['resultat'], 'kvalitetsstatus': post.get('kvalitetsstatus')}, ensure_ascii=False))
+    return 0 if done.returncode == 0 and post.get('kvalitetsstatus', 'ok') == 'ok' else 1
 
 
 if __name__ == '__main__':

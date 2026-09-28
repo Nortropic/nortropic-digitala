@@ -38,6 +38,8 @@ class Konsistens(unittest.TestCase):
             (kund / name).write_text('syntetisk kundfil\n')
         for name in ('VERKSAMHET.json', 'DRIFT.json'):
             (kund / name).write_text('{"schema": 1, "syntetisk": true}\n')
+        from test_kritikbevis import bildfixture
+        bildfixture(kund)
         for name, step in data['steg'].items():
             receipt = ladda_steg.ladda(ROT, name, tmp / name, kund=kund,
                                        bestallning='PROV-BESTALLNING-1' if step['mandat'] == 'bestallning' else None)

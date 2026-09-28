@@ -46,3 +46,25 @@ Site Verification API v1 (`webResource.getToken`, `insert`, `update`), Search Co
 `sitemaps.submit`, `searchanalytics.query`, `urlInspection.index.inspect`); adresserna står i verktygets kvitto.
 Verktygets anrop är byggda mot dokumentationen och prövade mot inspelade svar; live-anrop är inte körda (ingen
 åtkomst). Ett prov mot inspelade svar är inte en verifierad live-integration.
+
+
+## Beständigt anropskvitto och okänt utfall
+
+`--ut` är en engångsfil: en befintlig fil vägras före nätanrop och skrivs aldrig över. Verktyget sparar
+anropsavsikten före transporten och status/svar före nästa steg. Timeout, namnuppslagsfel och tappat svar ger
+status 0 och uttryckligt okänt utfall (exit 2), aldrig framgång. Även ett hårt avbrott lämnar den senaste
+avsikten som okänd. Ett tidigare mottaget verifieringssvar finns kvar när ett senare steg fallerar.
+Kvittofilen är privat (0600); authorization och tokenvärden skrivs inte ut.
+
+Kvitto schema 2 binder verksamhetsfil, åtkomstkonfigurationens hash utan värden, verktygskod, plan och varje
+faktiskt anrops metod/adress/nyttolasthash. `transport` innehåller också preflight och autentisering, med
+status, sanerat svar och svarshash. `anrop` innehåller kanalstegens tolkning. `provniva: testtransport` är ett
+lokalt kodprov, även om kommandot använder `--live` för att pröva den riktiga kontrollvägen. Besvarade
+API-anrop bevisar varken indexering eller fungerande drift.
+
+Efter okänt muteringsutfall ska ansvarig först läsa kvittot och stämma av leverantörens verkliga tillstånd.
+Dokumentera utförare, observation, källa och beslut i kundfallet innan ett avsiktligt nytt försök med ny
+kvittofil. Engångsspärren gäller den angivna filen, inte alla tänkbara filnamn eller andra klienter; att bara
+byta filnamn är ingen avstämning. Verktyget återupptar inte en okänd mutation automatiskt. De begränsade
+HTTP-återförsöken gäller endast uttryckligen tillåtna läsningar/idempotenta PUT och kända övergående svar,
+aldrig verifierings-POST eller status 0.

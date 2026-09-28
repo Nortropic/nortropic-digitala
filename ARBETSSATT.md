@@ -65,11 +65,13 @@ lanseringsmandat eller ett kanalbehov som kommer senare återöppnar stegen auto
 laddar stegets underlag i fallet (ett redan laddat steg återupptas utan ny laddning),
 skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
-per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
-[--beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
-utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att allt annat fortsätter, och `omprova
+per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--bevis FIL] [--kvitto FIL] [--sidoeffekt …]
+[--beroende …] [--lost-beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
+utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att oberoende arbete kan fortsätta, och `omprova
 --steg S --not …` öppnar steget igen när beroendet finns. En färsk utförare kör `status` och `fortsatt` och tar över
-utan att ägaren återberättar. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
+utan att ägaren återberättar. Klar/N/A kräver kandidat-, miljö- och konfigurationsbundet råbevis enligt
+[kunskap/bevis-och-fortsattning.md](kunskap/bevis-och-fortsattning.md). Ändrade bevis eller nödvändiga förutsättningar
+återöppnar aktuellt godkännande; väntan är aldrig färdig leverans. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
 Runtime/.runtime/bin/codex-<version>`, samma modell som Runtimes konfiguration anger), inte med den CLI som råkar ligga i
 PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körde (L27).
 
@@ -120,3 +122,28 @@ Norrglänta.
 En beställning bär hela uppdraget till färdig privat förhandsvisning (`MANDAT.md` §2). Brief, koncept, interna
 kvalitetsval och vanliga rättningar går inte via ägaren; en intern gransknings- och rättningsloop (`KVALITET.md`)
 avgör omtag. Ägaren får den färdiga leveransen och rapporten och lämnar därefter sin bedömning.
+
+Bedömningskontrakt `digitala-kvalitet/2` i `kritik/BEDOMNING-v2.md` gäller nya bedömningar. Kundbehov och
+mandat står över intern brief; professionell otillräcklighet kan blockera trots gröna teknikprov. Frys kriterier
+före kandidatgranskning, bind faktisk kandidat och öppnade referensbilder; tidigare acceptanser ändras inte.
+
+
+## Beslut 2026-09-28: bildfält i kritikens svarskontrakt
+
+För nya kvalificerade kritikstarter begränsas den laddade schemamallen, efter manifestkontroll, till exakta
+bildplatser per roll och manifestets proveniensvärden. Orsak: ett faktiskt läst bildpaket kan annars ge ett
+formgiltigt svar med flera filnamn i samma fält som den semantiska konsumenten korrekt vägrar. Mallarna
+anger därför ett bildpar per jämförelseobjekt och ordagrann proveniens. Runtimes schemadialekt kan inte
+koppla metadata villkorligt till en viss bild; den befintliga domkontrollen gör fortsatt den kontrollen.
+Detta är en transportprecisering, inte en ändring av kvalitetskriterier, stilnivå eller godkännandefilter.
+Schema, fråga och domkodspinnar versionsbinds för nya körningar. Frysta laddningar, råsvar och pågående
+körningar bevaras; inget gammalt svar normaliseras eller får ett nytt godkännande av denna ändring.
+
+
+## Beslut 2026-09-28: exakta platser också i seen_files
+
+Ett senare native kontraktsprov genererade exakta bildpar men kommenterade bildplatserna i seen_files.
+För nya kvalificerade starter binds därför listans tillåtna värden till det färdigbyggda Runtime-underlaget,
+inklusive profilens dokumenterade FILES.md/AGENTS.md. Läsomfång anges i saktext. Detta förebygger formatfel;
+enum innebär inte att en fil lästs, och faktisk bildleverans samt den semantiska domkontrollen ändras inte.
+Tidigare domar och råsvar lämnas orörda. Beslutet tillhör ett senare delta efter föregående kodgranskning.

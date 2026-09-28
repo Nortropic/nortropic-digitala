@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 SCHEMA = 1
-KONTAKTTYPER = ('telefon', 'formular', 'dm', 'bokning', 'plats')
+KONTAKTTYPER = ('telefon', 'formular', 'dm', 'bokning', 'plats', 'e-post')
 ROLLER = ('verksamhetsstalle', 'besoksadress', 'hemvist')
 RACKVIDDER = ('lokal', 'regional', 'nationell', 'gransoverskridande')
 DAGAR = ('man', 'tis', 'ons', 'tor', 'fre', 'lor', 'son')
@@ -80,8 +80,10 @@ def validera(v):
     if v.get('orgnr') is not None and not (isinstance(v['orgnr'], str) and ORGNR.match(v['orgnr'])):
         errors.append('orgnr ska ha formen NNNNNN-NNNN')
     kv = v.get('kontaktvagar')
-    if not isinstance(kv, list) or not kv:
-        errors.append('kontaktvagar ska vara en lista med minst en typad kontaktväg')
+    if not isinstance(kv, list):
+        errors.append('kontaktvagar ska vara en lista med typade kontaktvägar (tom lista när uppgift saknas)')
+    elif not kv:
+        varningar.append('kontaktväg saknas: tekniska kontroller kan köras, kontaktresa och extern kanalberedskap är ofullständiga')
     else:
         for i, k in enumerate(kv):
             if not isinstance(k, dict) or k.get('typ') not in KONTAKTTYPER:
@@ -91,6 +93,16 @@ def validera(v):
             _str(k.get('belagg'), 'kontaktvagar[%d].belagg' % i, errors)
             if k.get('typ') == 'telefon' and isinstance(k.get('varde'), str) and e164(k['varde']) is None:
                 errors.append('kontaktvagar[%d].varde: telefonnumret är inte ett svenskt nummer i E.164 eller nationellt format' % i)
+            value = k.get('varde')
+            if isinstance(value, str) and k['typ'] in ('formular', 'bokning', 'dm'):
+                from urllib.parse import urlsplit
+                u = urlsplit(value)
+                relative = value.startswith('/') and not value.startswith('//') and k['typ'] != 'dm'
+                if not relative and not (u.scheme == 'https' and u.netloc and not u.username and not u.password):
+                    errors.append('kontaktvagar[%d].varde ska vara en sann https-adress eller lokal sökväg för formulär/bokning' % i)
+            if k['typ'] == 'e-post' and (not isinstance(value, str) or not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value)):
+                errors.append('kontaktvagar[%d].varde ska vara en e-postadress utan mailto-prefix' % i)
+
     adr = v.get('adress')
     if adr is not None:
         if not isinstance(adr, dict):

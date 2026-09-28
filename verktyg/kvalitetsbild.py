@@ -19,6 +19,8 @@ import json
 from pathlib import Path
 import sys
 import time
+import kritikbevis
+import hashlib
 
 STANDARD_EJ_OBSERVERAT = ('verkliga besökares beteende och konvertering', 'kundens eller mottagarens omdöme',
                           'läsbarhet utomhus i verkligheten', 'mänskliga användarprov', 'fältdata över tid')
@@ -36,8 +38,9 @@ def kvittohash_ok(run):
     line = Path(run) / 'KVITTO.sha256'
     if not line.is_file() or not (Path(run) / 'KVITTO.json').is_file():
         return None
-    import hashlib
-    expected = line.read_text().split()[0]
+    values=line.read_text().split()
+    if len(values)!=2 or values[1]!='KVITTO.json':return False
+    expected = values[0]
     return hashlib.sha256((Path(run) / 'KVITTO.json').read_bytes()).hexdigest() == expected
 
 
@@ -49,18 +52,47 @@ def bevisstatus(post, entry, leverans):
         return 'saknas: körkatalogen finns inte'
     if entry.get('kvitto') is None:
         return 'saknas: KVITTO.json saknas eller är oläsbart'
+    if kvittohash_ok(run) is None:
+        return 'saknas: KVITTO.sha256 integritetsrad krävs för aktuellt bevis'
     if kvittohash_ok(run) is False:
         return 'kvittohash: KVITTO.sha256 stämmer inte med KVITTO.json'
+    if post.get('runtime_kvitto_sha256') != hashlib.sha256((Path(run)/'KVITTO.json').read_bytes()).hexdigest():
+        return 'oavgjord: Runtime-kvittots hash saknas/avviker i körningens bindning'
+    if not post.get('profil') or post['profil'] != entry['kvitto'].get('profile'):
+        return 'ogiltig bindning: profil skiljer från Runtime-kvittots profile'
     ladd = (post.get('laddning') or {})
     fil = ladd.get('fil')
     if fil and Path(fil).is_file():
-        import hashlib
         if hashlib.sha256(Path(fil).read_bytes()).hexdigest() != ladd.get('sha256'):
             return 'inaktuell: laddningskvittot har ändrats sedan körningen'
     elif fil:
         return 'inaktuell: laddningskvittot finns inte längre'
     if entry.get('utfall') not in ('klar', 'svar_giltigt'):
         return 'underkänd: utfall %s' % entry.get('utfall')
+    if post.get('profil')=='kritik' and post.get('mall')=='femsekunderstest':
+        return 'begriplighetsprov: avskärmat femsekunderstest, ingen kvalitetsdom'
+    if post.get('profil') == 'kritik':
+        if not post.get('bedomningsbindning') or not post.get('bildbedomningsunderlag'):
+            return 'oavgjord: historisk kritik saknar kandidat- och bildbindning enligt v2'
+        try:
+            expected,underlag=kritikbevis.ur_laddning(fil)
+            if expected!=post['bedomningsbindning'] or underlag!=post['bildbedomningsunderlag']:
+                return 'ogiltig bindning: körningens kopior skiljer från faktiskt laddat manifest'
+            runtime_rows={r['place']:r for r in entry['kvitto'].get('underlag',[])}
+            for b in underlag['bilder']:
+                row=runtime_rows.get(b['plats'],{})
+                if row.get('copy_sha256')!=b['sha256'] or row.get('source_sha256')!=b['sha256']:
+                    return 'ogiltig bindning: Runtime-bildens hash skiljer från laddningen'
+            for output in ('svar.json','strom.jsonl','start.json'):
+                actual=Path(run)/output
+                if not actual.is_file() or entry['kvitto'].get('outputs',{}).get(output,{}).get('sha256')!=kritikbevis.stegbevis.sha(actual):
+                    return 'kvittohash: '+output+' saknas/skiljer från Runtime-kvittot'
+            result = kritikbevis.dom(entry.get('svar'), expected, underlag, entry['kvitto'])
+            entry['bildbelagg']=kritikbevis.bildbelagg(entry['kvitto'])
+        except (kritikbevis.Vagrad,kritikbevis.stegbevis.Vagrad,OSError,KeyError,TypeError,ValueError) as e:
+            return 'inaktuell/ogiltig beviskedja: '+str(e)
+        if result != 'ok':
+            return result
     if post.get('profil') == 'provare' and not entry.get('kontroll'):
         return 'oavgjord: KONTROLL SAKNAS — kontrollantens bedömning finns inte; provarens rapport räknas inte'
     if leverans:
@@ -81,7 +113,7 @@ def samla(fall, leverans=None):
                          'utfall': 'oläsbar', 'status': 'korrupt: posten går inte att läsa som JSON'})
             continue
         run = (post.get('resultat') or {}).get('run')
-        entry = {'fil': path.name, 'profil': post.get('profil'), 'etikett': post.get('etikett'), 'run': run,
+        entry = {'fil': path.name, 'mall':post.get('mall'), 'profil': post.get('profil'), 'etikett': post.get('etikett'), 'run': run,
                  'laddning': (post.get('laddning') or {}).get('sha256'), 'steg': (post.get('laddning') or {}).get('steg'),
                  'exit': post.get('exit'), 'kvitto': None}
         if run:
@@ -131,6 +163,7 @@ def samla(fall, leverans=None):
 
 
 def rendera(rows, ej_observerat, leverans=None):
+    alla_rader=rows
     out = ['# Kvalitetsbild', '', 'Skapad %s ur fallets körningar. Tre kolumner som aldrig blandas (KVALITET.md).' % time.strftime('%Y-%m-%dT%H:%MZ', time.gmtime()), '']
     if leverans:
         out += ['Bunden till leveransen: ' + ', '.join('%s=%s' % kv for kv in sorted(leverans.items())) + '.', '']
@@ -141,7 +174,7 @@ def rendera(rows, ej_observerat, leverans=None):
         out.append('- `%s` — %s %s: %s' % (r['fil'], r.get('profil') or '?', r.get('etikett') or '?', r['status']))
     aktuella = [r for r in rows if r['status'] == 'ok']
     brister = [r for r in rows if r['status'] != 'ok']
-    out += ['', 'Aktuella leveransbevis: %d. Historik eller brist: %d.' % (len(aktuella), len(brister)), '']
+    out += ['', 'Aktuella leveransbevis: %d. Historik eller utanför kvalitetsgrinden: %d.' % (len(aktuella), len(brister)), '']
     out += ['## Täckning (aktuella körningar per profil)', '']
     for profil in ('matning', 'kritik', 'provare'):
         n = sum(1 for r in aktuella if r['profil'] == profil)
@@ -178,11 +211,14 @@ def rendera(rows, ej_observerat, leverans=None):
             out.append('- kontrollantens bedömning: ' + ('finns (%s)' % (r.get('kontroll_fil') or 'KONTROLL-%s.md' % r['etikett']) if r.get('kontroll') else 'KONTROLL SAKNAS — utfallet är inte avgjort; provarens rapport räknas inte'))
         out.append('')
     out += ['## 2. Professionellt bedömt (modellbedömning, märkt som sådan)', '']
-    bedomt = [r for r in rows if r['profil'] == 'kritik']
+    bedomt = [r for r in alla_rader if r['profil'] == 'kritik']
     if not bedomt:
         out.append('Ingen kritik- eller läsarsession i fallet: ej bedömt.')
     for r in bedomt:
         out.append('### kritik — %s (%s)' % (r['etikett'], r.get('utfall') or 'okänt'))
+        out.append('Bevisstatus: '+r['status']+'. Bildbelägg: '+str(r.get('bildbelagg') or 'ej verifierat')+'.')
+        if r.get('mall')=='femsekunderstest':out.append('Avskärmat begriplighetsprov; ingen professionell kvalitetsdom och ingen täckning av kvalitetsgrinden.')
+        elif r.get('status')=='ok':out.append('Godkänd leveransbedömning inom den angivna räckvidden.')
         out.append('Körkatalog: `%s`; laddning %s (steg %s); bilder kompletta: %s.' % (
             r['run'] or 'ingen', (r['laddning'] or '')[:16], r['steg'], ((r.get('kvitto') or {}).get('images') or {}).get('complete', 'okänt')))
         svar = r.get('svar')
@@ -192,6 +228,8 @@ def rendera(rows, ej_observerat, leverans=None):
                     out.append('- %s: %s' % (key, json.dumps(svar[key], ensure_ascii=False)[:400]))
             if isinstance(svar.get('blocking_findings'), list):
                 out.append('- blockerande fynd: %d' % len(svar['blocking_findings']))
+                for finding in svar['blocking_findings']:out.append('  - '+json.dumps(finding,ensure_ascii=False))
+            for missing in svar.get('could_not_review',[]):out.append('- ej bedömbart: '+str(missing))
         else:
             out.append('- inget giltigt svar: ej bedömt')
         out.append('')
