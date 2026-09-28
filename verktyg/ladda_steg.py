@@ -28,6 +28,7 @@ MANDAT = ('staende', 'bestallning')
 BESTALLNING = re.compile(r'\A[A-Z0-9][A-Z0-9-]{2,79}\Z')
 STEGNAMN = re.compile(r'\A[a-z][a-z0-9-]{1,39}\Z')
 FIL = re.compile(r'\A[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*\Z')
+SKAPARFIL = 'SKAPARUNDERLAG.json'
 
 
 class Vagrad(Exception):
@@ -128,6 +129,108 @@ def git_lage(rot):
     return head.stdout.strip(), status.stdout.strip() == ''
 
 
+def skaparplan(kund, rot, pinnar):
+    """Validera ett litet kundvalt skaparpaket. Hash är bindning, aldrig bevis på användning."""
+    path = utan_lankar(kund / SKAPARFIL, kund)
+    try:
+        d = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError) as e:
+        raise Vagrad('skaparpaket kan inte läsas: ' + str(e)) from e
+    if (not isinstance(d, dict) or set(d) != {'schema', 'uppdrag', 'bilagor', 'referenser', 'resurser'}
+            or d['schema'] != 'digitala-skaparunderlag/1'
+            or any(not isinstance(d[k], list) for k in ('bilagor', 'referenser', 'resurser'))):
+        raise Vagrad('skaparpaket har fel form')
+
+    def text(value):
+        return isinstance(value, str) and bool(value.strip())
+
+    def filrad(item, role, extra):
+        if (not isinstance(item, dict) or set(item) != {'fil', 'sha256'} | extra
+                or not isinstance(item['fil'], str) or not FIL.fullmatch(item['fil'])
+                or item['fil'] in (SKAPARFIL, 'SKAPARPAKET.md')
+                or not isinstance(item['sha256'], str) or not re.fullmatch('[0-9a-f]{64}', item['sha256'])):
+            raise Vagrad('ogiltig filbindning i skaparpaket')
+        source = utan_lankar(kund / item['fil'], kund)
+        if not inuti(source, kund) or not source.is_file() or sha256_file(source) != item['sha256']:
+            raise Vagrad('skaparpaketets fil saknas eller har ändrats: ' + item['fil'])
+        if role == 'referensbild':
+            raw = source.read_bytes()
+            if not (raw.startswith(b'\x89PNG\r\n\x1a\n') or raw.startswith(b'\xff\xd8\xff')
+                    or (raw.startswith(b'RIFF') and raw[8:12] == b'WEBP')):
+                raise Vagrad('referensbild är inte PNG/JPEG/WebP: ' + item['fil'])
+        return {'fil': item['fil'], 'klass': 'kund', 'obligatorisk': True,
+                'delar': role + ': ' + item.get('varfor', 'fokuserat skapandeuppdrag, läs först'),
+                'kalla': str(source), 'sha256': item['sha256'], 'pinnad_sha256': None,
+                'byte': source.stat().st_size, 'status': 'laddad', 'plats': 'underlag/kund/' + item['fil']}
+
+    rows = [filrad(d['uppdrag'], 'skapandeuppdrag', set())]
+    roles = {}
+    seen = {d['uppdrag']['fil']}
+    for item in d['bilagor']:
+        if (not isinstance(item, dict) or item.get('roll') not in ('fakta', 'referensbild', 'beteende', 'tillgang')
+                or not text(item.get('varfor'))):
+            raise Vagrad('skaparpaketets bilaga saknar roll eller skäl')
+        row = filrad(item, item['roll'], {'roll', 'varfor'})
+        if item['fil'] in seen:
+            raise Vagrad('dubbel fil i skaparpaket: ' + item['fil'])
+        seen.add(item['fil']); roles[item['fil']] = item['roll']; rows.append(row)
+    ids = set()
+    for ref in d['referenser']:
+        if (not isinstance(ref, dict) or set(ref) != {'id', 'kalla', 'roller', 'urvalsskal', 'observation', 'bevis', 'paverkar', 'begransning'}
+                or any(not text(ref[k]) for k in ('id', 'kalla', 'urvalsskal', 'paverkar', 'begransning'))
+                or not isinstance(ref['roller'], list) or not ref['roller']
+                or any(r not in ('bransch', 'hantverk', 'ux') for r in ref['roller'])
+                or ref['observation'] not in ('live', 'galleri', 'text', 'delvis', 'otillganglig')
+                or not isinstance(ref['bevis'], list)
+                or any(not isinstance(p, str) or p not in roles for p in ref['bevis'])):
+            raise Vagrad('ogiltig referensroll eller bevispekare i skaparpaket')
+        if ref['id'] in ids:
+            raise Vagrad('dubbelt referens-id: ' + ref['id'])
+        ids.add(ref['id'])
+        if ref['observation'] in ('live', 'galleri') and not any(roles[p] == 'referensbild' for p in ref['bevis']):
+            raise Vagrad('visuell referens saknar hashbunden bild: ' + ref['id'])
+        if ref['observation'] != 'otillganglig' and not ref['bevis']:
+            raise Vagrad('observerad referens saknar underlag: ' + ref['id'])
+    resources = {}
+    for item in d['resurser']:
+        if (not isinstance(item, dict) or set(item) != {'fil', 'form', 'delar', 'skal', 'historik'}
+                or any(not text(item[k]) for k in item)
+                or not FIL.fullmatch(item['fil']) or not item['fil'].startswith('kunskap/externa/')
+                or item['form'] not in ('lasunderlag', 'metod', 'skill', 'plugin', 'verktyg', 'anpassning', 'utdrag')):
+            raise Vagrad('ogiltigt resursval i skaparpaket')
+        if item['fil'] in resources:
+            raise Vagrad('dubbelt resursval: ' + item['fil'])
+        source = utan_lankar(rot / item['fil'], rot)
+        if not inuti(source, rot) or not source.is_file() or pinnar.get(item['fil']) != sha256_file(source):
+            raise Vagrad('resursen är inte en tillgänglig pinnad professionsfil: ' + item['fil'])
+        resources[item['fil']] = item
+    return d, rows, resources
+
+
+def skaparpaket_md(d):
+    lines = ['# Fokuserat skaparpaket', '',
+             'Läs skapandeuppdraget först, öppna valda bilder och använd källorna vid konkreta val.',
+             'Behov och mandat gäller framför designhypotesen. Paketet är underlag, inte kvalitetsgodkännande.',
+             'Kopierad skilltext betyder inte installerad eller anropad skill. Kontrollera faktisk tillgång innan bruk.', '',
+             '## Uppdrag', '', '`underlag/kund/' + d['uppdrag']['fil'] + '`', '', '## Valda bilagor', '']
+    for item in d['bilagor']:
+        lines.append('- `%s` — %s: %s' % ('underlag/kund/' + item['fil'], item['roll'], item['varfor']))
+    lines += ['', '## Referenser och avsedd påverkan', '']
+    for ref in d['referenser']:
+        lines.append('- %s (%s; %s): %s. Urval: %s. Påverkar: %s. Gräns: %s. Bevis: %s.' %
+                     (ref['id'], ', '.join(ref['roller']), ref['observation'], ref['kalla'], ref['urvalsskal'],
+                      ref['paverkar'], ref['begransning'], ', '.join('`underlag/kund/'+p+'`' for p in ref['bevis'])))
+    lines += ['', '## Valda resurser', '']
+    for item in d['resurser']:
+        lines.append('- `%s` — önskad form %s, delar: %s. Skäl: %s. Läst historik: %s.' %
+                     ('underlag/profession/'+item['fil'], item['form'], item['delar'], item['skal'], item['historik']))
+    lines += ['', '## Obligatoriska gränser och fördjupning', '',
+              'UNDERLAG.md redovisar samtliga versionsbundna filer, inklusive kriterier, brief och kundkällor.',
+              'Kriterier och relevanta säkerhets-/integrationskrav får inte utelämnas för att paketet är litet.',
+              'Skriv faktisk användning och konsekvens i ANVANDNINGSNOTER.md; tomt utfall förblir okänt.', '']
+    return '\n'.join(lines)
+
+
 def planera(rot, steg_namn, kund, bestallning):
     """Kontrollerar allt och returnerar kopieplanen; kastar Vagrad utan sidoeffekter."""
     data = las_steg(rot)
@@ -146,9 +249,23 @@ def planera(rot, steg_namn, kund, bestallning):
             raise Vagrad('kundmappen finns inte: ' + str(kund_dir))
         if inuti(kund_dir, rot) or inuti(rot, kund_dir):
             raise Vagrad('sammanblandning: kundmappen får inte ligga i repot (och repot inte i kundmappen)')
+    skapar, bilagor, resurser = None, [], {}
+    if kund_dir and any(i['fil'] == SKAPARFIL for i in step['underlag']) and (kund_dir / SKAPARFIL).exists():
+        skapar, bilagor, resurser = skaparplan(kund_dir, rot, pinnar)
+    items = [dict(i) for i in step['underlag']]
+    existing = {i['fil'] for i in items if i['klass'] == 'profession'}
+    for name, item in resurser.items():
+        if name not in existing:
+            items.append({'fil': name, 'klass': 'profession', 'obligatorisk': False, 'delar': item['delar']})
     rows, saknade = [], []
-    for item in step['underlag']:
+    for item in items:
         row = {'fil': item['fil'], 'klass': item['klass'], 'obligatorisk': item['obligatorisk'], 'delar': item['delar']}
+        if item['klass'] == 'profession' and item['fil'].startswith('kunskap/externa/') and not item['obligatorisk']:
+            if item['fil'] not in resurser:
+                row.update(status='inte vald (valfri resurs)', plats=None)
+                rows.append(row)
+                continue
+            row['delar'] = resurser[item['fil']]['delar']
         if item['klass'] == 'profession':
             source = rot / item['fil']
             if source.exists() or source.is_symlink():
@@ -191,6 +308,55 @@ def planera(rot, steg_namn, kund, bestallning):
         rows.append(row)
     if saknade:
         raise Vagrad('saknat obligatoriskt underlag: ' + ', '.join(saknade))
+    task = next((r for r in rows if r['fil'] == 'KUNDSTART-ARBETSUPPGIFT.json' and r['status'] == 'laddad'), None)
+    if task and steg_namn == 'research':
+        try:
+            task_data = json.loads(Path(task['kalla']).read_text(encoding='utf-8'))
+            if not isinstance(task_data, dict) or task_data.get('schema') != 'digitala-intagsarbete/1':
+                raise ValueError('fel taskschema')
+            materials = task_data.get('material', [])  # en tidig avvikelserapport kan sakna material; inte komplett.
+            if not isinstance(materials, list):
+                raise ValueError('material är inte en lista')
+            for item in materials:
+                if not isinstance(item, dict):
+                    raise ValueError('materialrad är inte ett objekt')
+                if 'utdrag' not in item:
+                    continue  # historiskt format; ingen läsning hittas på.
+                excerpt = item['utdrag']
+                if (not isinstance(excerpt, dict) or set(excerpt) != {'fil', 'sha256', 'kalla_sha256'}
+                        or not isinstance(excerpt['fil'], str) or not FIL.fullmatch(excerpt['fil'])
+                        or not excerpt['fil'].startswith('KUNDSTART/')
+                        or item.get('sha256') != excerpt['kalla_sha256']
+                        or any(not isinstance(excerpt[k], str) or not re.fullmatch('[0-9a-f]{64}', excerpt[k])
+                               for k in ('sha256', 'kalla_sha256'))):
+                    raise ValueError('ogiltig materialutdragsbindning')
+                source = utan_lankar(kund_dir / excerpt['fil'], kund_dir)
+                if not inuti(source, kund_dir) or not source.is_file() or sha256_file(source) != excerpt['sha256']:
+                    raise ValueError('materialutdrag saknas eller har ändrats: ' + excerpt['fil'])
+                old = next((r for r in rows if r['klass'] == 'kund' and r['fil'] == excerpt['fil']), None)
+                if old:
+                    if old.get('sha256') != excerpt['sha256']:
+                        raise ValueError('motsägande materialutdrag: ' + excerpt['fil'])
+                    continue
+                rows.append({'fil': excerpt['fil'], 'klass': 'kund', 'obligatorisk': True,
+                             'delar': 'obetrott kundmaterialutdrag; laddat, inte redan läst; originalsha256 ' + excerpt['kalla_sha256'],
+                             'kalla': str(source), 'sha256': excerpt['sha256'], 'pinnad_sha256': None,
+                             'byte': source.stat().st_size, 'status': 'laddad', 'plats': 'underlag/kund/' + excerpt['fil']})
+        except (OSError, ValueError) as e:
+            raise Vagrad('Kundstarts materialunderlag kan inte laddas: ' + str(e)) from e
+    if skapar and steg_namn in ('koncept', 'bygge'):
+        # Samma fil kan redan vara ett obligatoriskt kundunderlag. Behåll en enda kopia med samma hash.
+        for row in bilagor:
+            existing_row = next((r for r in rows if r['klass'] == 'kund' and r['fil'] == row['fil']), None)
+            if existing_row:
+                if existing_row.get('sha256') != row['sha256']:
+                    raise Vagrad('skaparpaket och steg har olika filbindning: ' + row['fil'])
+            else:
+                rows.append(row)
+        raw = skaparpaket_md(skapar).encode('utf-8')
+        rows.append({'fil': 'SKAPARPAKET.md', 'klass': 'kund', 'obligatorisk': True, 'delar': 'genererad läsordning; läs först',
+                     'data': raw, 'sha256': hashlib.sha256(raw).hexdigest(), 'pinnad_sha256': None,
+                     'byte': len(raw), 'status': 'laddad', 'plats': 'SKAPARPAKET.md'})
     bildrad = next((r for r in rows if r['fil'] == kritikbevis.BILDFIL and r['status'] == 'laddad'), None)
     if bildrad:
         try:
@@ -213,6 +379,8 @@ def underlag_md(steg_namn, step, rows, bestallning):
              'mandat står över råd och internt skrivna designhypoteser i briefen. Kundfiler (`underlag/kund/`) och professionsfiler (`underlag/profession/`)',
              'hålls isär; en kundpreferens blir aldrig praxis: erfarenhet klassas som observation, kundpreferens, hypotes eller',
              'dokumenterad felorsak (kunskap/LARDOMAR.md), och ingen mängd tillämpningar gör något till praxis.',
+             '', '**Skapandeingång:** ' + ('läs `SKAPARPAKET.md` först; fullständig fördjupning nedan.' if any(r['fil'] == 'SKAPARPAKET.md' for r in rows)
+                                         else 'inget fokuserat skaparpaket laddat; detta kvitto bevisar inte att skapandeunderlaget är färdigt.'),
              '', '**Syfte:** ' + step['syfte'], '', '**Anvisning:** ' + step['anvisning'], '',
              '**Mandat:** ' + ('stående (MANDAT.md §1)' if step['mandat'] == 'staende' else 'beställning ' + str(bestallning) + ' (MANDAT.md §2)'), '',
              '| plats | klass | obligatorisk | delar att läsa | sha256 | byte | status |', '|---|---|---|---|---|---|---|']
@@ -228,7 +396,10 @@ def noter_md(steg_namn, rows):
     lines = ['# Användningsnoter — steget %s' % steg_namn, '',
              'Fyll en rad per underlag när steget är klart, med ett av fyra utfall: *påverkade ett konkret val, en ändring eller',
              'ett fynd (vilket)* · *användes som kontroll, ingen ändring behövdes* · *inte tillämpligt* · *nådde inte arbetet*.',
-             'Ingen rapport per fil för sakens skull; inga konstruerade bidrag. Noterna sammanfattas i fallets kontorspost.', '',
+             'Ingen rapport per fil för sakens skull; inga konstruerade bidrag. Noterna sammanfattas i fallets kontorspost.',
+             'Skilj vald/laddad, faktiskt läst eller anropad, konkret påverkan och observerat resultat. Ange bevispekare.',
+             'Åtgång: bokför tillgängliga input/output/cache-token, kostnad, väntetid, omtag och ägararbete separat.',
+             'Okända värden är okända; byt inte modellkvot eller debitering mot uppskattade token. Jämförelse kräver samma uppgift/räckvidd.', '',
              '| underlag | utfall | not |', '|---|---|---|']
     for r in rows:
         if r['status'] == 'laddad':
@@ -256,7 +427,7 @@ def ladda(rot, steg_namn, ut, kund=None, bestallning=None, utforare=None):
             continue
         target = ut / r['plats']
         target.parent.mkdir(parents=True, exist_ok=True)
-        data = Path(r['kalla']).read_bytes()
+        data = r['data'] if 'data' in r else Path(r['kalla']).read_bytes()
         if hashlib.sha256(data).hexdigest() != r['sha256']:
             raise Vagrad('filen ändrades under laddningen: ' + r['fil'])
         target.write_bytes(data)
@@ -291,7 +462,8 @@ def main(argv=None):
         return 2
     summary = {'utfall': 'laddad', 'steg': receipt['steg'], 'arbetsyta': receipt['arbetsyta'],
                'laddade': sum(1 for r in receipt['underlag'] if r['status'] == 'laddad'),
-               'valfria_saknade': [r['fil'] for r in receipt['underlag'] if r['status'] != 'laddad'],
+               'valfria_saknade': [r['fil'] for r in receipt['underlag'] if r['status'].startswith('saknas')],
+               'valfria_inte_valda': [r['fil'] for r in receipt['underlag'] if r['status'] == 'inte vald (valfri resurs)'],
                'sha256_over_underlag': receipt['sha256_over_underlag']}
     print(json.dumps(receipt if args.json else summary, ensure_ascii=False, indent=1 if args.json else None))
     return 0

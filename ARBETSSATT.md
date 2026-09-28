@@ -147,3 +147,22 @@ För nya kvalificerade starter binds därför listans tillåtna värden till det
 inklusive profilens dokumenterade FILES.md/AGENTS.md. Läsomfång anges i saktext. Detta förebygger formatfel;
 enum innebär inte att en fil lästs, och faktisk bildleverans samt den semantiska domkontrollen ändras inte.
 Tidigare domar och råsvar lämnas orörda. Beslutet tillhör ett senare delta efter föregående kodgranskning.
+
+## Beslut DIGITALA-YRKESFORMAGA-20260928 — från research till skapande
+
+De tidigare aktiva referensfiltren för lokalitet, företagsbetyg, galleri och konkurrent ersätts av
+uppgiftsmotiverade källroller (referensjakt.md). Aktuella kundkällor följer research/brief/koncept/bygge;
+research får även hashbundna materialutdrag, uttryckligen obetrodda och inte redan lästa.
+
+Briefarbetet lämnar ett kort skapandeuppdrag och SKAPARUNDERLAG.json vid ny formgivning/större omarbetning.
+Vanliga laddaren kopierar valda bilder/tillgångar med hash och skriver SKAPARPAKET.md först i läsordningen.
+Obligatoriska kriterier, kundfakta och säkerhetskrav består som fördjupning. Valfria externa resurser kräver
+ett motiverat val; ingen automatisk dump av Taste, prototype, PICKER eller Hallmark. Resursens historiska
+beslut läses och hel skill/plugin, metod, anpassning, utdrag eller verktyg avgörs för uppgiften. Laddaren
+installerar/anropar inget; faktisk användning och påverkan dokumenteras separat.
+
+Tidigt skapas en representativ upplevelse med verkligt innehåll och relevant interaktion på mobil/större vy.
+Alternativa riktningar följer osäkerheten, inte fast kvot/enaxelkrav. Granskning jämför faktisk kandidat
+med öppnade professionella referenser. Omprov får ett fokuserat konsekvensunderlag, medan bedömningskontrakt
+v2 och fastställd täckning gäller oförändrat. Befintliga körspår används för sann resursredovisning; ingen
+ny full läsning bara för att samla godkännanden. Skapandeunderlag.md och konsekvensgranskning.md anger formen.
