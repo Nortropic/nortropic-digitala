@@ -298,11 +298,13 @@
         "properties": {
           "kandidatbild": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll kandidat, utan tillägg eller flera filnamn."
           },
           "referensbild": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll referens, utan tillägg eller flera filnamn."
           },
           "observation": {
             "type": "string",
@@ -314,15 +316,18 @@
           },
           "kalla": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera kalla ordagrant från samma manifestpost som referensbild."
           },
           "tid": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera tid ordagrant från samma manifestpost som referensbild."
           },
           "vy": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera vy ordagrant från samma manifestpost som referensbild."
           },
           "drag": {
             "type": "string",
@@ -459,7 +464,8 @@
         "properties": {
           "kandidatbild": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll kandidat, utan tillägg eller flera filnamn."
           },
           "observation": {
             "type": "string",
@@ -471,15 +477,18 @@
           },
           "kalla": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera kalla ordagrant från samma manifestpost som dagensbild."
           },
           "tid": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera tid ordagrant från samma manifestpost som dagensbild."
           },
           "vy": {
             "type": "string",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "description": "Kopiera vy ordagrant från samma manifestpost som dagensbild."
           },
           "drag": {
             "type": "string",
@@ -491,7 +500,8 @@
           },
           "dagensbild": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll dagens, utan tillägg eller flera filnamn."
           }
         }
       }

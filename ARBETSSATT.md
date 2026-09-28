@@ -126,3 +126,15 @@ avgör omtag. Ägaren får den färdiga leveransen och rapporten och lämnar dä
 Bedömningskontrakt `digitala-kvalitet/2` i `kritik/BEDOMNING-v2.md` gäller nya bedömningar. Kundbehov och
 mandat står över intern brief; professionell otillräcklighet kan blockera trots gröna teknikprov. Frys kriterier
 före kandidatgranskning, bind faktisk kandidat och öppnade referensbilder; tidigare acceptanser ändras inte.
+
+
+## Beslut 2026-09-28: bildfält i kritikens svarskontrakt
+
+För nya kvalificerade kritikstarter begränsas den laddade schemamallen, efter manifestkontroll, till exakta
+bildplatser per roll och manifestets proveniensvärden. Orsak: ett faktiskt läst bildpaket kan annars ge ett
+formgiltigt svar med flera filnamn i samma fält som den semantiska konsumenten korrekt vägrar. Mallarna
+anger därför ett bildpar per jämförelseobjekt och ordagrann proveniens. Runtimes schemadialekt kan inte
+koppla metadata villkorligt till en viss bild; den befintliga domkontrollen gör fortsatt den kontrollen.
+Detta är en transportprecisering, inte en ändring av kvalitetskriterier, stilnivå eller godkännandefilter.
+Schema, fråga och domkodspinnar versionsbinds för nya körningar. Frysta laddningar, råsvar och pågående
+körningar bevaras; inget gammalt svar normaliseras eller får ett nytt godkännande av denna ändring.

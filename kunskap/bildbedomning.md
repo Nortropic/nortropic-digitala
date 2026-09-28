@@ -80,3 +80,17 @@ produktens befintliga täckningsrader behöver inte ändras. Verktyget binder be
 Laddningsarbetsytan och LADDNING.json är arkivmaterial. Bevara dem på bokförd plats med oförändrade bytes
 även efter körningen; de ska inte rensas som temporära filer. Kvalitetsbilden återläser dem och kräver även
 att KORNING-postens profil motsvarar Runtime-kvittots `profile`.
+
+
+## Exakta bildfält vid nya kritikstarter
+
+Varje `kandidatbild`, `referensbild` och `dagensbild` är en enda exakt `bilder[].plats` med motsvarande roll.
+Flera bildpar skrivs som separata jämförelseobjekt. Prosa hör till observationsfälten. `kalla`, `tid` och `vy`
+kopieras ordagrant från samma referens-/DAGENS-post som bildfältet anger.
+
+`kor_profil.py` begränsar den laddade schemamallen med rollbundna enums från det kontrollerade manifestet
+innan schemafilen skickas till Runtime; schemats faktiska hash bokförs även i KORNING. Proveniensfälten får
+rollens tillåtna värden. Dessa enums bevisar inte att tre värden kommer från samma bild: den oförändrade
+semantiska domkontrollen verifierar det paret. Finns inga DAGENS-bilder tillåter schemat endast tom
+`dagensjamforelser`, utan en påhittad enum. Avskärmade femsekundersprov ändras inte. En gammal fri-strängsdom
+med sammansatta bildfält förblir ogiltigt bunden även om alla bilder faktiskt lästs och verdict är approved.

@@ -173,6 +173,47 @@ def bygg_matning(args, release, root, receipt):
     return argv, {'profil_val': valda, 'kodens_varden': kod, 'hur': hur}
 
 
+def bind_bildschema(schema_text, bilddata):
+    """Begränsa den laddade mallen till det verifierade manifestet, före Runtime-start.
+
+    Runtime stöder enum men inte villkorliga scheman. Proveniensvärden begränsas
+    därför per roll; kritikbevis.dom kontrollerar fortsatt att de hör till SAMMA bild.
+    Inga modellsvar eller kvalitetskriterier ändras här.
+    """
+    schema = json.loads(schema_text)
+
+    def bind_enum(node, values):
+        values = sorted(set(values))
+        if (node.get('type') != 'string' or not values
+                or any(not isinstance(v, str) or len(v) > node.get('maxLength', len(v)) for v in values)
+                or ('enum' in node and not set(values) <= set(node['enum']))):
+            raise Vagrad('bildmanifestet ryms inte i den laddade schemamallen')
+        node['enum'] = values
+
+    try:
+        candidates = [b['plats'] for b in bilddata['bilder'] if b['roll'] == 'kandidat']
+        for field, role, image_key in (('referensjamforelser', 'referens', 'referensbild'),
+                                        ('dagensjamforelser', 'dagens', 'dagensbild')):
+            array = schema['properties'][field]
+            if array.get('type') != 'array' or array['items'].get('type') != 'object':
+                raise Vagrad('den laddade schemamallen saknar jämförelseobjekt')
+            props = array['items']['properties']
+            bind_enum(props['kandidatbild'], candidates)
+            images = [b for b in bilddata['bilder'] if b['roll'] == role]
+            if not images:
+                # Inga DAGENS-bilder: tom lista, aldrig en påhittad bild eller tom enum.
+                if role != 'dagens' or array.get('minItems', 0) > 0:
+                    raise Vagrad('den laddade schemamallen kräver saknade jämförelsebilder')
+                array['maxItems'] = 0
+                continue
+            bind_enum(props[image_key], [b['plats'] for b in images])
+            for key in ('kalla', 'tid', 'vy'):
+                bind_enum(props[key], [b[key] for b in images])
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar bild-/proveniensfält') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
 def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.mall not in KRITIKMALLAR:
         raise Vagrad('okänd mall; kända: ' + ', '.join(KRITIKMALLAR))
@@ -211,6 +252,7 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
         kontrakt = laddad_fil(receipt, kritikbevis.KONTRAKT)
         if bilddata['kriterier_sha256'] != hashlib.sha256(kontrakt.encode()).hexdigest():
             raise Vagrad('bildmanifestet gäller annan kriteriefrysning än laddat BEDOMNING-v2')
+        schema = bind_bildschema(schema, bilddata)
         bildmap = {b['fil']: b for b in bilddata['bilder']}
         expected = kritikbevis.bindning(bilddata, hashlib.sha256(bildtext.encode()).hexdigest())
         # Inputs cannot silently substitute unbound images for the required set.
@@ -249,6 +291,7 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.tid:
         argv += ['--tid', str(args.tid)]
     return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files), 'kontext_policy': policy,
+                  'schema_sha256': hashlib.sha256(schema.encode()).hexdigest(),
                   'manifest_platser': [f['plats'] for f in files], 'bedomningsbindning': expected, 'bildbedomningsunderlag': bilddata}
 
 

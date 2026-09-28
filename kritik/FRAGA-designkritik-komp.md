@@ -15,7 +15,7 @@ verdict är approved endast när blocking_findings och could_not_review är tomm
 Läs KUND/BEDOMNINGSUNDERLAG.json och UNDERLAG/BEDOMNINGSBINDNING.json. Kopiera filens samtliga åtta fält
 oförändrade till bedomningsbindning: underlag_sha256 (manifestet), kriterier_sha256 (kriterietexten),
 krav_sha256 (förhandskraven), domkod_sha256 (den pinnade domlogiken), kandidat, miljo, konfiguration och rackvidd. Täck varje obligatorisk rad i manifestets tackning; ange saknat underlag i could_not_review.
-Approved kräver minst en faktisk referensjämförelse med bildplatser, källa, tidpunkt, vy, konkret drag,
+Approved kräver minst en faktisk referensjämförelse med exakta bildplatser, källa, tidpunkt, vy, konkret drag,
 observation, konsekvens och vad som behålls/ändras med skäl. Referensens källa/tid/vy kopieras från manifestet.
 Runtime kontrollerar öppning/leverans av bilder separat; seen_files redovisar bara vad du faktiskt sett.
 Saknas nödvändigt underlag: verdict ej_bedombart. En påvisad blockerande produktbrist: rejected. Båda kan
@@ -30,3 +30,10 @@ kalla/tid/vy från manifestet. Täck varje rad i manifestets dagens.tackning. Sa
 eller jämförelser är could_not_review och hindrar approved. Tom lista är tillåten när det förhandsbestämda
 dagens.na_skal anger att föregående kandidat saknas; hitta aldrig på en jämförelse. DAGENS ersätter inte
 professionella referenser och en förbättring mot en svag föregångare räcker inte till yrkesmässig kvalitet.
+
+Bildfältens kontrakt: kandidatbild är exakt EN bilder[].plats med roll kandidat; referensbild exakt EN
+plats med roll referens; dagensbild exakt EN plats med roll dagens. Kopiera värdet ordagrant, utan
+parenteser, flera filnamn, URL, tid eller annan prosa. Flera bildpar blir separata jämförelseobjekt;
+observationer och resonemang hör till observation/drag, inte bildfälten. Kopiera kalla, tid och vy
+ordagrant från SAMMA valda referensbild respektive dagensbild. En schemagiltig kombination av metadata
+från olika bilder är fortfarande ogiltig. Begränsningen ändrar inte bedömningen eller dess invändningar.
