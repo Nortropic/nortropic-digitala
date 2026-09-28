@@ -254,3 +254,16 @@ före avbrottsåterhämtning; befintliga filrättigheter bevaras och valda bevis
 Samma återhämtningsproveniens visas även i kvalitetsbildens publika JSON-utdata: ursprunglig
 konsumentbindning samt Runtimes format-/sessionsmetadata följer med statusraden. Denna
 pinnuppdatering rättar en utelämnad projektion, utan ändrad sakdom eller godkännanderegel.
+
+
+## Beslut DIGITALA-KREATIV-ARBETSKEDJA-20260928 — skapande och första återkoppling
+
+Vid ny riktning eller kvalitetsomarbetning tillämpas skapandeunderlag.md:s första arbetsvarv
+från det vanliga genererade SKAPARPAKET.md. Behov, verkligt innehåll, bild/representation och
+handling styr kompositionen före tokenplan; externa original behålls och egna anpassningar
+är märkta. Kundkrav, interna designhypoteser och provbegränsningar hålls isär. Skaparen ska
+få faktisk browseråterkoppling under konceptarbetet, själv eller genom uttrycklig intern
+överlämning. Separat produktkritik prövar helheten innan utbyggnad. Metodens stöd är den
+riktade diagnosen av befintliga produktioners faktiska läs- och beslutsspår; detta är ingen
+allmän effektgaranti, stilregel eller ny Runtime-mekanism. Avgränsat arbetsprov och kvarstående
+osäkerhet redovisas privat i samma Digitala-uppdrags kreativ-rattning-r1.

@@ -313,3 +313,12 @@ i briefen).
 - **Tillämpning:** avgränsade graf- och innehållsrättningar efter konkret kritik; direktproduktionens första resultat bevaras som jämförelse.
 - **Kvarvarande osäkerhet:** två uppgifter och en direktparallell visar varken bred stilvariation eller kausal metodvinst. Native-kostnad är inte total projektkostnad.
 - **Läge:** observerat och prövat i begränsad omfattning, inte ny praxis. **Förslag för nästa fall:** återanvänd den förbättrade laddnings-/kundvägen och pröva dess värde i verkligt relevant arbete; ingen beställning av ny benchmark eller fler fiktiva byggen följer.
+
+
+## K20260928 — Provledningen och källornas tillämpning kan begränsa riktningen
+- **Klass:** dokumenterad observation, inte en allmän stilregel. **Observation:** råspår från de tre tidigare produktionerna visar en gemensam systemfontmiljö, en fixerad bild i keramikparet och skapare som faktiskt läst externa råd men tillämpat återhållsamhetsrådet ensidigt. Energiunderlaget föreskrev dessutom en intern sidföljd. Det finns inte belägg för att samma gamla CSS kopierats. Faktisk browserdiagnos visade deklarerad Iowan Old Style, inte en misslyckad webbfont. Bevis: kontorets privata `evidence/digitala/local/yrkesformaga-20260928/kreativ-rattning-r1/ORSAK.md` och dess råspårsindex.
+- **Möjlig generell lärdom:** skilj kundgränser från provledarens förenklingar och interna designhypoteser. Följ vilket material som faktiskt lästs och prövats innan orsaken tillskrivs ett lager eller en modell. Ett externt stilråd behöver en uppgiftsbunden tillämpning.
+- **Lokal preferens?** Iowan, ljus palett eller en mätarbetsyta är inga nya yrkesnormer. Teknisk återanvändning är fortsatt värdefull; kundidentitet väljs med skäl.
+- **Tillämpning:** beslut DIGITALA-KREATIV-ARBETSKEDJA-20260928 i ARBETSSATT: vanlig brief, skaparpaket, tidig rendering och separat helhetskritik. Externa original och kvalitetskriterier bevaras.
+- **Kvarvarande osäkerhet:** ett begränsat omprov kan visa att vägen används och att en riktning fungerar, inte kausal effekt, generell variation eller självständig yrkesförmåga i alla uppdrag. Alla tidigare indatavillkor är inte oförändrade.
+- **Förslag för nästa fall:** använd den integrerade vanliga vägen med verkliga kundfakta och tidig helhetskritik; gör inte det begränsade arbetsprovets form till ny startmall. Nästa fullständiga bygge kräver eget accepterat uppdrag.

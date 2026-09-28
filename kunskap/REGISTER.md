@@ -177,3 +177,15 @@ inte läsa eller anropa. Prototype/Taste/Emil/Hallmark får väljas utan krav p�
 Nya resurser behöver aktuell käll-/licens-/åtkomstkontroll och namngivet versionsbeslut; ingen automatisk adoption.
 Denna revision inför skapandeunderlag.md (kort uppdrag och valda bilder/resurser) samt
 konsekvensgranskning.md (ändringens följder och relevant kärnpaket). Kvalitet-v2 och domfilter ändras inte.
+
+
+## DIGITALA-KREATIV-ARBETSKEDJA-20260928 — egen tillämpning, bevarade original
+
+Frontend-designs pinnade original och licens är oförändrade. Riktad läsning av tidigare
+faktiska produktionsbeslut visade att “spend your boldness in one place” blev samma stilla
+omgivning i olika verksamheter, trots källans övriga råd. Digitalas egen anpassning står i
+skapandeunderlag.md: behov och kompositionsrelationer före tokens, uppgiftsprövade externa
+råd och faktisk browseråterkoppling före utbyggnad. Genererat SKAPARPAKET och konceptsteget
+bär tillämpningen. Ingen installation, ny källversion, generell stilspärr eller automatisk
+originalitetsbedömning införs. Kritikmallarnas helhetsfråga ändrar inte v2:s kriterier,
+scheman, bildkrav eller domlogik. Användningsnoter och avgränsat prov ska visa genomslaget.

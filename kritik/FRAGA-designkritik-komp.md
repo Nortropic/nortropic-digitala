@@ -7,6 +7,13 @@ på faktiskt öppnade bilder ingår; saknat underlag är ej bedömbart och kan i
 
 Huvudfrågan: vad gör detta minnesvärt, och vad är kvar av stapeln (samma kompositionsmall sektion efter sektion, foto under overlay, generiskt tjänsteföretag)? Jämför uttryckligen med de förhandsbestämda DAGENS-vyerna och med referenserna: är kompen mer specifik för just {{KUND}}, eller bara annorlunda? Håll isär vad du SER i bilderna och vad du LÄSER i HTML och underlag. Skriv "okänt" där bilderna inte räcker (rörelse, verklig läsbarhet utomhus).
 
+Bedöm helheten före följsamhet mot en intern designhypotes: hur samverkar faktiskt innehåll,
+bild, typografi, komposition och handling för kundens behov och referensernas valda kvaliteter?
+Om ett annat företagsnamn kunde sättas dit utan större ändring, förklara om likheten är motiverad
+eller en konkret yrkesbrist. Avgör vid brist om riktningen behöver omväljas eller om detaljrättning
+räcker. Tidigare approved-etiketter och godkända delfynd ersätter inte denna dom. Externa stilråd
+är uppgiftsberoende råd, inga universella krav på färg, font, minimalism eller ett enda bärande grepp.
+
 Professionell otillräcklighet i bildhantverk, komposition, innehåll och generisk mallanvändning kan blockera
 även när tekniken fungerar. Smak mellan fungerande alternativ är förbättring. Varje blockerande fynd behöver
 plats, kriterium, observation, konsekvens och prövbar rättning. Svara med ett enda JSON-objekt enligt schemat;
