@@ -78,7 +78,9 @@ print(json.dumps(result))
 
     def test_enum_nar_faktiska_runtime_schemafilen_i_bada_mallarna(self):
         r = ladda_steg.ladda(ROT, 'kritik', self.root/'laddning', kund=self.k)
-        files = self.root/'files.json'; files.write_text('[]')
+        files = self.root/'files.json'
+        note = self.root/'extra.txt'; note.write_text('syntetiskt kompletterande underlag')
+        files.write_text(json.dumps([{'kalla':str(note),'plats':'TEXT/extra.txt','vad':'kompletterande provtext'}]))
         fall = self.root/'fall'; fall.mkdir()
         for mall in ('renderingslasning', 'designkritik-komp'):
             original = kor_profil.laddad_fil(r, 'kritik/SCHEMA-'+mall+'.json')
@@ -88,7 +90,22 @@ print(json.dumps(result))
             raw = Path(argv[argv.index('--schema')+1]).read_bytes()
             schema = json.loads(raw)
             self.assertEqual(extra['schema_sha256'], hashlib.sha256(raw).hexdigest())
-            self.assertEqual(schema, self.schema(mall))
+            manifest = json.loads(Path(argv[argv.index('--underlag')+1]).read_text())
+            expected = json.loads(kor_profil.bind_sedda_filer(json.dumps(self.schema(mall)), manifest['filer']))
+            self.assertEqual(schema, expected)
+            places = sorted({f['plats'] for f in manifest['filer']} | {'FILES.md','AGENTS.md'})
+            self.assertEqual(schema['properties']['seen_files']['items']['enum'], places)
+            self.assertIn('UNDERLAG/BEDOMNINGSBINDNING.json', places)
+            self.assertIn('TEXT/extra.txt', places)
+            # Pröva även seen_files i den faktiskt skrivna schemafilen, i BÅDA mallarna.
+            node = schema['properties']['seen_files']
+            small = {'type':'object','additionalProperties':False,'required':['seen_files'],'properties':{'seen_files':node}}
+            values = [{'seen_files':places}, {'seen_files':[]},
+                      {'seen_files':['VYER/kandidat.png (öppnad med Read)']},
+                      {'seen_files':['TEXT/pahittad.txt']},
+                      {'seen_files':['VYER/kandidat.png och VYER/mobil.png']},
+                      {'seen_files':['KUND/PROJECT-BRIEF.md (rad 1–10)']}]
+            self.assertEqual(self.native(small, values), [True,True,False,False,False,False])
             self.assertEqual(kor_profil.laddad_fil(r, 'kritik/SCHEMA-'+mall+'.json'), original)
             # Båda använder den aktiva dialekten; inga villkorliga nyckelord smygs in.
             self.assertEqual(self.native({'type':'object','additionalProperties':False,'required':['r'],
@@ -141,6 +158,22 @@ print(json.dumps(result))
         answer['referensjamforelser'][0]['kandidatbild'] = 'VYER/kandidat.png och VYER/mobil.png (/första vy)'
         self.assertEqual(kb.dom(answer, binding, self.d, receipt), 'ogiltig jämförelse: bild saknas i bundet manifest')
         self.assertEqual(self.native(self.schema(), [answer]), [False])
+
+    def test_seen_enum_bevisar_inte_bildlasning(self):
+        answer, binding, receipt = self.answer()
+        schema = json.loads(kor_profil.bind_sedda_filer(json.dumps(self.schema()),
+                            [{'plats':b['plats']} for b in self.d['bilder']]))
+        self.assertEqual(self.native(schema, [answer]), [True])
+        receipt['images']['delivered_or_opened'] = []
+        self.assertIn('Runtime saknar belagd', kb.dom(answer, binding, self.d, receipt))
+
+    def test_seen_schema_ryms_inte_eller_saknas_vagras(self):
+        schema = self.schema()
+        with self.assertRaisesRegex(kor_profil.Vagrad, 'ryms inte'):
+            kor_profil.bind_sedda_filer(json.dumps(schema), [{'plats':'TEXT/'+'a'*201+'.txt'}])
+        del schema['properties']['seen_files']
+        with self.assertRaisesRegex(kor_profil.Vagrad, 'saknar seen_files'):
+            kor_profil.bind_sedda_filer(json.dumps(schema), [])
 
     def test_trasig_mall_eller_overskriden_langd_vagras_fore_start(self):
         schema = json.loads((ROT/'kritik/SCHEMA-renderingslasning.json').read_text())

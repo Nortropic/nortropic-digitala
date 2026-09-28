@@ -138,3 +138,12 @@ koppla metadata villkorligt till en viss bild; den befintliga domkontrollen gör
 Detta är en transportprecisering, inte en ändring av kvalitetskriterier, stilnivå eller godkännandefilter.
 Schema, fråga och domkodspinnar versionsbinds för nya körningar. Frysta laddningar, råsvar och pågående
 körningar bevaras; inget gammalt svar normaliseras eller får ett nytt godkännande av denna ändring.
+
+
+## Beslut 2026-09-28: exakta platser också i seen_files
+
+Ett senare native kontraktsprov genererade exakta bildpar men kommenterade bildplatserna i seen_files.
+För nya kvalificerade starter binds därför listans tillåtna värden till det färdigbyggda Runtime-underlaget,
+inklusive profilens dokumenterade FILES.md/AGENTS.md. Läsomfång anges i saktext. Detta förebygger formatfel;
+enum innebär inte att en fil lästs, och faktisk bildleverans samt den semantiska domkontrollen ändras inte.
+Tidigare domar och råsvar lämnas orörda. Beslutet tillhör ett senare delta efter föregående kodgranskning.

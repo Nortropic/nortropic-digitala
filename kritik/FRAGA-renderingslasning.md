@@ -43,3 +43,9 @@ parenteser, flera filnamn, URL, tid eller annan prosa. Flera bildpar blir separa
 observationer och resonemang hör till observation/drag, inte bildfälten. Kopiera kalla, tid och vy
 ordagrant från SAMMA valda referensbild respektive dagensbild. En schemagiltig kombination av metadata
 från olika bilder är fortfarande ogiltig. Begränsningen ändrar inte bedömningen eller dess invändningar.
+
+seen_files innehåller endast exakta paketplatser som faktiskt lästs, ett oförändrat platsvärde per post.
+Skriv aldrig tillägg som "(öppnad med Read)", radintervall eller "ej läst" i listan. Lästa delar och
+begränsningar hör till summary/could_not_review eller annan saktext. FILES.md och AGENTS.md får anges
+bara om de faktiskt lästs. En tillåten enum-plats är aldrig bevis för läsning; Runtime-bildbelägget och
+den semantiska konsumentens krav gäller fortfarande. Hitta inte på en läsning för att fylla listan.

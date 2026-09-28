@@ -214,6 +214,26 @@ def bind_bildschema(schema_text, bilddata):
     return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
 
 
+def bind_sedda_filer(schema_text, files):
+    """Exakta paketplatser, inte bevis på läsning. Körs efter hela underlagsbygget.
+
+    Runtime web_critique.build_workspace tillför FILES.md och AGENTS.md;
+    load_manifest reserverar samma namn. Inga andra automatiska filer antas.
+    """
+    schema = json.loads(schema_text)
+    try:
+        node = schema['properties']['seen_files']['items']
+        places = sorted({f['plats'] for f in files} | {'FILES.md', 'AGENTS.md'})
+        if (not isinstance(node, dict) or node.get('type') != 'string'
+                or any(not isinstance(p, str) or len(p) > node.get('maxLength', len(p)) for p in places)
+                or ('enum' in node and not set(places) <= set(node['enum']))):
+            raise Vagrad('paketplatserna ryms inte i den laddade seen_files-mallen')
+        node['enum'] = places
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar seen_files-items') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
 def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.mall not in KRITIKMALLAR:
         raise Vagrad('okänd mall; kända: ' + ', '.join(KRITIKMALLAR))
@@ -276,6 +296,7 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
             with bind_path.open('x', encoding='utf-8') as out:
                 json.dump(expected, out, ensure_ascii=False, indent=1)
         files.append({'kalla': str(bind_path), 'plats': 'UNDERLAG/BEDOMNINGSBINDNING.json', 'vad': 'exakt bedömningsbindning, kopieras till svaret'})
+        schema = bind_sedda_filer(schema, files)
     fraga += '\n\nBindning: laddningskvitto %s (steg %s), sha256 %s.\n' % (laddning_sha[:16], receipt['steg'], receipt['sha256_over_underlag'][:16])
     fall = Path(args.fall)
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())

@@ -94,3 +94,10 @@ rollens tillåtna värden. Dessa enums bevisar inte att tre värden kommer från
 semantiska domkontrollen verifierar det paret. Finns inga DAGENS-bilder tillåter schemat endast tom
 `dagensjamforelser`, utan en påhittad enum. Avskärmade femsekundersprov ändras inte. En gammal fri-strängsdom
 med sammansatta bildfält förblir ogiltigt bunden även om alla bilder faktiskt lästs och verdict är approved.
+
+
+`seen_files` binds först när hela kritikpaketets filförteckning är byggd, inklusive den maskinskrivna
+bedömningsbindningen. Tillåtna värden är exakt dessa paketplatser plus Runtime-profilens automatiska
+`FILES.md` och `AGENTS.md`. Ange bara faktiskt lästa filer. Parenteser, radintervall och olästa filer hör
+inte i listan; beskriv läsomfång i saktext. Enum kontrollerar endast platsformat/tillhörighet, aldrig om
+läsning skett. Den oförändrade konsumenten kräver fortsatt exakt listning och Runtime-belagd bildläsning.
