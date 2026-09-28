@@ -247,3 +247,7 @@ anvisning att ompröva brief. En ändrad historisk fil får en separat hash av n
 aldrig ny godkänd paketbindning, så omarbetning kan skydda mot ännu en samtidig ändring.
 Överföringen bokför förberedd historik före första kundskrivning och återläser dess bindningar
 före avbrottsåterhämtning; befintliga filrättigheter bevaras och valda bevispekare får kanoniska namn.
+
+Samma återhämtningsproveniens visas även i kvalitetsbildens publika JSON-utdata: ursprunglig
+konsumentbindning samt Runtimes format-/sessionsmetadata följer med statusraden. Denna
+pinnuppdatering rättar en utelämnad projektion, utan ändrad sakdom eller godkännanderegel.
