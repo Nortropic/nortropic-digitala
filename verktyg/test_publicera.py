@@ -17,7 +17,7 @@ import publicera as pb
 class Publicering(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.hem = Path(self.temp.name)
+        self.hem = Path(self.temp.name).resolve()
         self.repos = self.hem / 'nortropic-repos'
         self.primar = self.repos / 'nortropic-digitala'
         self.ingang = self.primar / 'verktyg/publicera.py'
