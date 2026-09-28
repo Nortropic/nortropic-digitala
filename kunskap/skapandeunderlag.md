@@ -24,6 +24,54 @@ Skriv kort, med källpekare och behovs-id ur aktuellt kundunderlag:
 Mandat och aktuella kundfakta gäller framför sammanfattningen. Vid konflikt rättas sammanfattningen och berörda
 val. Oberoende arbete fortsätter vid avgränsad åtkomstbrist; ett provblockerat efterled blir aldrig fakeframgång.
 
+## Från behov till första formbeslut
+
+Digitalas egen tillämpning, beslutad i DIGITALA-KREATIV-ARBETSKEDJA-20260928.
+Externa original i `externa/` är bevarade; följande är vår anpassning, inte deras författares nya råd.
+
+Börja med vad besökaren behöver förstå, se och göra tillsammans. Beskriv det med det verkliga innehållet:
+vilken bild eller annan representation förklarar något, hur delarna påverkar varandra och vad som ändras
+när personen använder upplevelsen. Välj sedan typografi, färg och detaljregler som bär den kompositionen.
+En lista färger och fonter, en genreetikett eller en teoretiskt unik tokenplan avgör inte riktningen.
+
+Skilj i uppdraget mellan **kundfakta/varumärkeskrav**, **designhypotes** och **provbegränsning**, med källa.
+En internt föreslagen sidordning, “varm/redaktionell” eller en redan tillgänglig demonstrationsbild är
+inte ett kundlås. Befintlig bild får användas när den fyller uppgiften; välj eller framställ annat material
+när bildidén kräver det, med rättighet och sanningsmärkning. En provbegränsning tas bort eller redovisas som
+begränsad räckvidd innan provet används för att bedöma den förmåga den utesluter.
+
+Pröva relevansen hos valda externa råd. Exempelvis frontend-designs “spend your boldness in one place”,
+minimalism, tvåpass/tokenplan och klusterlista är råd att motivera eller avvisa, inte universella
+kompositionsregler. Behåll dess krav på avsiktliga ämnesbundna val; låt inte listan över vanliga drag bli
+ett förbudssystem som lämnar samma stilla sida för varje verksamhet. Dokumentera bara konflikter som
+faktiskt påverkar ett val. Kundkrav överordnas råd; intern brief kan omprövas.
+
+Återanvänd teknik med begriplig avgränsning: semantik, säkra formulär, fokus, bildleverans och integration.
+Gammal kunds CSS, DESIGN.md, bildidé eller sektioner förs inte med som startidentitet. Om ett sådant grepp
+återanvänds, motivera det ur det aktuella behovet. En egen tidigare demo är inte en kvalitetsreferens.
+
+## Utförarens arbetsmiljö och tidiga återkoppling
+
+Starta skaparen vid det laddade SKAPARPAKET.md; startmeddelandet anger arbetsyta och omfattning,
+inte en dold palett, sidmall eller designlösning. Läs uppdragets källor och öppna valda bilder faktiskt.
+Använd den valda resursen som metod, installerad skill eller verktyg efter behov och verifierad åtkomst.
+Ingen extra skillinstallation behövs bara för att dess metodtext hjälper.
+
+Kontrollera före produktion att skaparen kan skriva nödvändiga tillgångar och se sin första rendering.
+Använd sessionens behöriga browser eller Digitalas befintliga webbläsarväg (`webblasare.md`) under arbetet.
+En Read/Edit/Write-profil utan browser får lämna den första representativa delen till en behörig browser-
+utförare och få bilder/beteendefynd tillbaka innan vidare produktion. Det är en redovisad intern överlämning,
+inte självständig browseranvändning. Saknad åtkomst får inte tyst ersättas med kodläsning eller ett nytt
+generellt font-/bild-/kodformatsförbud. Välj rimligt filformat och lokala, rättighetsklarerade typsnitt
+efter uppgiften; självhostning är inte samma sak som förbud mot andra typsnitt än systemets.
+
+Pröva den bärande delen i mobil och större vy, inklusive relevant val/återgång eller annan interaktion.
+Se skärmbilderna och kontrollera faktiskt renderade fonter och laddningsfel, inte bara CSS-deklarationen.
+Om bild, innehåll och handling fortfarande är separata mallblock, ompröva deras relationer innan fler
+sektioner byggs. Vid osäkerhet prövas en verkligt annan lösning på just problemet; ingen fast konceptkvot.
+Den separata kritikern bedömer sedan hela den avgränsade upplevelsen, med aktuella behov, kandidat och
+referenser. Skaparen får rätta efter kritiken men utfärdar inte själv dess kvalitetsdom.
+
 ## Pröva kompositionen med verkligt innehåll före full utbyggnad
 
 Använd den första representativa delen för att fatta ett konkret kompositionsbeslut,

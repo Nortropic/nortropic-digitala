@@ -249,7 +249,16 @@ def skaparpaket_md(d):
     for item in d['resurser']:
         lines.append('- `%s` — önskad form %s, delar: %s. Skäl: %s. Läst historik: %s.' %
                      ('underlag/profession/'+item['fil'], item['form'], item['delar'], item['skal'], item['historik']))
-    lines += ['', '## Obligatoriska gränser och fördjupning', '',
+    lines += ['', '## Första arbetsvarvet', '',
+              'Läs `underlag/profession/kunskap/skapandeunderlag.md`: Digitalas egen tillämpning av externa råd.',
+              'Skilj kundkrav, intern designhypotes och provbegränsning. Välj relationen mellan verkligt innehåll,',
+              'bild/representation och handling före tokens; ingen tidigare demos kundidentitet är startmall.',
+              'Kontrollera faktisk browser-/tillgångsåtkomst. Rendera den första bärande delen på mobil och dator,',
+              'öppna bilderna och pröva central interaktion innan utbyggnad. `underlag/profession/kunskap/webblasare.md`',
+              'beskriver den befintliga vägen. Saknad browser kräver uttrycklig intern bildåterkoppling, inte påstått prov.',
+              'Skriv val, avvisanden och vad renderingen ändrade i arbetsloggen/ANVANDNINGSNOTER.md.',
+              'Lämna hela den avgränsade upplevelsen till separat kritik; ett eget designbeslut är inte kvalitetsdom.',
+              '', '## Obligatoriska gränser och fördjupning', '',
               'UNDERLAG.md redovisar samtliga versionsbundna filer, inklusive kriterier, brief och kundkällor.',
               'Kriterier och relevanta säkerhets-/integrationskrav får inte utelämnas för att paketet är litet.',
               'Skriv faktisk användning och konsekvens i ANVANDNINGSNOTER.md; tomt utfall förblir okänt.', '']

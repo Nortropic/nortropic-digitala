@@ -60,10 +60,13 @@ tillåtna respektive förbjudna (§12).
 
 ## §7 Designriktning
 
-Vald riktning: en mening riktning, en mening motivering ur §1–§2, och vad som skiljer den från det förväntade i
-branschen. Layoutspråk: en kompositionsmening per nyckelsektion med referenspekare (referens + skärmbildsfil).
-Signaturelement: det grepp som gör sajten igenkännbar, motiverat och byggbart; motion-nivå (`ingen`, `subtil`,
-`uttrycksfull`) med skäl. Typografi och färg som förslag med motivering, inte som regel. Referensöversättning: per
+Vald riktning: vilket kundbehov som formar helheten och hur verkligt innehåll, bild/representation och handling
+samverkar. Märk bindande varumärkeskrav med kundkälla, interna designhypoteser och eventuella provbegränsningar
+separat. Motivera kompositionens relationer, innehållsrytm och interaktion med öppnade referenser; förskriv inte
+en sidordning bara för att den förekom i en demo. Ett igenkännbart grepp är ett möjligt resultat, inget krav på
+nyhet för nyhetens skull. Motion-nivå (`ingen`, `subtil`, `uttrycksfull`) med skäl. Typografi och färg följer
+den valda upplevelsen och prövas renderade. Externa råd tillämpas enligt skapandeunderlag.md, inte som en
+automatisk stilstandard. Referensöversättning: per
 referens ursprung, källtyp, öppnad, vad som tas, vad som förkastas och varför (`referensjakt.md`). Externa
 professionella referenser för jämförelse, inte kopiering (`referenser-professionella.md`).
 
