@@ -18,6 +18,11 @@ nödvändiga bilder eller referenser redovisas i could_not_review och hindrar he
 Svara med ett enda JSON-objekt enligt det givna schemat. verdict är approved endast när både blocking_findings och could_not_review är tomma. Ej bedömbart
 redovisas som avgränsad underlagsbrist, inte som bevisat produktfel.
 
+Respektera schemats maxLength innan du lämnar svaret. Håll summary till högst 1200 tecken
+inklusive blanksteg som marginal till schemats gräns 2000. Lägg fynd och läsgränser i deras
+avsedda fält utan att upprepa dem i summary; korta aldrig bort en invändning för att få approved.
+Kopiera fortfarande bedomningsbindning och exakta bild-/proveniensfält oförändrade.
+
 Läs KUND/BEDOMNINGSUNDERLAG.json och UNDERLAG/BEDOMNINGSBINDNING.json. Kopiera filens samtliga åtta fält
 oförändrade till bedomningsbindning: underlag_sha256 (manifestet), kriterier_sha256 (kriterietexten),
 krav_sha256 (förhandskraven), domkod_sha256 (den pinnade domlogiken), kandidat, miljo, konfiguration och rackvidd. Täck varje obligatorisk rad i manifestets tackning; ange saknat underlag i could_not_review.
