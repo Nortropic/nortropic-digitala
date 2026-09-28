@@ -15,6 +15,13 @@ den genom beställningens kanal.
     python3 -B verktyg/kundstart.py konsumera --kund DIR --utforare NAMN  # signal → fryst export → import/research → kvittens
     python3 -B verktyg/kundstart.py returfragor --kund DIR --utforare NAMN --fragor FIL.json
     python3 -B verktyg/kundstart.py last --kund DIR --utforare NAMN --material-id ID --lasbevis FIL.json
+    python3 -B verktyg/kundstart.py tillvalsstatus --kund DIR --utforare NAMN --tillval ID --status inkluderat|vantar_atkomst|anslutet_provat|ingen --kalla TEXT [--not TEXT]
+
+Kundytans intervjuagent och översikten "Ditt uppdrag" lämnar i samma export kundens tillval (val i kontroller eller med
+ordagrant citat ur samtalet), agentens rekommendationer (hypoteser, aldrig kundens val), domänkontroll (öppna DNS/RDAP-
+uppgifter), kunduppgifter med ordagrant citat och beställd avgränsad research. Importen registrerar tillvalen och
+citatbundna kunduppgifter i INTERVJU.json, domänkontrollen som observation, och skriver alltihop i intagsutdraget och
+arbetsuppgiften som research och brief laddar. Ett nyare tillval ersätter ett äldre synligt; inget köps eller aktiveras.
 
 Åtkomst: miljövariabeln KUNDSTART_BAS_URL (tjänstens adress) och en fil med den interna nyckeln, rättighet 0600,
 utanför /tmp: `--nyckel-fil` eller miljövariabeln KUNDSTART_NYCKEL_FIL (standard ~/.nortropic-hemligheter/kundstart/
@@ -42,6 +49,9 @@ import intervju as iv  # noqa: E402
 KALLA_LASBAR = 'det vi redan hade antecknat om er'  # VERKSAMHET.json:s belägg är interna; kunden ser en neutral, sann källa
 MATERIAL_ID = re.compile(r'^m_[A-Za-z0-9_-]{6,24}$')
 FRAGA_ID = re.compile(r'^(?:[A-Z]+\d+|(?:RET|BEH)\d+_\d+)$')
+TILLVAL_ID = re.compile(r'^(?:[a-z][a-z_]{1,39}|annat_\d{1,3})$')
+KUNDVAL_TEXT = {'onskat': 'Kunden vill ha', 'har_system': 'Kunden har redan', 'hjalp': 'Kunden vill ha hjälp att välja', 'inte_nu': 'Inte nu enligt kunden'}
+TILLVAL_STATUS = ('inkluderat', 'vantar_atkomst', 'anslutet_provat')
 
 
 class Vagrad(Exception):
@@ -218,6 +228,87 @@ def status(kund, bas, nyckel, bypass):
     return d, {'arende_id': d['arende_id'], 'svar': len(vy['dialog']), 'oppna_fragor': [f['id'] for f in vy['oppna']], 'bild': len(vy['bild']), 'material': len(vy['material']), 'aterstar': vy['aterstar'], 'inlamnad': vy['arende']['inlamnad'], 'ai': r['ai'], 'revision': vy['arende']['revision'], 'hamtat_till_revision': (d['hamtat'][-1]['revision'] if d['hamtat'] else None)}
 
 
+def _citat_belagt(paket, u):
+    """En kunduppgift är kundens ord bara när värdet är ett citat som står ordagrant i samma exports svar eller materialutdrag."""
+    citat = u.get('citat')
+    if not isinstance(citat, str) or len(citat.strip()) < 2 or u.get('varde') != citat:
+        return False
+    if u.get('kalla_typ') == 'svar':
+        return any(sv.get('fraga_id') == u.get('kalla_id') and sv.get('revision') == u.get('kalla_revision')
+                   and isinstance(sv.get('text'), str) and citat in sv['text']
+                   for o in paket.get('omgangar', []) for sv in o.get('svar', []))
+    if u.get('kalla_typ') == 'material':
+        return any(m.get('id') == u.get('kalla_id') and citat in str((m.get('extraktion') or {}).get('text', ''))
+                   for m in paket.get('material', []))
+    return False
+
+
+def _ren(v, n):
+    return re.sub(r'[\x00-\x1f]', ' ', str(v or '')).strip()[:n]
+
+
+def _tillval_rad(t):
+    """Kundens aktuella ställningstagande till ett tillval som kundens uppgift; ett ångrat val bevaras som ett eget besked."""
+    if not isinstance(t, dict) or not TILLVAL_ID.match(str(t.get('id', ''))):
+        return None
+    namn = _ren(t.get('namn') or t.get('beskrivning') or t['id'], 120)
+    if t.get('kundval') in KUNDVAL_TEXT:
+        varde = '%s: %s' % (KUNDVAL_TEXT[t['kundval']], namn) + (' (%s)' % _ren(t['system'], 80) if t.get('system') else '')
+    elif t.get('historik'):
+        varde = 'Inget val: kunden har ångrat sitt tidigare val för %s' % namn
+    else:
+        return None
+    if t.get('kalla') == 'samtal' and t.get('citat'):
+        varde += ' – kundens ord: "%s"' % _ren(t['citat'], 300)
+    kanal = 'samtal ' + _ren(t.get('fraga_id'), 20) if t.get('kalla') == 'samtal' and t.get('fraga_id') else 'kontroll'
+    return {'nyckel': 'tillval_' + t['id'], 'varde': varde, 'status': 'kunden uppger',
+            'kalla': 'kundstart tillval %s rev %d (%s)' % (t['id'], t['revision'], kanal), 'omrade': 'D', 'datum': nu()[:10]}
+
+
+def _domankontroll_rad(t):
+    """Kundytans domänkontroll är en daterad observation av öppna uppgifter, aldrig en ändring hos leverantören."""
+    k = t.get('kontroll') if isinstance(t, dict) and t.get('id') == 'doman' and t.get('kundval') in ('har_system', 'onskat') else None
+    if not isinstance(k, dict) or not isinstance(k.get('doman'), str):
+        return None
+    if k.get('fel'):
+        varde = '%s kunde inte kontrolleras (%s)' % (_ren(k['doman'], 120), _ren(k['fel'], 120))
+    else:
+        reg = {True: 'registrerad', False: 'verkar ledig', None: 'registrering okänd'}.get(k.get('registrerad'), 'registrering okänd')
+        delar = ['%s: %s (%s)' % (_ren(k['doman'], 120), reg, _ren(k.get('kalla_registrering'), 10))]
+        if k.get('registrar'):
+            delar.append('registrar ' + _ren(k['registrar'], 80))
+        if k.get('dns_leverantor'):
+            delar.append('DNS hos ' + _ren(k['dns_leverantor'], 60))
+        epost = k.get('epost') if isinstance(k.get('epost'), dict) else {}
+        delar.append('e-post på domänen (%s)' % _ren(epost.get('leverantor'), 60) if epost.get('finns') else 'ingen e-post på domänen')
+        webb = k.get('webb') if isinstance(k.get('webb'), dict) else {}
+        delar.append('befintlig webbplats på adressen' if webb.get('finns') else 'ingen webbplats på adressen')
+        varde = '; '.join(delar)
+    return {'nyckel': 'doman_kontroll', 'varde': varde, 'status': 'observerat',
+            'kalla': 'kundstart domänkontroll %s (öppen DNS/RDAP)' % _ren(k.get('tid'), 25), 'omrade': 'D', 'datum': str(k.get('tid') or nu())[:10]}
+
+
+def tillvalsutdrag(paket):
+    """Intagsutdragets avsnitt om tillval, domän, kunduppgifter med citat och beställd research."""
+    ut = '\n### Kundens tillval (Kundstart; kundens val, inte köp eller aktivering)\n'
+    rader = [_tillval_rad(t) for t in paket.get('tillval', [])]
+    ut += ''.join('\n- %s [%s]' % (r['varde'], r['kalla']) for r in rader if r) or '\n- inga ställningstaganden'
+    ut += '\n\nBrief besvarar varje aktuellt tillval (vill ha, har redan, hjälp att välja) i INTEGRATIONSVAL.json under kundtillval. Inte nu och ångrade val tas inte med som val; kontobrist gör inte behovet inaktuellt.\n'
+    rek = [t for t in paket.get('tillval', []) if isinstance(t, dict) and isinstance(t.get('rekommendation'), dict)]
+    ut += '\n### Agentens rekommendationer i samtalet (hypoteser, inte kundens val)\n'
+    ut += ''.join('\n- %s: %s' % (_ren(t.get('namn') or t.get('id'), 120), _ren(t['rekommendation'].get('text'), 300)) for t in rek) or '\n- inga'
+    dom = [x for x in (_domankontroll_rad(t) for t in paket.get('tillval', [])) if x]
+    if dom:
+        ut += '\n\n### Domänkontroll (observerat i öppna uppgifter)\n\n- %s [%s]\n' % (dom[0]['varde'], dom[0]['kalla'])
+    ku = paket.get('kunduppgifter', [])
+    ut += '\n### Kunduppgifter med ordagrant citat (agentens noteringar; citatet är verifierat mot samma export)\n'
+    ut += ''.join('\n- %s: "%s" [%s %s rev %s]' % (_ren(u.get('nyckel'), 60), _ren(u.get('varde'), 400), _ren(u.get('kalla_typ'), 10), _ren(u.get('kalla_id'), 30), u.get('kalla_revision')) for u in ku if _citat_belagt(paket, u)) or '\n- inga'
+    rs = paket.get('research', [])
+    ut += '\n\n### Beställd avgränsad research från samtalet (inte påbörjad)\n'
+    ut += ''.join('\n- %s: %s%s' % (_ren(r.get('id'), 20), _ren(r.get('fraga'), 300), (' (varför: %s)' % _ren(r.get('varfor'), 200)) if r.get('varfor') else '') for r in rs) or '\n- ingen'
+    return ut + '\n'
+
+
 def intagsutdrag(s, paket):
     """Samma fullständiga intag vid ny import och rättning av äldre metadata."""
     research = iv.research_md(s)
@@ -225,6 +316,8 @@ def intagsutdrag(s, paket):
     for n in paket.get('behov', []):
         research += '\n- %s [%s], källa %s rev %s: %s\n' % (n.get('nyckel'), n.get('status'), n.get('kalla_fraga'), n.get('revision'), n.get('citat'))
     research += '\n### Öppen täckning enligt kundytan (status bevarad)\n' + '\n'.join('- %s: %s' % (x.get('nyckel'), x.get('status')) for x in paket.get('tackning', []) if x.get('status') != 'uppgift_finns') + '\n'
+    if any(paket.get(k) for k in ('tillval', 'kunduppgifter', 'research')):
+        research += tillvalsutdrag(paket)
     return research
 
 
@@ -265,8 +358,24 @@ def validera_export(paket, arende_id):
         strings(row, ('nyckel', 'omrade', 'typ'), prefix)
     for field in ('omgangar', 'svar', 'rattelser', 'fakta_ai', 'rattelser_fakta', 'material'):
         rows(paket, field)
-    for field in ('behov', 'tackning', 'returfragor'):
+    for field in ('behov', 'tackning', 'returfragor', 'kunduppgifter', 'tillval', 'research', 'tackning_agent'):
         rows(paket, field, optional=True)
+    for u in paket.get('kunduppgifter', []):
+        strings(u, ('id', 'nyckel', 'varde', 'citat', 'kalla_typ', 'kalla_id'), 'kunduppgifter.', True)
+        krav(type(u.get('kalla_revision')) is int and 1 <= u['kalla_revision'] <= ar['revision'], 'kunduppgifter.kalla_revision')
+    for t in paket.get('tillval', []):
+        strings(t, ('id',), 'tillval.', True)
+        krav(t.get('kundval') in (None, 'onskat', 'har_system', 'hjalp', 'inte_nu'), 'tillval.kundval')
+        krav(type(t.get('revision')) is int and 0 <= t['revision'] <= ar['revision'], 'tillval.revision')
+        krav(isinstance(t.get('historik', []), list), 'tillval.historik')
+        for field in ('namn', 'beskrivning', 'system', 'citat', 'fraga_id', 'kalla', 'not'):
+            if t.get(field) is not None:
+                krav(isinstance(t[field], str), 'tillval.' + field)
+        for field in ('kontroll', 'rekommendation', 'digitala'):
+            if t.get(field) is not None:
+                krav(isinstance(t[field], dict), 'tillval.' + field)
+    for r in paket.get('research', []):
+        strings(r, ('id', 'fraga'), 'research.', True)
     if 'signal' in paket:
         krav(isinstance(paket['signal'], dict), 'signal')
     for i, o in enumerate(paket['omgangar']):
@@ -563,6 +672,19 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         if not giltig_rad(f):
             ej_registrerade.append({'omgang': None, 'skal': 'kundrad i fel form (finns kvar i exportfilen)', 'fragor': [str((f or {}).get('nyckel') if isinstance(f, dict) else f)[:60]]}); continue
         kund_rader.append({'nyckel': f['nyckel'], 'varde': f['varde'], 'status': 'okänt' if iv.okand(f) else 'kunden uppger', 'kalla': kalla_text(f.get('kalla'), 'kundstart'), 'omrade': f.get('omrade') or 'H', 'datum': str(f.get('datum') or nu()[:10])[:10]})
+    # Kundens egna ord som intervjuagenten noterat: kundens uppgift bara när citatet står ordagrant i samma export.
+    for u in paket.get('kunduppgifter', []):
+        rad = {'nyckel': u.get('nyckel'), 'varde': u.get('varde'), 'omrade': u.get('omrade') if str(u.get('omrade')) in iv.OMRADEN else 'H'}
+        if not _citat_belagt(paket, u) or not giltig_rad(rad):
+            ej_registrerade.append({'omgang': None, 'skal': 'kunduppgift utan ordagrant stöd i exportens svar eller material (finns kvar i exportfilen)', 'fragor': [str(u.get('nyckel'))[:60]]}); continue
+        kund_rader.append({**rad, 'status': 'kunden uppger', 'kalla': 'kundstart citat %s rev %d' % (_ren(u['kalla_id'], 30), u['kalla_revision']), 'datum': nu()[:10]})
+    # Tillvalen: kundens ställningstagande (kontroll eller citat i samtalet) är kundens uppgift; ett nyare ersätter ett äldre.
+    for t in paket.get('tillval', []):
+        rad = _tillval_rad(t)
+        if rad and giltig_rad(rad):
+            kund_rader.append(rad)
+        elif isinstance(t, dict) and (t.get('kundval') or t.get('historik')):
+            ej_registrerade.append({'omgang': None, 'skal': 'tillval i fel form (finns kvar i exportfilen)', 'fragor': [str(t.get('id'))[:60]]})
     # Kundens ord som redan står i kundmappen (tidigare hämtningar) står över varje AI-tolkning skriven mot en äldre
     # revision; en tolkning som kommer i samma hämtning som kundens rättelse registreras och avgörs synligt nedan.
     kund_rev = {}
@@ -587,6 +709,10 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         # jämförelsen görs mot samma sanerade form som lagras, så en kumulativ omhämtning aldrig ger dubbla kundrader
         if not any(x['nyckel'] == f['nyckel'] and x.get('kalla') == f['kalla'] and x['varde'] == f['varde'] for x in s['fakta']):
             fakta_rader.append({'nyckel': f['nyckel'], 'varde': f['varde'], 'status': f['status'], 'kalla': f['kalla'], 'omrade': f['omrade'], 'datum': f['datum']})
+    for t in paket.get('tillval', []):
+        rad = _domankontroll_rad(t)
+        if rad and not any(x['nyckel'] == rad['nyckel'] and x['varde'] == rad['varde'] and x.get('kalla') == rad['kalla'] for x in s['fakta']):
+            fakta_rader.append(rad)
     if fakta_rader:
         faktafil = mapp / ('fakta-rev%d.json' % paket['arende']['revision'])
         faktafil.write_text(json.dumps(fakta_rader, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
@@ -603,6 +729,10 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
             r = next((x for x in kund_rader if x['nyckel'] == m['nyckel'] and x['varde'] == m['uppgift_2']['varde']), None)
             if r and m['uppgift_1']['status'] in ('tolkning', 'hypotes'):
                 s, _ = iv.avgor(kund, m['id'], r['varde'], 'kundens ord i Kundstart (%s) ersätter vår %s' % (r['kalla'], m['uppgift_1']['status']))
+            elif ((m['nyckel'].startswith('tillval_') and all(str(m[u].get('kalla', '')).startswith('kundstart tillval ') for u in ('uppgift_1', 'uppgift_2')))
+                  or (m['nyckel'] == 'doman_kontroll' and all(str(m[u].get('kalla', '')).startswith('kundstart domänkontroll ') for u in ('uppgift_1', 'uppgift_2')))):
+                # Samma kunds senare ställningstagande i samma kontroll är ingen sakmotsägelse; det senaste gäller, synligt.
+                s, _ = iv.avgor(kund, m['id'], m['uppgift_2']['varde'], 'kundens senare besked i Kundstart (%s) ersätter det tidigare (%s)' % (m['uppgift_2']['kalla'], m['uppgift_1']['kalla']))
     hamtade_filer = []
     if med_material:
         for m in paket['material']:
@@ -734,7 +864,7 @@ def konsumera(kund, bas, nyckel, bypass, utforare, avvikelseplan=None):
             research = intagsutdrag(iv.las(kund), paket)
             privat_skriv(base / 'research-intervju.md', research)
             privat_skriv(Path(kund) / 'research-intervju.md', research)
-            task = {'schema': 'digitala-intagsarbete/1', 'arende_id': d['arende_id'], 'signal_id': signal['id'], 'exportrevision': paket['arende']['revision'], 'ansvarig': utforare, 'import_sha256': digest, 'research': str(base / 'research-intervju.md'), 'behov': paket.get('behov', []), 'tackning': paket.get('tackning', []), 'returfragor': paket.get('returfragor', []), 'material': [{'id': m.get('id'), 'sha256': m.get('sha256'), 'lasstatus': m.get('lasstatus', 'mottagen')} for m in paket.get('material', [])], 'lage': 'importerat; forskningssyntes, sakbeslut och eventuell returfråga återstår', 'nasta': 'läs kundens ord/material och research-utdrag; uppdatera research.md med källor; returfrågor skickas i samma ärende'}
+            task = {'schema': 'digitala-intagsarbete/1', 'arende_id': d['arende_id'], 'signal_id': signal['id'], 'exportrevision': paket['arende']['revision'], 'ansvarig': utforare, 'import_sha256': digest, 'research': str(base / 'research-intervju.md'), 'behov': paket.get('behov', []), 'tackning': paket.get('tackning', []), 'returfragor': paket.get('returfragor', []), 'tillval': paket.get('tillval', []), 'research_bestallningar': paket.get('research', []), 'kunduppgifter': [u for u in paket.get('kunduppgifter', []) if _citat_belagt(paket, u)], 'material': [{'id': m.get('id'), 'sha256': m.get('sha256'), 'lasstatus': m.get('lasstatus', 'mottagen')} for m in paket.get('material', [])], 'lage': 'importerat; forskningssyntes, sakbeslut och eventuell returfråga återstår', 'nasta': 'läs kundens ord/material och research-utdrag; uppdatera research.md med källor; returfrågor skickas i samma ärende'}
             task.update(importstatus=state['importstatus'], ej_registrerade=avvikelser, avvikelseplan=plan,
                         material=materialunderlag, export={'fil': str((base / 'EXPORT.json').relative_to(Path(kund))), 'sha256': digest},
                         historiskt_intag={'fil': str((base / 'research-intervju.md').relative_to(Path(kund))),
@@ -791,11 +921,25 @@ def material_last(kund, bas, nyckel, bypass, mid, path, utforare):
     return d, r
 
 
+def tillvalsstatus(kund, bas, nyckel, bypass, utforare, tillval, status_, kalla, not_=''):
+    """Digitalas status för ett tillval i kundens översikt: ingår i uppdraget, väntar på åtkomst, anslutet och prövat, eller ingen."""
+    if not utforare or not tillval or not TILLVAL_ID.match(tillval) or status_ not in TILLVAL_STATUS + ('ingen',) or not (kalla or '').strip():
+        raise Vagrad('tillvalsstatus kräver --utforare, giltigt --tillval, --status inkluderat|vantar_atkomst|anslutet_provat|ingen och --kalla')
+    d = las_kundstart(kund)
+    bunden(d, bas)
+    body = {'tillval': tillval, 'status': None if status_ == 'ingen' else status_, 'not': not_ or '', 'kalla': kalla, 'utforare': utforare}
+    body['idempotens'] = 'TS' + hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()[:40]
+    r = anrop(bas, nyckel, 'POST', '/api/intern/arenden/%s/tillval' % d['arende_id'], body, bypass)
+    privat_json(Path(kund) / 'KUNDSTART' / ('tillvalsstatus-%s-%s.json' % (tillval, body['idempotens'][2:14])), {'begaran': body, 'utfall': r, 'tid': nu()})
+    return d, {'tillval': tillval, 'status': body['status'], 'sparat': True}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog='kundstart', description=__doc__.split('\n\n')[0])
-    p.add_argument('kommando', choices=('skapa', 'status', 'hamta', 'lank', 'aterkalla', 'konsumera', 'returfragor', 'last'))
+    p.add_argument('kommando', choices=('skapa', 'status', 'hamta', 'lank', 'aterkalla', 'konsumera', 'returfragor', 'last', 'tillvalsstatus'))
     p.add_argument('--kund', required=True); p.add_argument('--namn'); p.add_argument('--kontakt'); p.add_argument('--testdialog', action='store_true')
     p.add_argument('--avvikelseplan'); p.add_argument('--utforare'); p.add_argument('--fragor'); p.add_argument('--material-id'); p.add_argument('--lasbevis')
+    p.add_argument('--tillval'); p.add_argument('--status'); p.add_argument('--kalla'); p.add_argument('--not', dest='not_')
     p.add_argument('--dagar', type=int, default=30); p.add_argument('--material', action='store_true')
     p.add_argument('--bas-url', default=os.environ.get('KUNDSTART_BAS_URL')); p.add_argument('--nyckel-fil', default=os.environ.get('KUNDSTART_NYCKEL_FIL', '~/.nortropic-hemligheter/kundstart/KUNDSTART_INTERN_NYCKEL.secret'))
     p.add_argument('--bypass-fil', default=os.environ.get('KUNDSTART_BYPASS_FIL'))
@@ -827,6 +971,8 @@ def main(argv=None):
         elif a.kommando == 'last':
             if not a.lasbevis: raise Vagrad('last kräver --lasbevis')
             d, msg = material_last(a.kund, a.bas_url, nyckel, bypass, a.material_id, a.lasbevis, a.utforare)
+        elif a.kommando == 'tillvalsstatus':
+            d, msg = tillvalsstatus(a.kund, a.bas_url, nyckel, bypass, a.utforare, a.tillval, a.status, a.kalla, a.not_)
         elif a.kommando == 'lank':
             d, msg = ny_lank(a.kund, a.bas_url, nyckel, bypass, a.dagar)
         else:

@@ -26,11 +26,17 @@ utlöser ingen ny intervju.
 Den kontaktväg beställningen anger (e-post, telefon med anteckningar, möte, kundens eget verktyg). Verktyget skriver
 omgången som en läsbar fil (`INTERVJU/omgang-N.md`) med begripliga, neutrala frågor i hanterbara omgångar (högst åtta);
 sessionen skickar den genom kanalen och registrerar svaren ordagrant (`svar`). En kanal är Kundstart-länken
-(repot `Nortropic/nortropic-kundstart`, KUNDSTART-20260927): kunden svarar i en webbyta som ställer frågorna ur samma
-bank en i taget, och `verktyg/kundstart.py` skapar ärendet ur kundmappen (`skapa`, länken skrivs 0600 i `~/.nortropic-hemligheter/<kund>/` och
+(repot `Nortropic/nortropic-kundstart`, KUNDSTART-20260927 och KUNDSTART-DIALOG-20260928): en intervjuagent för samtalet
+på webben med egna följdfrågor, där frågebanken i detta verktyg är internt täckningsstöd och inte manus; kunden ser och
+rättar samma ärende i översikten "Ditt uppdrag" och tar ställning till tillval (alla integrationsområden, också egen domän
+med kontroll av domänens öppna DNS-uppgifter), och `verktyg/kundstart.py` skapar ärendet ur kundmappen (`skapa`, länken skrivs 0600 i `~/.nortropic-hemligheter/<kund>/` och
 lämnas genom beställningens kanal) och för in exporten i `INTERVJU.json` genom detta verktygs egna funktioner (`hamta`:
 svar ordagrant, AI-tolkningar som `tolkning`, rättelser som `kunden uppger`, material i kundmappens `KUNDSTART/`);
-kundmappen är det auktoritativa hemmet. Ingen ny kundportal; ingen fråga om
+kundmappen är det auktoritativa hemmet. Tillvalen, domänkontrollen (observerat), kunduppgifter med ordagrant citat
+(verifierat mot samma export) och beställd research följer importen till `INTERVJU.json`, `research-intervju.md` och
+`KUNDSTART-ARBETSUPPGIFT.json`; brief besvarar varje aktuellt tillval i `INTEGRATIONSVAL.json` (`kundtillval`) och
+överföringen vägrar annars. Agentens rekommendationer är hypoteser, aldrig kundens val, och ett tillval är inget köp.
+Digitalas status per tillval förs tillbaka till kundens översikt med `kundstart.py tillvalsstatus`. Ingen ny kundportal; ingen fråga om
 ramverk, API, skill, typografisk skala eller arkitektur. Kundens språk; otydliga svar följs upp med exempel; viktiga
 tolkningar sammanfattas i dialogen så kunden kan rätta dem, utan något obligatoriskt godkännande av en separat brief.
 

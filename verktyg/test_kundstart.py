@@ -127,6 +127,75 @@ class Kundstart(unittest.TestCase):
         smuts = subprocess.run(['git', '-C', str(HERE.parent), 'status', '--porcelain', '--', 'verktyg', 'kunskap', 'kunder'], capture_output=True, text=True).stdout
         self.assertEqual(sorted(r for r in smuts.splitlines() if 'test_kundstart' not in r and 'kundstart.py' not in r), self.smuts_fore, 'inget skrivs i repot (jämfört med trädet före provet: ett smutsigt arbetsträd är inte provets fel)')
 
+    def dialogpaket(self, revision=7, bokning='onskat', citat_ok=True):
+        p = paket(revision=revision)
+        p['kunduppgifter'] = [
+            {'id': 'U7_1', 'nyckel': 'verksamhetsmal', 'rubrik': 'Mål', 'avsnitt': 'mal', 'varde': 'boka tid direkt på hemsidan', 'citat': 'boka tid direkt på hemsidan', 'kalla_typ': 'svar', 'kalla_id': 'A1', 'kalla_revision': 3, 'revision': revision, 'omrade': 'A', 'status': 'kunden uppger'},
+            {'id': 'U7_2', 'nyckel': 'gruppkapacitet', 'rubrik': 'Grupp', 'avsnitt': 'verksamhet', 'varde': 'hela Norrbotten' if not citat_ok else 'hemsidan', 'citat': 'hela Norrbotten' if not citat_ok else 'hemsidan', 'kalla_typ': 'svar', 'kalla_id': 'A1', 'kalla_revision': 3, 'revision': revision, 'omrade': 'A', 'status': 'kunden uppger'},
+        ]
+        p['tillval'] = [
+            {'id': 'bokning', 'namn': 'Bokning och kalender', 'kundval': bokning, 'kalla': 'kontroll', 'revision': revision, 'historik': [{'kundval': bokning, 'revision': revision}], 'rekommendation': None, 'digitala': None, 'kontroll': None},
+            {'id': 'doman', 'namn': 'Egen domän', 'kundval': 'har_system', 'system': 'testfirma.se', 'kalla': 'samtal', 'fraga_id': 'A1', 'citat': 'boka tid', 'revision': 5, 'historik': [{'kundval': 'har_system', 'revision': 5}],
+             'kontroll': {'doman': 'testfirma.se', 'tid': '2026-09-28T18:00:00Z', 'registrerad': True, 'kalla_registrering': 'dns', 'dns_leverantor': 'Loopia', 'epost': {'finns': True, 'leverantor': 'Loopia'}, 'webb': {'finns': False, 'varden': None}, 'registrar': None, 'anmarkningar': []}},
+            {'id': 'foretagsprofil', 'namn': 'Google-företagsprofil', 'kundval': None, 'revision': 0, 'historik': [], 'rekommendation': {'text': 'Lokala kunder hittar er via kartan.', 'giltig': True}},
+        ]
+        p['research'] = [{'id': 'R7_1', 'fraga': 'Hur tar liknande verksamheter emot bokningar?', 'varfor': 'Val av bokningsnivå', 'status': 'bestalld'}]
+        return p
+
+    def test_tillval_doman_och_citerade_kunduppgifter_foljer_med_till_intaget(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        p = self.dialogpaket(citat_ok=False)
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+        code, r = self.kor('hamta', '--kund', str(self.k))
+        self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k))
+        rad = lambda n: [f for f in s['fakta'] if f['nyckel'] == n]
+        self.assertEqual(rad('tillval_bokning')[0]['status'], 'kunden uppger')
+        self.assertIn('Kunden vill ha: Bokning och kalender', rad('tillval_bokning')[0]['varde'])
+        self.assertIn('kundstart tillval bokning rev 7 (kontroll)', rad('tillval_bokning')[0]['kalla'])
+        self.assertIn('testfirma.se', rad('tillval_doman')[0]['varde']); self.assertIn('kundens ord: "boka tid"', rad('tillval_doman')[0]['varde'])
+        self.assertEqual(rad('doman_kontroll')[0]['status'], 'observerat', 'domänkontrollen är en observation, inte kundens ord')
+        self.assertIn('e-post på domänen (Loopia)', rad('doman_kontroll')[0]['varde'])
+        self.assertEqual(rad('tillval_foretagsprofil'), [], 'en rekommendation blir aldrig kundens val')
+        mal = [f for f in rad('verksamhetsmal') if f.get('kalla', '').startswith('kundstart citat')]
+        self.assertEqual(len(mal), 1); self.assertEqual(mal[0]['kalla'], 'kundstart citat A1 rev 3')
+        self.assertEqual(rad('gruppkapacitet'), [], 'citat som inte står i exportens svar registreras inte')
+        self.assertIn('kunduppgift utan ordagrant stöd', r['meddelande'])
+        utdrag = ks.intagsutdrag(iv.las(str(self.k)), p)
+        for text in ('Kundens tillval (Kundstart', 'Kunden har redan: Egen domän (testfirma.se)', 'Agentens rekommendationer i samtalet (hypoteser', 'Lokala kunder hittar er via kartan', 'Domänkontroll (observerat', 'Beställd avgränsad research från samtalet (inte påbörjad)', 'R7_1: Hur tar liknande'):
+            self.assertIn(text, utdrag)
+        self.assertNotIn('hela Norrbotten', utdrag, 'obelagd kunduppgift visas inte som kundens ord')
+
+    def test_andrat_tillval_ersatter_det_aldre_synligt_och_upprepas_inte(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = self.dialogpaket(revision=7, bokning='onskat')
+        self.assertEqual(self.kor('hamta', '--kund', str(self.k))[0], 0)
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = self.dialogpaket(revision=9, bokning='inte_nu')
+        code, r = self.kor('hamta', '--kund', str(self.k))
+        self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k))
+        mot = [m for m in s['motsagelser'] if m['nyckel'] == 'tillval_bokning']
+        self.assertEqual(len(mot), 1); self.assertEqual(mot[0]['lage'], 'avgjord')
+        self.assertIn('Inte nu enligt kunden', mot[0]['galler']); self.assertIn('senare besked', mot[0]['skal'])
+        self.assertIn('Inte nu enligt kunden', iv.aktuella_uppgifter(s)['tillval_bokning']['varde'])
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = self.dialogpaket(revision=9, bokning='inte_nu')
+        self.kor('hamta', '--kund', str(self.k))
+        self.assertEqual(len([f for f in iv.las(str(self.k))['fakta'] if f['nyckel'] == 'tillval_bokning']), 2, 'kumulativ omhämtning dubblerar inte')
+
+    def test_tillvalsstatus_skickar_digitalas_status_utan_kundtext(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        self.svar_pa[('POST', '/api/intern/arenden/ar_test12345678/tillval')] = {'ok': True}
+        code, r = self.kor('tillvalsstatus', '--kund', str(self.k), '--utforare', 'digitala/prov', '--tillval', 'bokning', '--status', 'inkluderat', '--kalla', 'INTEGRATIONSVAL.json kundtillval')
+        self.assertEqual(code, 0, r)
+        metod, vag, kropp = self.anrop[-1]
+        self.assertEqual((metod, vag), ('POST', '/api/intern/arenden/ar_test12345678/tillval'))
+        self.assertEqual((kropp['tillval'], kropp['status'], kropp['utforare']), ('bokning', 'inkluderat', 'digitala/prov'))
+        self.assertTrue(kropp['idempotens'].startswith('TS'))
+        self.assertEqual(self.kor('tillvalsstatus', '--kund', str(self.k), '--utforare', 'digitala/prov', '--tillval', 'bokning', '--status', 'aktiverat', '--kalla', 'x')[0], 2)
+
     def test_sen_tolkning_mot_aldre_revision_ateruppstar_inte_over_kundens_rattelse(self):
         self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'regelstyrd'}
         self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')

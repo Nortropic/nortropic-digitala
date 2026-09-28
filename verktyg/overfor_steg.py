@@ -16,6 +16,44 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+DISPOSITIONER = ('val', 'kanal', 'utreds', 'avstar')
+
+
+def kundtillval_krav(customer):
+    """Kundens aktuella tillval ur senaste Kundstart-intaget: {id: kundval}. Tom när intaget saknar tillval."""
+    path = Path(customer) / 'KUNDSTART-ARBETSUPPGIFT.json'
+    if not path.is_file():
+        return {}
+    try:
+        task = json.loads(path.read_bytes())
+    except (ValueError, UnicodeError):
+        raise ls.Vagrad('KUNDSTART-ARBETSUPPGIFT.json kan inte läsas; importera intaget på nytt före brief')
+    return {t['id']: t.get('kundval') for t in task.get('tillval', []) if isinstance(t, dict) and isinstance(t.get('id'), str)}
+
+
+def prova_kundtillval(customer, integrationsval):
+    """Brief besvarar varje aktuellt kundtillval; ett borttaget eller avböjt tillval får inte stå kvar som val."""
+    tillval = kundtillval_krav(customer)
+    aktuella = sorted(t for t, v in tillval.items() if v in ('onskat', 'har_system', 'hjalp'))
+    if not tillval:
+        return
+    if aktuella and integrationsval is None:
+        raise ls.Vagrad('kunden har aktuella tillval från Kundstart (%s); skriv INTEGRATIONSVAL.json med kundtillval som besvarar vart och ett' % ', '.join(aktuella))
+    if integrationsval is None:
+        return
+    rader = integrationsval.get('kundtillval', [])
+    if not isinstance(rader, list) or not all(isinstance(r, dict) for r in rader):
+        raise ls.Vagrad('INTEGRATIONSVAL.json: kundtillval ska vara en lista med rader')
+    svar = {r.get('tillval'): r for r in rader}
+    saknas = [t for t in aktuella if t not in svar or svar[t].get('disposition') not in DISPOSITIONER
+              or not isinstance(svar[t].get('skal'), str) or not svar[t]['skal'].strip()]
+    if saknas:
+        raise ls.Vagrad('INTEGRATIONSVAL.json besvarar inte kundens tillval: %s (disposition val|kanal|utreds|avstar och skal krävs)' % ', '.join(saknas))
+    kvar = [t for t, r in svar.items() if r.get('disposition') == 'val' and tillval.get(t) not in ('onskat', 'har_system', 'hjalp')]
+    if kvar:
+        raise ls.Vagrad('kunden har tagit bort eller avböjt tillvalet %s; ta bort valet ur INTEGRATIONSVAL.json eller motivera det som utreds' % ', '.join(sorted(map(str, kvar))))
+
+
 def safe(root, name):
     if not isinstance(name, str) or not ls.FIL.fullmatch(name):
         raise ls.Vagrad('ogiltig överföringssökväg')
@@ -145,9 +183,12 @@ def transfer(s, steg, rot, checkpoint=None):
                         raise ls.Vagrad('verksamhetsutdata ändrar beställningens kund eller fiktiv-status')
             else:
                 integrationer.plan(value)
+                prova_kundtillval(customer, value)
         except (ValueError, KeyError, TypeError, AttributeError, vu.Vagrad, integrationer.Fel) as e:
             raise ls.Vagrad('ogiltigt valfritt arbetsresultat ' + optional + ': ' + str(e)) from e
         files[optional] = raw
+    elif steg == 'brief':
+        prova_kundtillval(customer, None)
     if steg == 'brief' and safe(work, ls.SKAPARFIL).exists():
         package_present = True
         original = read_work(work, ls.SKAPARFIL)
