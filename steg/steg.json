@@ -116,7 +116,7 @@
   "research": {
    "mandat": "staende",
    "syfte": "Faktaunderlag före brief: organisation, erbjudande, användare, uppgifter, räckvidd, förtroende, innehåll och bild, röst, transaktioner, integrationer, juridikobservationer, alternativ, designreferenser, framgångsmått, sökintention, kanalobservationer, öppna frågor och kontrollrad; referensjakten är en del.",
-   "anvisning": "Följ research-underlag.md (ryggradens 19 sektioner, status per nyckeluppgift, faktadisciplinen, kontrollraden, användbarhetsfrågorna); intervjun (steget intervju) ger sektion 19 och research prövar och kompletterar den och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv i kundmappens research.md; VERKSAMHET.json skrivs eller uppdateras ur sektion 1 och 5 (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig.",
+   "anvisning": "Följ research-underlag.md (ryggradens 19 sektioner, status per nyckeluppgift, faktadisciplinen, kontrollraden, användbarhetsfrågorna); intervjun (steget intervju) ger sektion 19 och research prövar och kompletterar den och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv research.md i den laddade arbetsytan och överför med fortsatt.py overfor --fall FALL --steg research; valfri VERKSAMHET.json skrivs eller uppdateras i samma arbetsyta ur sektion 1 och 5 och valideras vid överföringen (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig. Referensroller bransch/hantverk/UX får överlappa; faktisk vy/beteende styr urvalet, inte lokalitetskvot eller företagsbetyg. Materialutdrag ur KUNDSTART-ARBETSUPPGIFT kopieras som obetrodda data, aldrig som redan lästa. research-intervju.md är intagsunderlag från intervjun, medan detta stegs syntes skrivs till research.md. Krävs ändrat intagsutdrag återöppnas research; ladda om aktuellt underlag, dölj inte versionsbytet.",
    "underlag": [
     {
      "fil": "kunskap/research-underlag.md",
@@ -141,13 +141,43 @@
      "klass": "kund",
      "obligatorisk": false,
      "delar": "svar och fakta, om intervjun är påbörjad"
+    },
+    {
+     "fil": "KUNDSTART-ARBETSUPPGIFT.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "research-intervju.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "kunskap/referenser-professionella.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "VERKSAMHET.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "befintligt original för källbunden uppdatering ur research; validera nytt arbetsresultat"
     }
    ]
   },
   "brief": {
    "mandat": "bestallning",
    "syfte": "Samlad brief enligt brief-mall.md (§0–§13): problem, målgrupper och uppgifter, innehållsstruktur, handlingar, sök och kanaler, röst, designriktning, bild, teknik, juridikflaggor, framgångsmått och bedömningsplan, förbjudna påståenden, öppna frågor; riktningen väljs internt utan ägarstopp och redovisas i leveransen.",
-   "anvisning": "Följ brief-mall.md; bevisregeln gäller varje värde. Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Sätt juridikflaggor ur research §11 mot juridikflaggor.md (rapportera, avgör aldrig). Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Briefen och ACCEPT vinner över råd; avvikelser i briefens konfliktrad.",
+   "anvisning": "Följ brief-mall.md; bevisregeln gäller varje värde. Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Sätt juridikflaggor ur research §11 mot juridikflaggor.md (rapportera, avgör aldrig). Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Styrkta kundbehov och ägarens mandat är överordnade intern brief; interna designhypoteser kan omprövas med spårbara skäl. §5 gäller sök/kanaler; §7 design. Vid ny formgivning/större omarbetning skriv SKAPARUPPDRAG.md och SKAPARUNDERLAG.json enligt skapandeunderlag.md; fakta/källstatus, valt visuellt underlag och resursval ska bära skapandet. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas. Välj vid relevanta integrationsbehov INTEGRATIONSVAL.json i arbetsytan före överföring till kundmappen (digitala-integrationsval/1); bind behov/källa/motiv till briefen och kör integrationer.py plan --val på samma fil. En liten brief behöver inget skaparpaket. Tidigare paket laddas som historiskt original, med endast fortfarande hashgiltiga bilagor; stale bilagor markeras och blir inte nya skaparval. I en laddad arbetsyta skrivs brief, eventuella skapar- och integrationsvalfiler där och överförs med fortsatt.py overfor --fall FALL --steg brief före klart. Valda befintliga bilagor finns under underlag/kund/; överföraren beräknar null-hashar från lästa bytes, bevarar original och vägrar fel hash. Ingen manuell värdreparation krävs.",
    "underlag": [
     {
      "fil": "kunskap/brief-mall.md",
@@ -208,19 +238,73 @@
      "klass": "kund",
      "obligatorisk": false,
      "delar": "hela, om den finns (för §5)"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "KVALITET.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "KUNDSTART-ARBETSUPPGIFT.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "research-intervju.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "INTERVJU.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "kunskap/skapandeunderlag.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
+    },
+    {
+     "fil": "SKAPARUNDERLAG.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "historiskt arbetsunderlag för omarbetning; bara hashgiltiga tidigare bilagor laddas, inaktuella markeras utan att bli nytt skaparpaket"
     }
    ]
   },
   "koncept": {
    "mandat": "bestallning",
    "syfte": "Konceptsteg före bygget: lösningsalternativ utreds internt och en motiverad riktning väljs utan ägarstopp; Design Read och namngivna axlar är metoder, antalet alternativ följer uppgiften, inga universella dial-värden (L16 är en hypotes, inte praxis).",
-   "anvisning": "Utred lösningsalternativ internt utifrån briefens problem och målgrupp: läs Taste §0 (Brief Inference) och §4 som metodstöd, gör en Design Read, och pröva ett antal riktningar som uppgiften motiverar på axlar som namnges för just denna kund (inga universella dial-värden, inget fast antal riktningar, ingen obligatorisk axel). Kritisera komparna genom kritikprofilen (designkritik-komp), välj en motiverad riktning utan ägarstopp och redovisa valet och alternativen i leveransen. L16 är en hypotes ur Norrglänta, inte en regel.",
+   "anvisning": "Läs SKAPARPAKET.md när det finns och därefter obligatoriska gränser/fördjupning i UNDERLAG.md. Utveckla lösningen utifrån kundbehov, riktigt innehåll och observerade bransch-/hantverks-/UX-referenser. Gör tidigt en representativ rendering med bild och relevant interaktion på mobil och större skärm. Pröva olika riktningar när osäkerheten motiverar det, utan fast antal eller obligatorisk axel; Design Read, Taste och prototype är valbara resurser, inte stil- eller metodtvång. Kritisera det nödvändiga genom designkritik-komp, välj internt utan ägarstopp och förklara val/avvisanden. L16 är en historisk hypotes, inte praxis. Om nya resurs-/integrationsval behövs, ompröva brief och uppdatera SKAPARUNDERLAG.json/INTEGRATIONSVAL.json där; ladda därefter om berörda steg. Ändra inte valen tyst i en redan laddad kopia.",
    "underlag": [
     {
      "fil": "kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md",
      "klass": "profession",
-     "obligatorisk": true,
-     "delar": "§0 (0.A–0.D); §1 (1.A–1.C); §4.1–4.3; §4.7–4.8 — inte §2, §3, §5, §6–9"
+     "obligatorisk": false,
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "kunskap/externa/anthropic-frontend-design-SKILL.md",
@@ -231,33 +315,93 @@
     {
      "fil": "kunskap/externa/emil-prototype-SKILL.md",
      "klass": "profession",
-     "obligatorisk": true,
-     "delar": "Operating Posture; Hard Rules 1–3; Workflow fas 1–5 (som metod)"
+     "obligatorisk": false,
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "kunskap/externa/emil-prototype-PICKER-d16ebe60.md",
      "klass": "profession",
      "obligatorisk": false,
-     "delar": "bara om en live-bläddringsyta efterfrågas"
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§7 designriktning och konfliktraden"
+     "delar": "§1–§2 behov, §7 designriktning och konfliktrad; interna hypoteser är omprövbara"
     },
     {
      "fil": "kunskap/referenser-professionella.md",
      "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; faktisk jämförelse vid ny formgivning och kvalitetsomarbetning"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "KVALITET.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/bildbedomning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; skapa bildmanifest före kritik"
+    },
+    {
+     "fil": "KUNDSTART-ARBETSUPPGIFT.json",
+     "klass": "kund",
      "obligatorisk": false,
-     "delar": "jämförelsedimensionerna och urvalet, när briefen motiverar en jämförelse"
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "research-intervju.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "INTERVJU.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "kunskap/skapandeunderlag.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "SKAPARUNDERLAG.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "valda resurser; koncept/bygge kopierar även hashbundet skapandeuppdrag och bilagor"
+    },
+    {
+     "fil": "kunskap/externa/canvas-design-SKILL-33375500.md",
+     "klass": "profession",
+     "obligatorisk": false,
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
   "bygge": {
    "mandat": "bestallning",
    "syfte": "Bygge i kundrepot enligt brief och vald riktning.",
-   "anvisning": "Följ bygge-referens.md (krav på resultatet, mönster med skäl, browsergranskning under bygget, arbetslogg). frontend-design: Design principles, Process, Restraint and self-critique. mobile-native: The Symptom Table, The Fixes 1–11, Baseline, Never Ship. formularsakerhet.md för formulär (en klocka, honeypot, servervalidering). emil-design-eng bara när briefens motion-nivå är över 'ingen': The Animation Decision Framework 1–4, Component Building Principles. Mät layoutvyns bredd i varje mobilprov (L21). Skriv kundrepots DESIGN.md (formatet i externa/google-design-md-README) ur briefens §7 och håll den i takt med bygget; kör linten i kundrepot (`npx -p @google/design.md@0.4.0 designmd lint --format json DESIGN.md`, paketet pinnat 0.4.0; installationen är kundrepots beroende, inget abonnemang). Under bygget: node verktyg/webblasare/inspektera.mjs --adress ADRESS --ut FALL/INSPEKTION-<tid> --vyer 390,1440 --kontext PROJECT-BRIEF.md,<kodfiler> [--hover SEL --fokus SEL --meny SEL] — bedöm bilderna, inte bara texten.",
+   "anvisning": "Läs SKAPARPAKET.md när det finns; följ bygge-referens.md och obligatoriska säkerhets-/kvalitetsunderlag. Välj resurser efter faktiskt behov i SKAPARUNDERLAG.json: mobile-native för mobil, emil-design-eng för interaktions-/komponentkvalitet också utan rörelse, design.md när format/lint hjälper och andra pinnade resurser med skäl. Kopierad text är inte installerad/anropad skill; använd befintlig kvalificerad verktygsväg när den behövs. Dokumentera riktningen i kundrepots DESIGN.md utan påtvingad palett eller stack. Rendera under arbetet: node verktyg/webblasare/inspektera.mjs --adress ADRESS --ut FALL/INSPEKTION-<tid> --vyer 390,1440 --kontext PROJECT-BRIEF.md,<kodfiler> [--hover SEL --fokus SEL --meny SEL]. Bedöm faktisk bild och interaktion i hela uppgiften inklusive undersidor och fel/tom/laddning. Mät mobilens verkliga viewport (L21), rätta vanliga produktfel och för kort arbetslogg. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas. Om nya resurs-/integrationsval behövs, ompröva brief och uppdatera SKAPARUNDERLAG.json/INTEGRATIONSVAL.json där; ladda därefter om berörda steg. Ändra inte valen tyst i en redan laddad kopia.",
    "underlag": [
     {
      "fil": "kunskap/bygge-referens.md",
@@ -286,8 +430,8 @@
     {
      "fil": "kunskap/externa/emil-mobile-native-SKILL.md",
      "klass": "profession",
-     "obligatorisk": true,
-     "delar": "The Symptom Table; The Fixes 1–11; Baseline; Never Ship"
+     "obligatorisk": false,
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "kunskap/formularsakerhet.md",
@@ -299,7 +443,7 @@
      "fil": "kunskap/externa/emil-emil-design-eng-SKILL.md",
      "klass": "profession",
      "obligatorisk": false,
-     "delar": "The Animation Decision Framework 1–4; Component Building Principles — bara när briefens motion-nivå är över 'ingen'"
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "PROJECT-BRIEF.md",
@@ -311,13 +455,67 @@
      "fil": "kunskap/externa/google-design-md-README-9bf8eae6.md",
      "klass": "profession",
      "obligatorisk": false,
-     "delar": "\"The Format\" och \"lint\": DESIGN.md som riktningsfil i kundrepot och lint av den"
+     "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
     },
     {
      "fil": "kunskap/webblasare.md",
      "klass": "profession",
      "obligatorisk": true,
      "delar": "användning 1 och tillstånden"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "KVALITET.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "KUNDSTART-ARBETSUPPGIFT.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "research-intervju.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "INTERVJU.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuellt kundunderlag/status; källa framför intern syntes"
+    },
+    {
+     "fil": "kunskap/skapandeunderlag.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "SKAPARUNDERLAG.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "valda resurser; koncept/bygge kopierar även hashbundet skapandeuppdrag och bilagor"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -417,7 +615,7 @@
   "kritik": {
    "mandat": "staende",
    "syfte": "Kritik genom Runtimes kritikprofil: designkritik av komp, renderingsläsning eller femsekunderstest, med Digitalas fråga och schema.",
-   "anvisning": "Välj mall i kritik/ (designkritik-komp, renderingslasning, femsekunderstest). Fyll varje {{PLATSHÅLLARE}} med --parameter; femsekunderstestet är avskärmat och tar inga parametrar, inga kundunderlag och inga textbilagor (verktyget vägrar). Kalibrera med frontend-designs klusterlista; Hallmark-linsen (externa) är en kritikröst bland flera, vald när briefen motiverar en formmässig granskning, inte ett extra godkännande. Bedömaren får skärmbilder, aldrig facit; varje bild ska öppnas. Skriv 'okänt' där underlaget inte räcker.",
+   "anvisning": "Välj mall i kritik/ (designkritik-komp, renderingslasning, femsekunderstest). Fyll varje {{PLATSHÅLLARE}} med --parameter; femsekunderstestet är avskärmat och tar inga parametrar, inga kundunderlag och inga textbilagor (verktyget vägrar). Kalibrera med frontend-designs klusterlista; Hallmark-linsen (externa) är en kritikröst bland flera, vald när briefen motiverar en formmässig granskning, inte ett extra godkännande. Bedömaren får skärmbilder, aldrig facit; varje bild ska öppnas. Skriv 'okänt' där underlaget inte räcker. Använd konsekvensgranskning.md och eventuell GRANSKNINGSFOKUS.md för ett relevant kärnpaket; fasta bildkrav och kriterier gäller ändå. Valfri Hallmark laddas genom SKAPARUNDERLAG:s resursval, inte automatiskt. Jämför öppnade referens/kandidatbilder i konkreta drag och användarkonsekvenser.",
    "underlag": [
     {
      "fil": "kritik/FRAGA-designkritik-komp.md",
@@ -465,13 +663,61 @@
      "fil": "PROJECT-BRIEF.md",
      "klass": "kund",
      "obligatorisk": true,
-     "delar": "§7 designriktning (läggs i bedömarens underlag som utdrag)"
+     "delar": "§1–§2 behov, §7 designriktning och konfliktrad; interna hypoteser är omprövbara"
     },
     {
      "fil": "kunskap/externa/hallmark-SKILL-13ac0ec7.md",
      "klass": "profession",
      "obligatorisk": false,
      "delar": "kritikröstens metod (S5) som en lins bland flera i designkritik; följer med i manifestet för designkritik-komp och renderingslasning, aldrig till det avskärmade femsekunderstestet"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "KVALITET.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/referenser-professionella.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; faktisk jämförelse vid ny formgivning och kvalitetsomarbetning"
+    },
+    {
+     "fil": "BEDOMNINGSUNDERLAG.json",
+     "klass": "kund",
+     "obligatorisk": true,
+     "delar": "hashbundet kandidat-/referensbildmanifest med fördefinierad sid-/läges-/vytäckning; bilder laddas automatiskt"
+    },
+    {
+     "fil": "kunskap/bildbedomning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; skapa bildmanifest före kritik"
+    },
+    {
+     "fil": "SKAPARUNDERLAG.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "valda resurser; koncept/bygge kopierar även hashbundet skapandeuppdrag och bilagor"
+    },
+    {
+     "fil": "kunskap/konsekvensgranskning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "GRANSKNINGSFOKUS.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuell ändring och dess direkta/indirekta följder; ingen dispens från fastställd täckning"
     }
    ]
   },
@@ -521,6 +767,30 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "kvalitetsbasen och konfliktraden"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "KVALITET.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "kunskap/konsekvensgranskning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "GRANSKNINGSFOKUS.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuell ändring och dess direkta/indirekta följder; ingen dispens från fastställd täckning"
     }
    ]
   },
@@ -701,6 +971,18 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "§4, §9, §10, §11"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -732,6 +1014,36 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "hela"
+    },
+    {
+     "fil": "kritik/BEDOMNING-v2.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela; version och hash binds före kandidatbedömning"
+    },
+    {
+     "fil": "kunskap/konsekvensgranskning.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "hela"
+    },
+    {
+     "fil": "GRANSKNINGSFOKUS.md",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "aktuell ändring och dess direkta/indirekta följder; ingen dispens från fastställd täckning"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -807,6 +1119,18 @@
      "klass": "kund",
      "obligatorisk": true,
      "delar": "hela"
+    },
+    {
+     "fil": "kunskap/integrationer-standardvagar.md",
+     "klass": "profession",
+     "obligatorisk": true,
+     "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   }

@@ -11,6 +11,7 @@ mätts står som EJ_MATT. Mätvärden kommer ur Runtimes mätkvitto (--matning),
         [--audit npm-audit.json] [--krav KRAV.json] --ut PRELAUNCH.json [--md PRELAUNCH.md]
 """
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -20,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import seo_kontroll as sk  # noqa: E402
 import copy_kontroll as ck  # noqa: E402
+import stegbevis  # noqa: E402
 
 STANDARDKRAV = {'performance': 90, 'accessibility': 95, 'best_practices': 95, 'seo': 95, 'lcp_ms': 2500, 'cls': 0.1, 'inp_ms': 200, 'sidvikt_kb': 1000}
 HEMLIGHETER = re.compile(r'(re_[A-Za-z0-9]{20,}|sk_live_[A-Za-z0-9]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN (RSA |EC )?PRIVATE KEY-----)')
@@ -54,27 +56,42 @@ def g0_bygg(bygge, repo):
     return grind('0 byggintegritet', status, belagg, (platsh + hemligt) or None)
 
 
-def g1_handlingar(handlingar):
+def bygg_hash(bygge):
+    root = Path(bygge).resolve()
+    rows = [(str(p.relative_to(root)), hashlib.sha256(p.read_bytes()).hexdigest()) for p in sorted(root.rglob('*')) if p.is_file() and not set(p.relative_to(root).parts) & {'node_modules', '.git'}]
+    return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+
+
+def g1_handlingar(handlingar, bygge=None):
     if not handlingar:
-        return grind('1 viktiga handlingar', 'EJ_MATT', 'ingen HANDLINGAR.json: handlingarna ur briefens §4 med provkvitto per handling', 'skriv HANDLINGAR.json [{namn, typ, prov: provare|manuell, kvitto, utfall}]')
-    data = json.loads(Path(handlingar).read_text(encoding='utf-8'))
-    rader = []; ok = True
-    for h in data.get('handlingar', []):
-        kvitto = h.get('kvitto'); utfall = None
-        if kvitto and Path(kvitto).is_file():
-            try:
-                k = json.loads(Path(kvitto).read_text(encoding='utf-8'))
-                utfall = k.get('utfall') or k.get('bedomning') or k.get('status')
-            except ValueError:
-                utfall = 'kvitto oläsbart'
-        elif h.get('prov') == 'manuell' and h.get('utfall'):
-            utfall = 'manuell: ' + h['utfall']
-        rader.append('%s (%s): %s' % (h.get('namn'), h.get('typ'), utfall or 'inte prövad'))
-        if not utfall or not str(utfall).lower().startswith(('klar', 'godk', 'manuell: godk', 'pass')):
-            ok = False
-    if not rader:
-        return grind('1 viktiga handlingar', 'EJ_MATT', 'HANDLINGAR.json utan handlingar')
-    return grind('1 viktiga handlingar', 'PASS' if ok else 'FAIL', '; '.join(rader), None if ok else 'varje viktig handling ska ha ett provkvitto med utfall klar/godkänd (leveransen är provet, inte svarskoden)')
+        return grind('1 viktiga handlingar', 'EJ_MATT', 'ingen HANDLINGAR.json med kandidatbundet stegbevis')
+    try:
+        data = stegbevis.las(handlingar)
+        if not bygge or data.get('bygge_sha256') != bygg_hash(bygge):
+            return grind('1 viktiga handlingar', 'EJ_MATT', 'handlingsprovet saknar aktuell bygginnehållshash; ingen kandidat antas')
+        if not data.get('handlingar'):
+            return grind('1 viktiga handlingar', 'EJ_MATT', 'HANDLINGAR.json utan handlingar')
+        rows = []
+        for h in data['handlingar']:
+            if not all(data.get(k) for k in ('fall', 'kund')) or not all(h.get(k) for k in ('bevis','kontroll_id','steg','niva')):
+                return grind('1 viktiga handlingar', 'EJ_MATT', 'handling saknar fall/kund/bevis/kontroll_id/steg/niva; äldre fri status är inte verifierat resultat')
+            b = stegbevis.las(h['bevis'])
+            if h['niva'] not in ('lokal','privat-preview','drift') or b.get('niva') not in ('lokal','privat-preview','drift'):
+                return grind('1 viktiga handlingar', 'EJ_MATT', 'dokument/statik är inte ett genomfört handlingsprov')
+            if b.get('niva') != h['niva']:
+                raise stegbevis.Vagrad('handlingsprovet gäller annan provnivå än handlingens förväntade nivå')
+            g = stegbevis.kontrollera(h['bevis'], data['fall'], data['kund'], h['steg'])
+            kr = g['stegkrav']['kontroller']
+            if h['kontroll_id'] not in kr or not any(r['id'] == h['kontroll_id'] and r['utfall'] == 'godkant' for r in b['kontroller']):
+                raise stegbevis.Vagrad('handlingen saknar obligatoriskt godkänt prov: ' + h['kontroll_id'])
+            control = next(r for r in b['kontroller'] if r['id'] == h['kontroll_id'])
+            actual_build = stegbevis.pekare(stegbevis.las(control['fil']), control.get('byggpekare'))
+            if actual_build != data['bygge_sha256']:
+                raise stegbevis.Vagrad('råresultatet gäller annat bygginnehåll; en ny hash i HANDLINGAR.json räcker inte')
+            rows.append('%s (%s): godkänt kandidatbundet prov %s, nivå %s' % (h.get('namn'), h.get('typ'), h['kontroll_id'], b['niva']))
+        return grind('1 viktiga handlingar', 'PASS', '; '.join(rows) + '; endast angiven provnivå: lokalt accepterat är inte externt skickat eller mottaget')
+    except (stegbevis.Vagrad, KeyError, TypeError) as e:
+        return grind('1 viktiga handlingar', 'FAIL', str(e), 'rätta bevisbindningen och prova faktisk kandidat; återanvänd inte fri status')
 
 
 def las_matning(matning):
@@ -293,7 +310,7 @@ def rapport(a):
     if a.krav:
         krav.update(json.loads(Path(a.krav).read_text(encoding='utf-8')))
     m = las_matning(a.matning)
-    grindar = [g0_bygg(a.bygge, a.repo), g1_handlingar(a.handlingar), g2_prestanda(m, krav, a.lage), g3_responsivitet(m, las_inspektion(a.inspektion)), g4_tillganglighet(m), g5_seo(a.bygge, a.lage, a.verksamhet), g6_juridik(a.juridik), g7_sakerhet(a.huvuden, a.adress, a.audit, a.bygge)]
+    grindar = [g0_bygg(a.bygge, a.repo), g1_handlingar(a.handlingar, a.bygge), g2_prestanda(m, krav, a.lage), g3_responsivitet(m, las_inspektion(a.inspektion)), g4_tillganglighet(m), g5_seo(a.bygge, a.lage, a.verksamhet), g6_juridik(a.juridik), g7_sakerhet(a.huvuden, a.adress, a.audit, a.bygge)]
     tekniska = [g for g in grindar if not g['grind'].startswith('6')]
     juridik_lamnad = bool(a.juridik and Path(a.juridik).is_file())
     ohanterade = (grindar[6]['atgard'] or '').startswith('människa avgör varje flagga; ohanterade:')

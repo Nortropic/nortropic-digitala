@@ -21,6 +21,8 @@ class Publicering(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.rot = Path(self.tmp.name) / 'repo'; (self.rot / 'verktyg').mkdir(parents=True); (self.rot / 'steg').mkdir(); (self.rot / 'kunskap').mkdir()
         shutil.copy(HERE / 'pinna.py', self.rot / 'verktyg' / 'pinna.py')
+        for name in ('kritikbevis.py','stegbevis.py','kor_profil.py','kvalitetsbild.py','ladda_steg.py'):
+            (self.rot/'verktyg'/name).write_text('# syntetisk domkod för pinnkontrakt\n')
         (self.rot / 'kunskap' / 'a.md').write_text('a\n')
         (self.rot / 'steg' / 'steg.json').write_text(json.dumps({'schema': 1, 'beskrivning': 'x', 'steg': {'s': {'mandat': 'staende', 'syfte': 'x', 'anvisning': 'x', 'underlag': [{'fil': 'kunskap/a.md', 'klass': 'profession', 'obligatorisk': True, 'delar': 'hela'}]}}}))
         (self.rot / 'verktyg' / 'test_ok.py').write_text('import unittest\nclass T(unittest.TestCase):\n    def test_ok(self):\n        self.assertTrue(True)\n')

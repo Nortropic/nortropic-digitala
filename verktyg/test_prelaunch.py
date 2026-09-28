@@ -53,6 +53,13 @@ class Grindar(unittest.TestCase):
         hv = self.d / 'huvud.txt'; hv.write_text('HTTP/2 200\ncontent-security-policy: default-src \'self\'; frame-ancestors \'none\'\nstrict-transport-security: max-age=63072000\nx-content-type-options: nosniff\nreferrer-policy: strict-origin-when-cross-origin\n')
         au = self.d / 'audit.json'; au.write_text(json.dumps({'metadata': {'vulnerabilities': {'high': 0, 'critical': 0}}}))
         (self.b / 'index.html').write_text((self.b / 'index.html').read_text().replace('<img src="/b.jpg">', '').replace('<a href="/tjanster/">Tjänster</a><a href="/tjanster/">x</a>', ''))
+        from test_stegbevis import bevis
+        import fortsatt as fs
+        kund=self.d/'kund';kund.mkdir();fall=self.d/'fall';fs.fortsatt(fall,kund,None,'codex')
+        evidence=bevis(fall,kund,'uppstart',niva='lokal')
+        import stegbevis as sb
+        b=sb.las(evidence); control=b['kontroller'][0]; raw=sb.las(control['fil']); raw['bygge_sha256']=pl.bygg_hash(self.b); Path(control['fil']).write_text(json.dumps(raw)); control['sha256']=sb.sha(control['fil']); control['byggpekare']=['bygge_sha256']; evidence.write_text(json.dumps(b))
+        h.write_text(json.dumps({'fall':str(fall),'kund':str(kund),'bygge_sha256':pl.bygg_hash(self.b),'handlingar':[{'namn':'syntetiskt offertprov','typ':'formulär','bevis':str(evidence),'kontroll_id':'resultat','steg':'uppstart','niva':'lokal'}]}))
         r = self.kor(matning=m, handlingar=h, juridik=j, huvuden=hv, audit=au)
         st = {g['grind'][:1]: g['status'] for g in r['grindar']}
         self.assertEqual(st, {'0': 'PASS', '1': 'PASS', '2': 'PASS', '3': 'PASS', '4': 'PASS', '5': 'PASS', '6': 'MANNISKA', '7': 'PASS'})
@@ -60,6 +67,11 @@ class Grindar(unittest.TestCase):
         j.write_text(json.dumps({'flaggor': [{'flagga': 'hälsa/kropp/medicin', 'status': 'hanterad'}]}))
         r = self.kor(matning=m, handlingar=h, juridik=j, huvuden=hv, audit=au)
         self.assertTrue(r['redo_for_lansering'])
+        # A changed build cannot reuse the old raw result by replacing only the outer hash.
+        original=(self.b/'index.html').read_text(); (self.b/'index.html').write_text(original+'changed')
+        outer=json.loads(h.read_text()); outer['bygge_sha256']=pl.bygg_hash(self.b); h.write_text(json.dumps(outer))
+        self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'FAIL')
+        (self.b/'index.html').write_text(original); outer['bygge_sha256']=pl.bygg_hash(self.b); h.write_text(json.dumps(outer))
         r = self.kor(matning=m, handlingar=h, huvuden=hv, audit=au)
         self.assertFalse(r['redo_for_lansering'], 'utan JURIDIK.json är sajten inte redo, även om alla tekniska grindar är PASS')
         self.assertFalse(r['juridik_lamnad'])
@@ -69,6 +81,24 @@ class Grindar(unittest.TestCase):
         st = {g['grind'][:1]: g['status'] for g in r['grindar']}
         self.assertEqual((st['2'], st['3'], st['4'], st['7']), ('FAIL', 'EJ_MATT', 'FAIL', 'FAIL'))
         self.assertIn('Content-Security-Policy', r['grindar'][7]['atgard'])
+
+    def test_handlingsprov_kraver_verklig_provniva_och_forvantat_steg(self):
+        from test_stegbevis import bevis
+        import fortsatt as fs
+        import stegbevis as sb
+        kund=self.d/'kund';kund.mkdir();fall=self.d/'fall';fs.fortsatt(fall,kund,None,'codex')
+        h=self.d/'H.json'
+        def paket(niva):
+            p=bevis(fall,kund,'uppstart',niva=niva);b=sb.las(p);c=b['kontroller'][0];raw=sb.las(c['fil']);raw['bygge_sha256']=pl.bygg_hash(self.b);Path(c['fil']).write_text(json.dumps(raw));c.update(sha256=sb.sha(c['fil']),byggpekare=['bygge_sha256']);p.write_text(json.dumps(b))
+            return {'fall':str(fall),'kund':str(kund),'bygge_sha256':pl.bygg_hash(self.b),'handlingar':[{'namn':'syntetiskt handlingsprov','typ':'formular','steg':'uppstart','niva':niva,'bevis':str(p),'kontroll_id':'resultat'}]}
+        for niva in ('dokument','statik'):
+            data=paket(niva);h.write_text(json.dumps(data));self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'EJ_MATT');self.assertFalse(self.kor(handlingar=h)['redo_for_lansering'])
+            data['handlingar'][0]['niva']='lokal';h.write_text(json.dumps(data));self.assertNotEqual(pl.g1_handlingar(h,self.b)['status'],'PASS')
+        for niva in ('lokal','privat-preview','drift'):
+            data=paket(niva);h.write_text(json.dumps(data));self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'PASS')
+        data=paket('lokal');data['handlingar'][0]['steg']='qa';h.write_text(json.dumps(data));self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'FAIL')
+        data['handlingar'][0]['steg']='uppstart';data['handlingar'][0]['niva']='drift';h.write_text(json.dumps(data));self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'FAIL')
+        data['handlingar'][0].pop('steg');h.write_text(json.dumps(data));self.assertEqual(pl.g1_handlingar(h,self.b)['status'],'EJ_MATT')
 
     def test_korning_fran_kor_profil_laser_runtimes_sammanfattning_och_inspektionen_ger_spill(self):
         """Fynd ur slutprovet HELHET-20260927: KORNING-kvittot bär inte mätvärdena; de ligger i körkatalogens SAMMANFATTNING.json."""

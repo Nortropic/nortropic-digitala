@@ -1,63 +1,57 @@
-# Referensjakt — kort arbetsunderlag för researchsteget
+# Referensjakt — uppgiften styr urvalet
 
-Härlett underlag (kedjedrivaren, 2026-09-26). Källor: webbgrundens `skills/nortropic-plan/references/inspirationskallor.md`
-@ `e4c8c52` rad 1–60 (källvärdering, "guldgruvan", receptet), Norrgläntas `PROJECT-BRIEF.md` §5 (referensöversättningen,
-budgetöverskridandet 21 mot 10) och jämförelsens §3.3 (gallerierna 2026-09-26). Det gamla protokollets maskineri
-(5d-stegen, stewardregeln, kandidattak som tvingande grind) följer inte med; briefen och ACCEPT vinner över allt här.
+Beslut DIGITALA-YRKESFORMAGA-20260928: ersätter de aktiva urvalsregler som härletts ur webbgrunden
+`inspirationskallor.md @ e4c8c52` och ett tidigare kundfall. Historiken bevaras i Git och REGISTER;
+Norrglänta är inte kvalitetsreferens. Ingen ort, omdömesnivå, minimalism eller företagsstorlek bestämmer urvalet.
 
-## Vad jakten ska ge
+## Sök efter vad som behöver lösas
 
-Tre till fem referenser som var och en svarar på en **fråga** i fallet (t.ex. "hur visar en småföretagssajt säsongens
-tjänster utan prislista?"), med en rad per referens i briefens referensöversättning: vad tas, vad förkastas, varför.
+Utgå från kundens viktigaste uppgifter, innehåll, erbjudande, målgrupp och osäkerheter. Skriv vilka frågor
+researchen ska besvara och avsluta när underlaget räcker för välgrundade val. Antalet sajter, kompar eller
+sökningar är inte en kvot. En komplettering ska lösa en faktisk lucka, inte fylla en lista.
 
-## Regler som stöd
+Använd tre källroller, med uppgiftsmotiverat urval. Samma källa får bära flera roller:
 
-1. **Budget som frågor, inte som antal laddningar.** Skriv före jakten vilka frågor referenserna ska svara på (högst fem).
-   En laddning som inte svarar på någon fråga räknas som överskridande och redovisas. (Norrglänta: 21 laddningar mot 10
-   räknade hämtningar, inte svar.)
-2. **Sedd eller läst.** Märk varje referens: *sedd* (renderad i webbläsare, skärmbild sparad) eller *läst* (sidtext eller
-   beskrivning). Bara sedda referenser får styra komposition.
-3. **Geografi per rad.** Lokal peer, nationell peer eller bredare referens står på varje rad; två lokala peers om de finns.
-4. **Betyg är ett urvalsfilter, aldrig belägg.** Reco eller Google Maps med betyg ≥ 4,7 och många omdömen väljer ut
-   företag vars sajter granskas; betyget säger inget om att designen konverterar. Ger den lokala marknaden få kandidater
-   vidgas geografin stegvis utan att kravet sänks.
-5. **Receptet**: omkring tre verkliga branschsajter (beviset), en till två från kurerade gallerier (smaklyftet), högst
-   två koncept (idégnistor). Bevis väger mer än koncept.
-6. **Läs bara.** Inga formulär, kontakt-CTA:er, konton eller inloggningar på främmande sajter. Betalt innehåll används
-   inte.
-7. **Byråkredit i footern** är en bonusväg till fler branschsajter, ingen förväntan.
+- **Bransch**: verkliga starka verksamhetssajter för erbjudande, innehåll, förtroende, kundresa och affärsmodell.
+  En direkt konkurrent kan samtidigt vara en professionell hantverksreferens. Lokal närhet väljs när den
+  förklarar marknaden eller kunduppgiften; två lokala konkurrenter är aldrig ett krav.
+- **Hantverk**: ledande komposition, typografi, bildbehandling, rytm, responsivitet eller interaktionskvalitet,
+  även från andra branscher. Motivera vad som faktiskt är väl löst och relevant att lära av.
+- **UX/funktion**: etablerade användbarhetsmönster och primärkällor för tillgänglighet, formulär, bokning,
+  betalning, innehållsstruktur eller andra funktioner. En teknisk dokumentation säger inte hur vacker en sajt är.
 
-## Källor och deras villkor i dag (läst 2026-09-26; kontrollera vid nästa fall)
+Skilj marknadsposition, företagsomdömen, designutmärkelser och själv observerad kvalitet. Betyg kan ge en
+branschobservation men är inget designfilter. En utmärkelse är en sökingång, inte bevis på användarnytta.
+Gallerier som Awwwards, SiteInspire, Godly, FWA, CSS Design Awards, Httpster och One Page Love är möjliga
+sökingångar, inte en stilhierarki. Ett litet företag får ha avancerat hantverk när uppgift, budget och drift
+bär det. Följ galleri till faktisk sajt när slutsatsen gäller beteende eller responsivitet.
 
-| Källa | Bäst för | Villkor |
-|---|---|---|
-| SiteInspire | ren, redaktionell, typografiskt återhållen design; taggar per bransch | svarar 429 för skript; fungerar i webbläsare för en människa |
-| Land-book | riktiga landningssidor per kategori | 403 med Cloudflare-utmaning för skript; webbläsare |
-| One Page Love, Httpster, Siiimple | enkelsidiga sajter; typografidrivna; minimalism per bransch | fria, 200 |
-| Haien (svensk byrå för hantverkare) | svensk peer med serif-typografi och tjänste-/ortssidor | fri; passar hantverk, inte alla branscher |
-| Mobbin | komponentnivå, mobilflöden | fri nivå begränsad, inloggning krävs för mycket; betalt används inte |
-| GoodUI, Baymard `learn` | konverterings- och formulärevidens | fria artiklar räcker; betalda paket används inte |
-| Awwwards, Godly, FWA, CSS Design Awards | experimentell rörelse och immersivt berättande | varningsflagg: bara filtrerat, aldrig som riktning för en småföretagssajt |
-| Reco, Google Maps | urval av verkliga branschsajter via omdömen | läs bara |
+## Läs och se på riktigt
 
-## Utdata
+Öppna de utvalda sajterna i riktig webbläsare på relevant mobil och större vy. Läs representativt innehåll,
+öppna relevant meny, tjänst, formulär/felväg eller annan tillåten interaktion. Ange exakt vad som observerats.
+Läsande utforskning får inte bli verkliga inskick, köp, bokningar, konton eller kontakt utan mandat.
 
-Referensöversättningen i briefens §7 (rad per referens) plus sparade skärmbilder i fallets `referenser/`. Konflikter
-mellan referenser (återhållsamhet mot uttryck, rörelse mot budget) skrivs som en rad "kända konflikter och hur de
-avgjordes" i briefens §7.
+Spara ett litet användbart visuellt paket: de vyer och tillstånd som förklarar ett viktigt val, med URL,
+fångsttid, viewport, avsnitt/tillstånd och kort observation. För varje referens ange:
 
-## Källtypsregler och bildinventering (HELHET-20260927, ur det arkiverade inspirationsprotokollet 5d)
+- roller och urvalsskäl; vad som gör den stark för den aktuella frågan;
+- status: faktisk livevy, galleribild, text, delvis läst eller otillgänglig;
+- bild-/beteendepekare, vad som togs med, vad som avvisades och begränsningen i observationen;
+- vilket konkret kandidatval den ska påverka och hur det ska prövas.
 
-- Kundens egna referenser och egen jakt väger lika; varje referens öppnas och skärmbildas (`referenser/ref-N-<namn>.png`
-  för kundens, `jakt-N-<namn>.png` för egna). Skärmbild slår beskrivning; observationer fabriceras aldrig
-  ("kunde inte öppnas" är ett giltigt utfall). Read-only mot främmande sajter.
-- Verklig sajt: rendera dator och mobil 390 px; skärmbilda första vyn och en bärande sektion. Galleripost: följ till
-  den faktiska sajten. Koncept (t.ex. Dribbble): märk "koncept — ej verifierat byggbart". Omdömesprofiler: bara
-  förtroendemönster. Betyg som bara syns i sökresultat märks "ej verifierat på källan".
-- Per referens: paletthuvuddrag (uppskattade hex för bas, text, primär, accent), typografigenre, första vyns mönster
-  (foto-ledd, text-ledd, delad), förtroendeblockets struktur, ett till två element värda att ta. Sammanställs i briefens
-  referensöversättning (§7): tas · förkastas · varför.
-- Bildinventering i research §7: källor i ordning (kundens material, Google-företagsprofil, sociala kanaler, befintlig
-  sajt); en rad per kandidatbild (källa, kategori, upplösning, användbar i första vyn, rättigheter, anspråk); utfall
-  TILLRÄCKLIG, BRISTFÄLLIG eller SAKNAS med vad som saknas. Ingen bildlucka är ett stopp: den blir en faktafråga och ett
-  fotouppdrag (`bild.md`).
+En sökträff eller marknadsföringstext är inte observerad layout eller funktion. En stillbild visar inte
+animation, touchbeteende eller genomförd transaktion. En otillgänglig källa får inte märkas sedd; välj en
+annan källa för nödvändig jämförelse. Kundens egna referenser får samma noggranna läsning som egen research.
+Webbreferensernas skärmbilder är privat jämförelseunderlag, inte licens att återpublicera deras tillgångar.
+
+## Från observation till skapande
+
+För in observationerna i research.md §13 och det valda urvalet i SKAPARUNDERLAG.json enligt
+skapandeunderlag.md. Brief §7 förklarar sambandet behov → observerat drag → egen lösning → prövning.
+Ett moodboard med bara färg, serif och rundningar räcker inte: visa även innehåll, hierarki, rytm,
+bildbeskärning och relevant interaktion. Kopiera inte identitet, texter eller egenart.
+
+Bildinventeringen i research §7 skiljer kundmaterial, licensierat material och syntetiska illustrationer.
+Dokumentera rättigheter och tänkt roll innan användning; genererad bild är inte verkligt kundbevis.
+Referensbild och publicerbar tillgång är olika roller. Läs bild.md för bearbetning och responsiva leveranser.

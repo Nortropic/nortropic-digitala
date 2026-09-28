@@ -31,7 +31,7 @@ class Validering(unittest.TestCase):
         self.assertEqual(vu.nap(v)['ort'], 'Provstad')
 
     def test_fel_vagras_med_namngivna_fel(self):
-        for bad, ord in ((exempel(fiktiv='ja'), 'fiktiv'), (exempel(orgnr='5566778899'), 'orgnr'), (exempel(kontaktvagar=[]), 'kontaktvagar'),
+        for bad, ord in ((exempel(fiktiv='ja'), 'fiktiv'), (exempel(orgnr='5566778899'), 'orgnr'), (exempel(kontaktvagar=None), 'kontaktvagar'),
                          (exempel(adress=dict(exempel()['adress'], postnummer='12345')), 'postnummer'), (exempel(rackvidd={'typ': 'lokal', 'orter': []}), 'orter'),
                          (exempel(tjanster=[]), 'tjanster'), (exempel(oppettider=[{'dag': 'måndag', 'oppnar': '7', 'stanger': '16:00'}]), 'oppettider'),
                          (exempel(extra=1), 'okända'), (exempel(sokkonsol_agare=['ingen-adress']), 'sokkonsol_agare'), (exempel(omdomen_kalla={'plattform': 'Google'}), 'omdomen_kalla'),

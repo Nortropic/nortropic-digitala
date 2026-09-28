@@ -21,7 +21,9 @@ class Prov(unittest.TestCase):
         self.assertIn('Tillämplighet:** tillämplig', md); self.assertIn('Provgatan 1, 123 45 Provstad', md); self.assertIn('Måndag: 07:00–16:00', md); self.assertIn('hitta.se', md)
         dold = ls.datablad(exempel(fiktiv=False, adress={'gata': 'Hemgatan 2', 'postnummer': '123 45', 'ort': 'Provstad', 'publik': False, 'roll': 'hemvist'}))
         self.assertIn('DOLD', dold); self.assertNotIn('Hemgatan', dold)
-        self.assertIn('Inget datablad', ls.datablad(exempel()))
+        self.assertIn('LOKALT TESTUTKAST', ls.datablad(exempel()))
+        self.assertIn('## Verksamhetsuppgifter', ls.datablad(exempel()))
+        self.assertIn('förbjuden', ls.datablad(exempel()))
 
     def test_kontroll_mot_bygge(self):
         with tempfile.TemporaryDirectory() as d:

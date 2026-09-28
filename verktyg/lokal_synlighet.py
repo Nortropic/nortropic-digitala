@@ -39,11 +39,13 @@ def datablad(v, beskrivning=None):
     status, skal = tillamplighet(v)
     lines = ['# Lokal synlighet — %s' % v['namn'], '', '**Tillämplighet:** %s — %s.' % (status, skal), '',
              '**Åtkomstväg:** profilen skapas, görs anspråk på och verifieras av en behörig människa (kundens Google-konto som primär ägare; kontoret som hanterare vid avtal). Verifiering (vykort, telefon, video) tar dagar till veckor: börja tidigt. Ingen API-skapad profil.', '']
-    if status != 'tillämplig':
+    if v['fiktiv'] and v['rackvidd']['typ'] in ('lokal', 'regional'):
+        lines += ['**LOKALT TESTUTKAST — får inte publiceras, användas för verklig profil, citation eller omdömesförfrågan.**', '', 'Följande är förberedda uppgifter för prov, inte aktivering eller verifierad extern integration.', '']
+    elif status != 'tillämplig':
         lines += ['Inget datablad: se tillämpligheten ovan.']
         return '\n'.join(lines) + '\n'
     lines += ['## Verksamhetsuppgifter (exakt som på sajten och i alla kataloger)', '', '- Namn: %s (ingen nyckelordsstoppning i namnet: suspensionsrisk)' % v['namn'],
-              '- Telefon: %s (visning) / %s (E.164); samma nummer som sajten, inget spårningsnummer' % (n['telefon_visning'], n['telefon_e164']),
+              '- Telefon: %s (visning) / %s (E.164); samma nummer som sajten, inget spårningsnummer' % (n['telefon_visning'] or 'saknas — får inte hittas på', n['telefon_e164'] or 'saknas'),
               '- Adress: %s' % (n['adress'] if n['adress_visas'] else 'DOLD (serviceområdesverksamhet) — ange serviceområden: ' + ', '.join(n['omrade'])),
               '- Serviceområde: ' + (', '.join(n['omrade']) or '(inget angivet)'), '- Webbplats: https://%s/ (länk med utm_source=google&utm_medium=organic&utm_campaign=gbp om mätverktyget läser UTM)' % ((v.get('webb') or {}).get('doman') or '<domän>'),
               '- Kategorier: primär = %s; sekundära bara genuint tillämpliga, aldrig aspirerande' % ((v.get('kategorier') or ['(ange primär kategori på svenska)'])[0]),
@@ -79,7 +81,7 @@ def kontrollera(v, bygge):
                     tel_text = re.sub(r'<[^>]+>', ' ', raw)
                     if n['telefon_visning'] and re.sub(r'\D', '', n['telefon_visning']) not in re.sub(r'\D', '', tel_text):
                         fynd.append({'sida': sk.url_for(root, f), 'typ': 'telefonnumret saknas som synlig text', 'text': 'sidan bär schema men inte numret i läsbar text'})
-    return {'schema': 1, 'verksamhet': v['namn'], 'tillamplighet': tillamplighet(v)[0], 'scheman': scheman, 'nap': n, 'fynd': fynd,
+    return {'schema': 1, 'verksamhet': v['namn'], 'tillamplighet': tillamplighet(v)[0], 'scheman': scheman, 'nap': n, 'fynd': fynd, 'niva': 'statisk lokal kontroll', 'kontaktberedskap': 'ofullständig' if not v.get('kontaktvagar') else 'uppgifter finns; faktisk leverans ej prövad', 'extern_aktivering': 'spärrad: fiktiv verksamhet' if v['fiktiv'] else 'ej prövad',
             'not': 'NAP ska vara identisk på sajten, i företagsprofilen och i katalogerna; profilens egna uppgifter läses av människa i business.google.com'}
 
 

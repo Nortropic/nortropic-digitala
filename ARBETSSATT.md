@@ -65,11 +65,13 @@ lanseringsmandat eller ett kanalbehov som kommer senare återöppnar stegen auto
 laddar stegets underlag i fallet (ett redan laddat steg återupptas utan ny laddning),
 skriver `NASTA.md` (beställning, syfte, anvisning, arbetsyta, redan utförda
 sidoeffekter, väntande beroenden, hur utfallet rapporteras) och bokför allt i fallets `LAGE.json` (0600) med händelselogg
-per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--kvitto FIL] [--sidoeffekt …]
-[--beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
-utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att allt annat fortsätter, och `omprova
+per utförare. `klart --steg S --utfall klar|underkand|inte-tillampligt|vantar --not … [--bevis FIL] [--kvitto FIL] [--sidoeffekt …]
+[--beroende …] [--lost-beroende …]` tar emot utfallet för det laddade steget; underkänt ger omprov av samma steg (diagnos → åtgärd → omprov)
+utan ägarfråga; `vantar --beroende "vad"` bokför ett saknat externt beroende så att oberoende arbete kan fortsätta, och `omprova
 --steg S --not …` öppnar steget igen när beroendet finns. En färsk utförare kör `status` och `fortsatt` och tar över
-utan att ägaren återberättar. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
+utan att ägaren återberättar. Klar/N/A kräver kandidat-, miljö- och konfigurationsbundet råbevis enligt
+[kunskap/bevis-och-fortsattning.md](kunskap/bevis-och-fortsattning.md). Ändrade bevis eller nödvändiga förutsättningar
+återöppnar aktuellt godkännande; väntan är aldrig färdig leverans. Utförarbyte till Codex utanför Runtime görs med Runtimes pinnade binär (`Nortropic
 Runtime/.runtime/bin/codex-<version>`, samma modell som Runtimes konfiguration anger), inte med den CLI som råkar ligga i
 PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körde (L27).
 
@@ -120,3 +122,132 @@ Norrglänta.
 En beställning bär hela uppdraget till färdig privat förhandsvisning (`MANDAT.md` §2). Brief, koncept, interna
 kvalitetsval och vanliga rättningar går inte via ägaren; en intern gransknings- och rättningsloop (`KVALITET.md`)
 avgör omtag. Ägaren får den färdiga leveransen och rapporten och lämnar därefter sin bedömning.
+
+Bedömningskontrakt `digitala-kvalitet/2` i `kritik/BEDOMNING-v2.md` gäller nya bedömningar. Kundbehov och
+mandat står över intern brief; professionell otillräcklighet kan blockera trots gröna teknikprov. Frys kriterier
+före kandidatgranskning, bind faktisk kandidat och öppnade referensbilder; tidigare acceptanser ändras inte.
+
+
+## Beslut 2026-09-28: bildfält i kritikens svarskontrakt
+
+För nya kvalificerade kritikstarter begränsas den laddade schemamallen, efter manifestkontroll, till exakta
+bildplatser per roll och manifestets proveniensvärden. Orsak: ett faktiskt läst bildpaket kan annars ge ett
+formgiltigt svar med flera filnamn i samma fält som den semantiska konsumenten korrekt vägrar. Mallarna
+anger därför ett bildpar per jämförelseobjekt och ordagrann proveniens. Runtimes schemadialekt kan inte
+koppla metadata villkorligt till en viss bild; den befintliga domkontrollen gör fortsatt den kontrollen.
+Detta är en transportprecisering, inte en ändring av kvalitetskriterier, stilnivå eller godkännandefilter.
+Schema, fråga och domkodspinnar versionsbinds för nya körningar. Frysta laddningar, råsvar och pågående
+körningar bevaras; inget gammalt svar normaliseras eller får ett nytt godkännande av denna ändring.
+
+
+## Beslut 2026-09-28: exakta platser också i seen_files
+
+Ett senare native kontraktsprov genererade exakta bildpar men kommenterade bildplatserna i seen_files.
+För nya kvalificerade starter binds därför listans tillåtna värden till det färdigbyggda Runtime-underlaget,
+inklusive profilens dokumenterade FILES.md/AGENTS.md. Läsomfång anges i saktext. Detta förebygger formatfel;
+enum innebär inte att en fil lästs, och faktisk bildleverans samt den semantiska domkontrollen ändras inte.
+Tidigare domar och råsvar lämnas orörda. Beslutet tillhör ett senare delta efter föregående kodgranskning.
+
+## Beslut DIGITALA-YRKESFORMAGA-20260928 — från research till skapande
+
+De tidigare aktiva referensfiltren för lokalitet, företagsbetyg, galleri och konkurrent ersätts av
+uppgiftsmotiverade källroller (referensjakt.md). Aktuella kundkällor följer research/brief/koncept/bygge;
+research får även hashbundna materialutdrag, uttryckligen obetrodda och inte redan lästa.
+
+Briefarbetet lämnar ett kort skapandeuppdrag och SKAPARUNDERLAG.json vid ny formgivning/större omarbetning.
+Vanliga laddaren kopierar valda bilder/tillgångar med hash och skriver SKAPARPAKET.md först i läsordningen.
+Obligatoriska kriterier, kundfakta och säkerhetskrav består som fördjupning. Valfria externa resurser kräver
+ett motiverat val; ingen automatisk dump av Taste, prototype, PICKER eller Hallmark. Resursens historiska
+beslut läses och hel skill/plugin, metod, anpassning, utdrag eller verktyg avgörs för uppgiften. Laddaren
+installerar/anropar inget; faktisk användning och påverkan dokumenteras separat.
+
+Tidigt skapas en representativ upplevelse med verkligt innehåll och relevant interaktion på mobil/större vy.
+Alternativa riktningar följer osäkerheten, inte fast kvot/enaxelkrav. Granskning jämför faktisk kandidat
+med öppnade professionella referenser. Omprov får ett fokuserat konsekvensunderlag, medan bedömningskontrakt
+v2 och fastställd täckning gäller oförändrat. Befintliga körspår används för sann resursredovisning; ingen
+ny full läsning bara för att samla godkännanden. Skapandeunderlag.md och konsekvensgranskning.md anger formen.
+
+
+### Behovsval till fungerande integrationsprov
+
+Research/brief laddar daterade standardvägar; välj bara kundens relevanta behov och dokumentera
+plan, konto, kostnad, begränsningar och ansvar. Bygge/prov använder `verktyg/integrationer.py`
+och dess exempel, samt befintliga kanalverktyg via delegaten. Kontraktsprov, provider-test och
+verklig integration är skilda nivåer. Prelaunch/leverans/drift återläser vad som faktiskt
+fungerar och vilket externt led som återstår, utan att gömma saknad kod bakom en token.
+
+### Övergång till starkare kundbindning 2026-09-28
+
+Äldre klarmarkeringar vars kvitton saknar aktuellt intag, skaparpaket eller integrationsval återöppnas vid första kontrollen. Historik, kvitton och utförda sidoeffekter bevaras; publicera/skicka inte samma sak igen. Läs orsaken och ompröva relevant underlag, inte hela historiken av slentrian. research-intervju.md är intervjuns intag; researchsteget skriver sin syntes i research.md. Nytt intag kräver vanlig omladdning.
+
+Vid skrivande Kundstart-import normaliseras också äldre falska motsägelser mellan
+okänt och en strikt senare, fortfarande aktuell kundutsaga från samma fråga.
+Föregående intervju, intagsutdrag och arbetsuppgift sparas privat före ändringen;
+motsägelsen avgörs med skäl och källrevision, den raderas inte. Råexporter och
+kvitterade signaler skickas inte om. Aktuellt intagsutdrag ändras och ordinarie
+faktabindning omprövar research/följdsteg. Två kända motstridiga uppgifter och
+rena statusläsningar lämnas orörda. Okänt skapar inte i sig en ny sakmotsägelse.
+
+Normaliseringen kräver att båda svaren återfinns ordagrant i senast importerade,
+hashbundna exporten. Behov och öppen täckning bevaras i det gemensamma intagsutdraget.
+Äldre motsägelser i omvänd riktning eller med en senare ersatt utsaga prövas via
+vanlig `intervju avgor`; de autoavgörs inte. En skadad föregångarkopia bevaras och
+återställs från verifierat underlag före omprov, aldrig genom att radera historiken.
+
+## Beslut 2026-09-28: överför arbetsresultat med lästa filbytes
+
+Fortsättningsuppdragets bevarade assistans visar att ett privat provskript fyllde tre
+null-hashar och kopierade en modellvald bilaga. Den gemensamma vägen får därför
+`fortsatt.py overfor --fall FALL --steg research|brief`: bevara modelloriginal, validera
+alla valda filer före skrivning, bind faktiskt lästa bytes, bevara tidigare kundfiler
+och återuppta avbrott utan nya externa handlingar. `klart` och dess sak-/beviskrav
+gäller fortfarande. Detta gäller avskilda laddade arbetsytor, inte kundspecifika designval.
+Researchunderlaget skiljer dessutom uttrycklig kunduppgift från extern verifiering och
+från okänt. Rättningen motiveras av den observerade felklassningen i kundfortsättningen;
+modellens allmänna semantiska förmåga är inte därmed verifierad.
+
+Kompositionsprecisering i samma fortsättning: tidigare keramik-/energiprov visade
+obalanserade bild/textkolumner och mindre genomarbetad mobilprioritering trots vald
+referens. Skapandeunderlaget kräver därför ett konkret kompositionsbeslut och ett
+avgränsat renderat omprov med verkligt innehåll före utbyggnad. Metoden prövas på
+befintligt material; de egna proven blir ingen estetisk mall och inför inga stilkrav.
+
+## Beslut 2026-09-28: avgränsad formåterhämtning av kritik
+
+Ordinarie profilkonsument och kvalitetsbild får återhämta ett komplett tidigare sakligt
+råsvar när endast ett tillåtet prosafälts form är ogiltig. Exakta originalbindningar
+till kandidat, fråga, schema, bilder, kriterier och domkod består; originalet bevaras.
+En liten formrättning och separat innebördskontroll måste lyckas. Ändrad dom, blockerare,
+risk, bevisräckvidd eller semantisk domkod vägras. Historiska kodbytes används endast
+som hashunderlag; ingen äldre godtycklig kod importeras. Ny pinnversion gäller den
+ändrade konsumentkopplingen, inte en ändring av professionens v2-bedömningskriterier.
+
+Separat kundpaketgranskning B1–B3/O1–O7 preciserar överföringen: valfritt skaparpaket i brief, historisk omladdning utan förfalskad färskhet, kanoniska filnamn/bevispekare, dynamiskt skiftlägesoberoende skrivskydd, symlinkfri historik och validerade valfria research-/integrationsutdata. Oförändrade sak-/beviskrav kvarstår. Ny pinnversion binder denna rättning; ingen kundpreferens eller produktsida blir metodpraxis.
+
+Separat formgranskning skärper samma återhämtningsväg: konsumentens aktuella kodbindning skiljs från ursprunglig bedömningsbindning; råström, sessionsbevis och Runtime-proveniens jämförs. Kvalitetsbilden visar att ursprungssessionen saknade terminal och att innebördskontrollen är en modellbedömning. Pinnuppdateringen omfattar dessa konsumenträttningar och historikladdaren; gränser, sakdom och beviskrav ändras inte.
+
+## Beslut 2026-09-28: aktuell materialkälla också i brief
+
+Ett faktiskt kontinuitetsprov visade att briefsteget fick intern research men inte kundmaterialets
+utdrag och sedan skärpte en verifieringsuppgift till ett obelagt existenspåstående. Samma befintliga
+hash- och sökvägskontroll för aktuella materialutdrag gäller därför både research och brief. Utdragen
+är obetrodda, laddade och inte redan lästa; koncept/bygge får fortfarande det motiverade urvalet via
+skaparpaketet. Historiska körningar och kundfiler ändras inte.
+
+Briefens bevisregel prioriterar aktuell kundkälla före intern syntes, skiljer verifieringsbehov från
+belagt innehåll och binder en saknad uppgift till just dess beroende åtgärd. Oberoende arbete inom
+accepterad omfattning fortsätter utan generell spärr på hela projektet. Detta är en generell
+käll- och proportioneringsrättning, ingen kundspecifik innehållsregel eller visad modellaccept.
+Ny läsning av briefmallen och laddarens kontrollmotivering ligger till grund för berörda nya pinnar.
+
+Separat kundpaketgranskning r2 prövar också omladdning efter historiska schema-/resursfel:
+brief bevarar originalpaketet som råhistorik utan valauktoritet och markerar fel; otillgängliga
+val aktiveras inte och osäkra källor följs inte. Koncept/bygge behåller strikt validering med
+anvisning att ompröva brief. En ändrad historisk fil får en separat hash av nu observerade bytes,
+aldrig ny godkänd paketbindning, så omarbetning kan skydda mot ännu en samtidig ändring.
+Överföringen bokför förberedd historik före första kundskrivning och återläser dess bindningar
+före avbrottsåterhämtning; befintliga filrättigheter bevaras och valda bevispekare får kanoniska namn.
+
+Samma återhämtningsproveniens visas även i kvalitetsbildens publika JSON-utdata: ursprunglig
+konsumentbindning samt Runtimes format-/sessionsmetadata följer med statusraden. Denna
+pinnuppdatering rättar en utelämnad projektion, utan ändrad sakdom eller godkännanderegel.

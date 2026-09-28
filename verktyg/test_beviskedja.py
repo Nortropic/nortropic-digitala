@@ -101,6 +101,7 @@ class B_LackageTillBlindBedomning(Rig):
         self.assertIn('avskärmad', out['skal'])
 
     def test_briefstyrd_kritik_far_brief_och_professionstext(self):
+        self.filer.write_text('[]')
         code, out = self.kritik('renderingslasning', None, '--parameter', 'NUMMER=1', '--parameter', 'ANTAL=1', '--parameter', 'VAD=x', '--parameter', 'KUND=k')
         self.assertEqual(code, 0, out)
         self.assertIn('KUND/PROJECT-BRIEF.md', out['manifest_platser'])
@@ -123,7 +124,7 @@ class C_KvalitetsbildensGiltighet(unittest.TestCase):
                 (rundir / 'KVITTO.json').write_text(json.dumps({'outcome': outcome, 'profile': 'matning'}))
                 (rundir / 'KVITTO.sha256').write_text((hashlib.sha256((rundir / 'KVITTO.json').read_bytes()).hexdigest() if hash_ok else 'a' * 64) + '  KVITTO.json\n')
                 (rundir / 'SAMMANFATTNING.json').write_text(json.dumps({'views': {}}))
-        post = {'schema': 1, 'profil': 'matning', 'etikett': name, 'exit': 0, 'resultat': {'run': str(rundir), 'outcome': outcome},
+        post = {'schema': 1, 'runtime_kvitto_sha256':hashlib.sha256((rundir/'KVITTO.json').read_bytes()).hexdigest() if run and kvitto else None, 'profil': 'matning', 'etikett': name, 'exit': 0, 'resultat': {'run': str(rundir), 'outcome': outcome},
                 'laddning': {'fil': str(self.laddning), 'sha256': self.ladd_sha, 'steg': 'matning'}, 'bindning': bindning or {}}
         (self.fall / ('KORNING-20260927T%s-matning-%s.json' % (name.zfill(6)[-6:], name))).write_text(json.dumps(post))
 
@@ -143,7 +144,7 @@ class C_KvalitetsbildensGiltighet(unittest.TestCase):
         self.assertTrue(status['fel'].startswith('underkänd'))
         self.assertTrue(status['korrupt'].startswith('korrupt'))
         text = kvalitetsbild.rendera(rows, None, {'revision': 'r1'})
-        self.assertIn('Aktuella leveransbevis: 1. Historik eller brist: 5.', text)
+        self.assertIn('Aktuella leveransbevis: 1. Historik eller utanför kvalitetsgrinden: 5.', text)
         for name in ('gammal', 'trasig', 'borta', 'fel', 'korrupt'):
             self.assertIn(name, text)
         self.assertIn('kritik: INGEN aktuell körning', text)

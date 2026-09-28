@@ -84,11 +84,11 @@ def kontrollera(mp, bygge):
     filer = [f for f in root.rglob('*') if f.is_file() and f.suffix in ('.html', '.js', '.mjs', '.tsx', '.jsx', '.ts') and not (set(f.parts) & {'node_modules', '.git', '.next'})]
     texter = {f: f.read_text(encoding='utf-8', errors='replace') for f in filer}
     allt = '\n'.join(texter.values())
-    ut = {'schema': 1, 'bygge': str(root), 'filer': len(filer), 'handelser': [], 'sparare': [], 'samtycke': None, 'fynd': []}
+    ut = {'schema': 2, 'niva': 'statisk textsökning — inga körda händelser', 'bygge': str(root), 'filer': len(filer), 'handelser': [], 'sparare': [], 'samtycke': None, 'fynd': []}
     for e in mp['handelser']:
         rx = re.compile(r'''(["'`])%s\1''' % re.escape(e['namn']))
         var = sorted({str(f.relative_to(root)) for f, t in texter.items() if rx.search(t)})
-        ut['handelser'].append({'namn': e['namn'], 'finns_i_koden': bool(var), 'filer': var[:5], 'status': 'i koden (inte verifierat mätt)' if var else 'saknas i koden'})
+        ut['handelser'].append({'namn': e['namn'], 'texttraff': bool(var), 'handelse_verifierad': False, 'filer': var[:5], 'status': 'ordträff (kan vara kommentar eller död kod; ej händelsebevis)' if var else 'ingen ordträff (inte bevis på frånvaro i körning)'})
         if not var:
             ut['fynd'].append('händelsen %s finns inte i bygget' % e['namn'])
     for nyckel, namn in SPARARE.items():
@@ -96,13 +96,15 @@ def kontrollera(mp, bygge):
             ut['sparare'].append(namn)
     ut['sparare'] = sorted(set(ut['sparare']))
     har_samtycke = bool(SAMTYCKE.search(allt))
-    ut['samtycke'] = {'kravs': mp['samtycke_kravs'], 'mekanism_funnen': har_samtycke}
+    ut['samtycke'] = {'kravs': mp['samtycke_kravs'], 'texttraff': har_samtycke, 'beteende_verifierat': False}
     if ut['sparare'] and not har_samtycke:
-        ut['fynd'].append('spårare (%s) utan spår av samtyckesmekanism; ingen spårning före samtycke' % ', '.join(ut['sparare']))
+        ut['fynd'].append('textträff för spårare (%s) utan samtyckestext; beteende måste prövas' % ', '.join(ut['sparare']))
     if mp['verktyg'] in ('ga4',) and 'gtag(' not in allt and 'googletagmanager.com' not in allt:
         ut['fynd'].append('verktyget ga4 är valt men inget gtag/GTM finns i bygget')
     if mp['verktyg'] == 'ingen' and ut['sparare']:
-        ut['fynd'].append('mätplanen säger inget verktyg men bygget laddar spårare: ' + ', '.join(ut['sparare']))
+        ut['fynd'].append('mätplanen säger inget verktyg men textsökningen hittar spårarnamn: ' + ', '.join(ut['sparare']))
+    ut['mottagning'] = {'verifierad': False, 'status': 'ej prövad; nätverksförsök är inte mottagarbekräftelse'}
+    ut['kvarstaende_prov'] = ['faktisk utlösare och rätt händelse', 'nätverk före nekat/accepterat/återkallat samtycke', 'händelsens korrelation i rätt mätmottagare och egenskap']
     ut['not'] = 'en händelse i koden är inte en mätt händelse: verifiera i verktygets felsökningsläge eller med webbläsarverktygets nätverkslogg'
     return ut
 
@@ -120,7 +122,10 @@ def utm(url, kalla, medium, kampanj, innehall=None):
 
 def las(export, mp):
     p = Path(export)
-    rows = json.loads(p.read_text(encoding='utf-8')) if p.suffix == '.json' else list(csv.DictReader(p.open(encoding='utf-8-sig')))
+    if p.suffix == '.json':
+        rows = json.loads(p.read_text(encoding='utf-8'))
+    else:
+        with p.open(encoding='utf-8-sig') as f: rows = list(csv.DictReader(f))
     konv = {e['namn'] for e in mp['handelser'] if e['konvertering']}
     summa = {'affarsnytta': {}, 'proxy': {}}
     for r in rows:

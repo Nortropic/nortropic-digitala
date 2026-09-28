@@ -305,3 +305,11 @@ i briefen).
   ett utförarbyte utanför Runtime ska använda samma pinnade binär som Runtime, inte det som råkar ligga i PATH.
 - **Lokal preferens?** Nej. **Tillämpning**: `ARBETSSATT.md` anger Runtimes pinnade binär för Codex-körningar utanför
   Runtime. **Kvarvarande osäkerhet**: om ägarens CLI uppdateras försvinner skillnaden. **Läge**: ny. **Klass**: observation.
+
+## Y20260928 — Underlagets värde måste synas i utfört arbete
+- **Klass:** observation. **Observation:** i yrkesförmågeprovet laddades och lästes faktiska referensbilder/metoder. Separat produktkritik underkände ändå en SVG-graf vars text skalades till oläslig storlek samt upprepade keramikinnehåll. Faktarättning utan redaktionell omskrivning hade lämnat tomma stegtexter. Bevis: kontorets privata `evidence/digitala/local/yrkesformaga-20260928/demonstration/bedomning/`; första negativa domar bevaras.
+- **Möjlig generell lärdom:** ett litet källbundet skaparpaket kan förbättra förutsättningarna, men det behöver faktisk bild-/interaktionskontroll och ett redaktionellt pass för att ge produktvärde. Mer kontext är ingen kvalitetsgaranti.
+- **Lokal preferens?** Bildskala, serif, palett och fiktiv kurs är lokala val. De förs inte in som yrkesnorm.
+- **Tillämpning:** avgränsade graf- och innehållsrättningar efter konkret kritik; direktproduktionens första resultat bevaras som jämförelse.
+- **Kvarvarande osäkerhet:** två uppgifter och en direktparallell visar varken bred stilvariation eller kausal metodvinst. Native-kostnad är inte total projektkostnad.
+- **Läge:** observerat och prövat i begränsad omfattning, inte ny praxis. **Förslag för nästa fall:** återanvänd den förbättrade laddnings-/kundvägen och pröva dess värde i verkligt relevant arbete; ingen beställning av ny benchmark eller fler fiktiva byggen följer.

@@ -6,13 +6,13 @@ kundens förvaltning och driftmiljön. Det som följer är krav på resultatet o
 
 ## Krav på resultatet (oavsett stack)
 
-- Semantisk HTML (landmärken, rubrikordning, listor, knappar som knappar, länkar som länkar); `<html lang="sv">`.
+- Semantisk HTML (landmärken, rubrikordning, listor, knappar som knappar, länkar som länkar); rätt `lang` för innehållets språk.
 - Responsivt utan horisontell spill i 320–1920 px; layoutvyns bredd lika med fönstret på mobil.
 - Tangentbord: allt nåbart och användbart; synligt fokus; hopp-länk; meny och dialoger stängs med Escape.
 - Tillgänglighet WCAG 2.2 AA som krav (axe utan violations är nödvändigt, inte tillräckligt; manuella kontroller
   enligt `externa/addyosmani-accessibility-SKILL.md`).
 - Prestanda: Core Web Vitals-mål (LCP < 2,5 s, CLS < 0,1, INP < 200 ms) på mobil; bilder med mått, AVIF/WebP,
-  första vyns bild prioriterad; typsnitt självhostade (högst två familjer); ingen tredjeparts-CDN för typsnitt.
+  första vyns bild prioriterad; typsnitt med uppgiftsmotiverade roller och rimlig laddningskostnad, normalt självhostade; ingen tredjeparts-CDN för typsnitt.
 - Säkerhet: säkerhetsrubriker (Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options,
   Referrer-Policy, frame-ancestors), inga hemligheter i klientbunten, servervalidering av varje formulärfält,
   formulärskydd enligt `formularsakerhet.md`, beroenden granskade (`npm audit` utan high/critical i produktion).
@@ -21,7 +21,7 @@ kundens förvaltning och driftmiljön. Det som följer är krav på resultatet o
 - Innehållsmodell efter behov: när kunden ska redigera själv, en innehållskälla (filer eller CMS) med dokumenterat
   redigeringsflöde; annars innehåll som data i repot, inte inbakat i komponenter.
 - Sammanhängande övergångar och rörelse enligt briefens motion-nivå; `prefers-reduced-motion` respekteras alltid.
-- Fel- och 404-sidor på svenska med kontaktväg.
+- Fel- och 404-sidor på aktuellt språk med fungerande nästa handling.
 
 ## Beprövade mönster (välj med skäl)
 
@@ -43,7 +43,8 @@ kundens förvaltning och driftmiljön. Det som följer är krav på resultatet o
 
 ## Riktningsfil och lint
 
-Briefens §7 skrivs som `DESIGN.md` i kundrepot (formatet `@google/design.md`, README i `kunskap/externa/`), så att
+Briefens §7 dokumenteras som `DESIGN.md` i kundrepot. `@google/design.md` (README i `kunskap/externa/`)
+är ett valbart format/lint när uppgiften motiverar det, så att
 tokens, typografi, färg och komponentregler är läsbara för varje utförare; `npx -p @google/design.md@0.4.0 designmd lint
 --format json DESIGN.md` hittar föräldralösa tokens och kontrastvarningar (i Norrgläntas etapp 4, DIGITALA-1-ETAPP4-RESULTAT-20260927, fann linten två föräldralösa tokens och en kontrastvarning).
 Formatet beskriver riktningen; det bestämmer den inte.
@@ -58,3 +59,10 @@ Skärmbilder kompletterar interaktionen; ett textträd är inte bildseende.
 
 Byggets beslut (vad som valdes, varför, vad som förkastades) skrivs kort i kundrepots `ARBETSLOGG.md` per steg, så
 att en annan utförare kan fortsätta (etapp 5: start/fortsätt-vägen läser den).
+
+## Börja med den bärande upplevelsen
+
+Följ skapandeunderlag.md: bygg tidigt representativt riktigt innehåll och relevant interaktion, jämför
+med öppnade referenser och utveckla sedan helheten. Olika kundbehov får ge olika visuella lösningar.
+Undersidor, språk, redaktörsytor och efterled håller samma hantverksnivå; tekniskt fungerande är inte
+ensamt professionellt tillräckligt. För varje viktigt val ska behov, resurs och faktisk påverkan gå att följa.

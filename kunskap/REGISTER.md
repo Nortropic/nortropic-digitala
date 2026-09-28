@@ -53,7 +53,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 
 | Fil här | Härlett ur | Form | Roll | Följer inte med |
 |---|---|---|---|---|
-| `referensjakt.md` | webbgrundens `skills/nortropic-plan/references/inspirationskallor.md` @ `e4c8c52` (rad 1–60), Norrgläntas brief §5 och jämförelsens §3.3 | metodunderlag | Research: kandidater, budget som frågor, sedd/läst, betyg som filter | — |
+| `referensjakt.md` | webbgrundens `skills/nortropic-plan/references/inspirationskallor.md` @ `e4c8c52` (rad 1–60), Norrgläntas brief §5 och jämförelsens §3.3 | metodunderlag | Research: bransch/hantverk/UX, uppgiftsmotiverat urval, faktisk observation och påverkan | — |
 | `redaktionellt-pass.md` | copy-blocklistens strukturregler och content-designerns sidregler (webbgrunden @ `e4c8c52`), frontend-design "More on writing in design" (fil 1), Norrgläntas fynd | metodunderlag | Redaktionellt pass (P2) och fråga i granskning D | — |
 | `formularsakerhet.md` | webbgrundens `skills/nortropic-prelaunch/references/security-checklist.md` @ `e4c8c52` §3 (rad 70–82), Norrgläntas brief §3 och den riktade kontrollens område 2 | metodunderlag | Bygge av formulär; kodläsningsfrågor i granskning D | — |
 | `LARDOMAR.md` | Norrgläntas leverans och riktade kontroll, jämförelsens §2.5, preciseringen | lärdomsfil | Uppstart av nästa fall (P4); klassning och uppföljning | — |
@@ -76,26 +76,26 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `kundintervju.md` | ägarens tillägg 2 (2026-09-27, avsnitt 3–4 och 7–8); det arkiverade repots input gate och research-kontraktets §16-frågor som frågebank-underlag @ `e4c8c52`; verktyget `verktyg/intervju.py` (nyskrivet) | metodunderlag + körbart verktyg | Steget intervju: omgångar, följdfrågor, svar ordagrant, fakta med status, motsägelser, avsnitt 19 | nod-3-stoppet, det maskinläsbara plannerschemat, obligatoriskt briefgodkännande |
 | `integrationer.md` | ägarens tillägg 2 (avsnitt 6); det arkiverade repots `extern-bokning.md`, lead-server-action-mönstret och Gate 1 @ `e4c8c52`, generaliserade till leveranskrav och kontroller | metodunderlag | Brief §4/§9, bygge, prelaunch grind 1 | Resend/Vercel-konstanter, `/api/puls`, fast primärhandling |
 | `webblasare.md` | HELHET-20260927 avsnitt 6; det arkiverade repots qa-launcher-linser och Puppeteer-provarens gränser (D034) som förlaga; Playwright 1.63.0 och @playwright/mcp 0.0.82 (Apache-2.0) pinnade i `verktyg/webblasare/package.json`; verktygen `inspektera.mjs`, `utforska.mjs`, `besok.mjs`, `gemensamt.mjs` (nyskrivna) | körbara verktyg + metodunderlag | Bygge (användning 1), qa (2), provare (3) | chrome-devtools-MCP, agent-browser, den gamla provarens startare (Runtimes provarprofil finns kvar) |
-| `referenser-professionella.md` | det arkiverade repots `skills/nortropic-antislop/references/premium-checklist.md` och `premium-bevis.md` @ `e4c8c52` (exemplar verifierade 2026-07-27) | referensbibliotek (valfritt) | Koncept och kritik: jämförelse med motivering, inte kopiering | PK-poängen, F-filtret som grind, design-blocklistan |
+| `referenser-professionella.md` | det arkiverade repots `skills/nortropic-antislop/references/premium-checklist.md` och `premium-bevis.md` @ `e4c8c52` (exemplar verifierade 2026-07-27) | referensbibliotek (urval efter uppgift) | Koncept och kritik: jämförelse med motivering, inte kopiering | PK-poängen, F-filtret som grind, design-blocklistan |
 
 ## D. Koppling per underlag — steg och utförare · när det läses och vilka delar · uppgift eller kontroll · vid konflikt
 
 | Underlag | Steg och utförare | När det läses; vilka delar | Uppgift eller kontroll | Vid konflikt med brief eller mandat |
 |---|---|---|---|---|
 | `KEDJA.md` (repots rot) | uppstart, båda utförarna | hela, vid uppstart av ett fall eller en etapp (obligatoriskt i `steg/steg.json`) | kontroll: vad Runtime skyddar mekaniskt och vad sessionen själv bär | beskrivande; ingen konflikt möjlig |
-| 1 frontend-design | Brief §7 (kedjedrivaren); bygge; redaktionellt pass | Vid tokenplan och pass 2: "Design principles", "Process: plan, review against the brief, build, critique", "Restraint and self-critique"; vid passet: "More on writing in design" (hela filen är 9 KB) | Tvåpass-syntesen, klusterlistan mot AI-generiska mönster, skrivråden | Briefen och ACCEPT vinner; avvikelsen skrivs i briefens konfliktrad |
+| 1 frontend-design | Brief §7 (kedjedrivaren); bygge; redaktionellt pass | Vid tokenplan och pass 2: "Design principles", "Process: plan, review against the brief, build, critique", "Restraint and self-critique"; vid passet: "More on writing in design" (hela filen är 9 KB) | Tvåpass-syntesen, klusterlistan mot AI-generiska mönster, skrivråden | Kundbehov och mandat står över råd och intern brief; avvikelsen skrivs i briefens konfliktrad |
 | 2 WIG `command.md` | Granskning D (Runtimes läsare); bygge (kedjedrivaren) | Vid kodgranskning: "Accessibility", "Focus States", "Forms", "Animation", "Typography", "Content Handling", "Images", "Hydration Safety", "Anti-patterns (flag these)"; inte "Output Format" | Kodläsningslista för gränssnitt: formulär, fokus, reduced motion, bilder | Ett råd som strider mot ett accepterat krav (t.ex. briefens längdregel) redovisas som förslag och ändrar inget |
 | 3 web-quality-audit | Granskning D; mätsteget (kedjedrivaren) | "How it works", "Audit categories", "Severity levels", "Audit output format" (Verification-punkterna); inte "Tool routing" (Chrome DevTools MCP används inte) | Bevistyper (fält, lab, statisk), allvarlighetsgrader, "aggregerad poäng är inte målet" | — |
 | 4 accessibility | Granskning D; bygge | "Evidence-led audit workflow", kriterierna under Perceivable–Robust vid behov, "Testing checklist › Manual testing"; automatiken täcks av pinnade axe och Lighthouse | Manuella tillgänglighetskontroller utöver axe: fokusordning, rubriker, namn | ACCEPT:s krav står över |
-| 5 emil-design-eng | Bygge, bara när briefens motion-nivå är över `ingen` | "The Animation Decision Framework" 1–4, "Component Building Principles"; inte "Initial Response" eller "Review Format" (skill-krom) | Rörelse med avsikt vid signaturelement; komponentkänsla | Briefens motion-nivå vinner |
+| 5 emil-design-eng | Bygge när interaktions-, komponent- eller rörelsekvalitet motiverar resursen | "The Animation Decision Framework" 1–4, "Component Building Principles"; inte "Initial Response" eller "Review Format" (skill-krom) | Rörelse med avsikt vid signaturelement; komponentkänsla | Kundbehov och reduced motion gäller; ingen rörelse krävs för att använda komponentmetoden |
 | 6 mobile-native | Bygge (kedjedrivaren); granskning D | "The Symptom Table", "The Fixes" 1–11, "Baseline", "Never Ship"; inte "Initial Response", "Output", "Tone" | Mobilkontroll bortom målytor och viewport | — |
-| 7 prototype (+ PICKER.md) | Variantsteget P1 (kedjedrivaren), när det görs | "Operating Posture", "Hard Rules" 1–3, "Workflow" fas 1–5; inte "Invocation Variants" (ingen skill) och inte fas 6 (befordran sker genom det vanliga bygget); PICKER.md bara om en live-bläddringsyta efterfrågas | Divergens på namngiven axel, riktigt innehåll, isolerad yta | Briefens fasta mål vinner; varianter rör bara prövbara detaljer |
-| 8 Taste | Konceptsteget och komps (kedjedrivaren), etapp 2 och nästa fall | Vid Design Read: §0 "Brief Inference" (0.A–0.D) och §1 "The Three Dials" (1.A–1.C) som en metod bland flera, inte universella värden; före komp: §4.1–4.3 (typografi, färg, layoutdiversifiering) och §4.7–4.8 (layoutdisciplin, bild); inte §2 (designsystemkarta), §3 (stackkonventioner), §5 (kanoniska skelett), §6–9 (dubblerar fil 1, 2 och 4) | En Design Read ur briefen före komparna; axlar och värden efter uppgiften, inga universella; biaskorrigering mot mallmönster | Briefen och ACCEPT vinner; Taste är råd och mall-varning, inte mall |
+| 7 prototype (+ PICKER.md) | Variantsteget P1 (kedjedrivaren), när det görs | "Operating Posture", "Hard Rules" 1–3, "Workflow" fas 1–5; inte "Invocation Variants" (ingen skill) och inte fas 6 (befordran sker genom det vanliga bygget); PICKER.md bara om en live-bläddringsyta efterfrågas | Divergens efter uppgiftens osäkerhet, riktigt innehåll, isolerad yta | Kundens styrkta behov vinner; alternativ får pröva hela riktningen, inte bara detaljer eller en axel |
+| 8 Taste | Konceptsteget och komps (kedjedrivaren), etapp 2 och nästa fall | Vid Design Read: §0 "Brief Inference" (0.A–0.D) och §1 "The Three Dials" (1.A–1.C) som en metod bland flera, inte universella värden; före komp: §4.1–4.3 (typografi, färg, layoutdiversifiering) och §4.7–4.8 (layoutdisciplin, bild); inte §2 (designsystemkarta), §3 (stackkonventioner), §5 (kanoniska skelett), §6–9 (dubblerar fil 1, 2 och 4) | Valbar Design Read ur kundbehov/brief; axlar när de hjälper frågan, inga universella värden; biaskorrigering mot mallmönster | Kundbehov och mandat står över råd och intern brief; Taste är råd och mall-varning, inte mall |
 | `referensjakt.md` | Research (kedjedrivaren) | Hela (kort) | Kandidater, budget som frågor, sedd/läst | — |
 | `redaktionellt-pass.md` | Redaktionellt pass (kedjedrivaren); granskning D som fråga | Hela (en sida) | Redaktionell kvalitet och kedjans innebörd | Stöd för bedömning, inte förbud |
 | `formularsakerhet.md` | Bygge av formulär (kedjedrivaren); granskning D | Hela (kort) | Honeypot, en klocka, servervalidering, fel | ACCEPT:s demogränser vinner (ingen sändning) |
 | `LARDOMAR.md` | Uppstart av nästa fall (kedjedrivaren) | Hela | P4 | — |
-| P-C Hallmark (`externa/hallmark-SKILL-13ac0ec7.md`) | Kritik (valfritt; följer med manifestet för designkritik och renderingsläsning) | Kritikröstens metod (S5) | En lins bland flera; fynd bedöms mot KVALITET.md | ingen egen stilregel; briefen vinner |
+| P-C Hallmark (`externa/hallmark-SKILL-13ac0ec7.md`) | Kritik (valfritt; laddas vid motiverat val i SKAPARUNDERLAG.json) | Kritikröstens metod (S5) | En lins bland flera; fynd bedöms mot KVALITET.md | ingen egen stilregel; kundbehov och mandat styr |
 | P-A design.md (`externa/google-design-md-README-9bf8eae6.md`) | Bygge (valfritt) | "The Format", "lint" | DESIGN.md som riktningsfil i kundrepot; lint med pinnat paket 0.4.0 | formatet beskriver, bestämmer inte |
 | `beredning.md` | Beredning (kontorets beredare och kedjedrivaren) | Hela | Elva svar, proportion, metodval efter problem | ägarens accepterade uppdrag vinner |
 | `research-underlag.md` | Research; intervju (kedjedrivaren eller Codex) | Hela; referensjakt.md för sektion 13 och 7; vid intervju status per uppgift, sektion 19 och användbarhet | Ryggrad, faktadisciplin, kontrollrad | — |
@@ -104,7 +104,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `bild.md` | Brief §8; bygge | Anspråk, val och licens, art direction; vid bygget beskärning, storlekar, verktygen | Bildkompetensens sju delar | kundens rättighetsläge vinner |
 | `bygge-referens.md` | Bygge (kedjedrivaren eller Codex) | Hela | Krav på resultatet; mönster med skäl | briefens §9 vinner |
 | `copy-kontroll.md` | Redaktionellt pass | Hela | Rapporten rättas eller motiveras | kundens röst vinner med motivering |
-| `referenser-professionella.md` | Koncept (valfritt); kritik | Jämförelsedimensionerna och urvalet | Jämförelse med motivering | briefen vinner; ett drag kan vara "gäller inte" |
+| `referenser-professionella.md` | Koncept; kritik vid ny formgivning och kvalitetsomarbetning | Jämförelsedimensionerna och urvalet | Jämförelse med motivering | kundbehov och mandat styr; ett jämförelsedrag kan vara "gäller inte" |
 | `kundintervju.md` | Steget intervju (kedjedrivaren eller Codex) | Hela | Intervju i beställningens kanal; svar ordagrant; fakta med status | ingen konflikt möjlig: kundens svar är kundens; tolkningen märks |
 | `integrationer.md` | Brief §4/§9; bygge; prelaunch | Hela; vid prelaunch formulär och leads | Leveranskrav och kontroller per integrationsnivå | briefens §4 vinner; nivån väljs efter behov |
 | `webblasare.md` | Bygge; qa; provare (kedjedrivaren eller Codex; besökaren i egen session) | Hela | Tre användningar, tillstånd, gränser, nätverkslogg, regressionsprov | ingen konflikt möjlig; skärmbilderna avgör layout |
@@ -117,7 +117,7 @@ Kontrollsummor (sha256) för alla fjorton filer och kontrollen mot läsbevisen: 
 | `lansering.md` | Steget lansering; drift | Hela | Plan, kontroll, återgång | bara med beställning som namnger lansering |
 | `drift.md` | Steget drift | Hela | Driftkontroll, incident, beroendeunderhåll | ingen självläkning |
 
-**Laddning per steg** (typisk last): research 1 fil (kort) · brief §5 fil 1 (9 KB) + ev. 7 (8 KB) · bygge 1, 6 (17 KB), ev. 5
+**Laddning per steg** (typisk last): research 1 fil (kort) · brief §7 fil 1 (9 KB) + ev. 7 (8 KB) · bygge 1, 6 (17 KB), ev. 5
 (27 KB) och `formularsakerhet.md` · redaktionellt pass `redaktionellt-pass.md` + fil 1:s skrivavsnitt · granskning D 2, 3,
 4, 6 som frågor (≈ 49 KB) · uppstart `LARDOMAR.md`, `MANDAT.md`, `ARBETSSATT.md` och `KEDJA.md` (steg.json) · konceptsteg och komps 8 (§0–§1, §4.1–4.3, §4.7–4.8; ≈ 30 KB av 87). Aldrig allt i en
 session.
@@ -158,3 +158,22 @@ Formen per resurs är ett nyttoval (regel 7); versionerna är pinnade (regel 4).
 | **P-C Hallmark** | läsunderlag (SKILL.md) för en kritiksession, ingen skill, inga referensfiler | blob `645221da` (inventeringens pin) | `externa/hallmark-SKILL-13ac0ec7.md` (67 460 byte, sha256 `59469635…`) | git-blob mot inventeringens pin | kritikröst S5 över förhandsvisningen |
 | **P-D canvas-design** | läsunderlag, ingen skill | blob `9f63fee8` | `externa/canvas-design-SKILL-33375500.md` (11 939 byte, sha256 `a1f28807…`) | git-blob mot pin | inte tillämpligt: riktningen är ren typografi, ingen egen grafik behövdes |
 | **Impeccable detect** | som i F | 4.1.0 (npx) | kundrepot | spegel med `_next/static` | 12 varningar = golvet, inga nya |
+
+### Tillägg till §D: beslutad kvalitetskedja v2
+
+KVALITET.md och kritik/BEDOMNING-v2.md laddas före brief, koncept, bygge, kritik, D och leverans.
+kunskap/bildbedomning.md laddas i koncept och kritik. Kritik kräver kundens BEDOMNINGSUNDERLAG.json samt dess
+hashbundna BEVISKRAV-fil och bilder, inklusive VYER/, REFERENSER/ och vid jämförelse DAGENS/. Den typiska
+kritikladdningen omfattar därför både professionskriterier, fördefinierad räckvidd och faktiskt bildunderlag.
+Domkodens hashlista i steg/DOMKOD.sha256 kontrolleras av konsumenten och binds i bedömningsposten.
+
+## Beslut DIGITALA-YRKESFORMAGA-20260928 — fokuserad användning
+
+Dagens referens-/skapandeväg följer referensjakt.md och skapandeunderlag.md. Tidigare kvot, betygsfilter,
+galleri-/konkurrentuteslutning och obligatorisk metod har ersatts med uppgiftsmotiverade val. Historiska
+versions-/installations-/användningsuppgifter ovan är bevarade som daterade fakta, inte dagens tillgänglighetsprov.
+Valfria externa texter laddas bara när kundens SKAPARUNDERLAG väljer dem. Full text finns kvar, men ladda betyder
+inte läsa eller anropa. Prototype/Taste/Emil/Hallmark får väljas utan krav på en viss stil, axel eller rörelse.
+Nya resurser behöver aktuell käll-/licens-/åtkomstkontroll och namngivet versionsbeslut; ingen automatisk adoption.
+Denna revision inför skapandeunderlag.md (kort uppdrag och valda bilder/resurser) samt
+konsekvensgranskning.md (ändringens följder och relevant kärnpaket). Kvalitet-v2 och domfilter ändras inte.
