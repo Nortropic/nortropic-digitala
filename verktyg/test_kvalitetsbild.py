@@ -1,5 +1,6 @@
 """Prov för kvalitetsbild: syntetiska körningar och kvitton ger de tre kolumnerna, och saknat fylls aldrig i."""
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
@@ -10,7 +11,9 @@ HERE = Path(__file__).resolve().parent
 
 
 def korning(fall, name, profil, etikett, run=None, exit_code=0, outcome='klar'):
-    (fall / name).write_text(json.dumps({'schema': 1, 'profil': profil, 'etikett': etikett, 'exit': exit_code,
+    digest=hashlib.sha256((run/'KVITTO.json').read_bytes()).hexdigest() if run else None
+    if run:(run/'KVITTO.sha256').write_text(digest+'  KVITTO.json\n')
+    (fall / name).write_text(json.dumps({'schema': 1, 'runtime_kvitto_sha256':digest, 'profil': profil, 'etikett': etikett, 'exit': exit_code,
                                          'laddning': {'sha256': 'a' * 64, 'steg': profil},
                                          'resultat': {'run': str(run) if run else None, 'outcome': outcome}}))
 
@@ -62,8 +65,9 @@ class Kvalitetsbild(unittest.TestCase):
         self.assertIn('axe violations 0, incomplete 1', text)
         self.assertIn('Lighthouse mobile', text)
         self.assertIn('## 2. Professionellt bedömt', text)
+        self.assertIn('historisk kritik saknar kandidat- och bildbindning enligt v2', text)
         self.assertIn('verdict: "approved"', text)
-        self.assertIn('blockerande fynd: 0', text)
+        self.assertIn('oavgjord: historisk kritik',text)
         self.assertIn('KONTROLL SAKNAS', text, 'ett scenario utan kontrollantens bedömning är inte avgjort')
         self.assertIn('## 3. Ej observerat', text)
         self.assertIn('säsongsvariation', text)

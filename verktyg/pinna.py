@@ -39,6 +39,9 @@ def main(argv):
         target.write_text('# sha256  fil — versionspinnar för professionsunderlag; ändras bara som nytt beslut (verktyg/pinna.py --skriv)\n'
                           + ''.join('%s  %s\n' % (new[rel], rel) for rel in sorted(new)), encoding='utf-8')
         print('skrev', len(new), 'pinnar')
+        import hashlib
+        names=('kritikbevis.py','stegbevis.py','kor_profil.py','kvalitetsbild.py','ladda_steg.py')
+        (ROT/'steg/DOMKOD.sha256').write_text('# Beslutad domlogik; nytt beslut vid ändring.\n'+''.join(hashlib.sha256((ROT/'verktyg'/n).read_bytes()).hexdigest()+'  verktyg/'+n+'\n' for n in sorted(names)))
     elif not changed:
         print('inga skillnader; %d pinnar' % len(new))
     return 0

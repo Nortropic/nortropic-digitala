@@ -20,6 +20,7 @@ En intervju med företagets representant är inte ett användartest; en testdial
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -104,6 +105,13 @@ class Vagrad(Exception):
     pass
 
 
+class Intervjutillstand(dict):
+    """Kundfilens sökväg i minnet, aldrig ett självdeklarerat JSON-bevisfält."""
+    def __init__(self, data, kund):
+        super().__init__(data)
+        self.kund = Path(kund)
+
+
 def nu():
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
@@ -145,16 +153,63 @@ def las(kund):
     p = stig(kund)
     if not p.is_file():
         raise Vagrad('ingen intervju startad i %s (kör start)' % kund)
-    return json.loads(p.read_text(encoding='utf-8'))
+    return Intervjutillstand(json.loads(p.read_text(encoding='utf-8')), kund)
 
 
 def spara(kund, s):
     s['uppdaterad'] = nu()
-    stig(kund).write_text(json.dumps(s, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    path=stig(kund); tmp=path.with_name(path.name + '.tmp-%d' % os.getpid())
+    with tmp.open('w', encoding='utf-8') as out:
+        os.chmod(tmp, 0o600); out.write(json.dumps(s, ensure_ascii=False, indent=1) + '\n'); out.flush(); os.fsync(out.fileno())
+    os.replace(tmp, path)
+
+
+def okand(uppgift):
+    # An explicit intake status wins. Only a complete short answer is recognised
+    # from free text; "jag vet inte priset, men vi behöver bokning" remains intact.
+    kort_svar = r"\s*(?:(?:(?:jag|vi) )?vet (?:inte|ej)|(?:(?:jag|vi) har )?ingen aning|(?:(?:jag|vi) är )?(?:osäker|osäkra|inte säker|inte säkra)|okänt|okant|(?:(?:i|we) )?(?:don['’]t|do not) know)\s*[.!]?\s*"
+    return uppgift.get('vet_inte') is True or uppgift.get('status') == 'okänt' or bool(re.fullmatch(kort_svar, str(uppgift.get('text', uppgift.get('varde', ''))), re.I))
+
+
+def aktuella_uppgifter(s):
+    rows = {x['nyckel']: x for x in s['svar']}
+    for x in s['fakta']:
+        if x.get('ersatt'):
+            continue
+        current = rows.get(x['nyckel'])
+        if current and str(x.get('kalla', '')).startswith('VERKSAMHET.json'):
+            continue  # A previous seed cannot override the customer's current answer.
+        if (current and x['status'] in ('tolkning', 'hypotes', 'preferens')
+                and (okand(current) or current.get('status') in ('kunden uppger', 'observerat', 'externt belagt'))):
+            continue  # Keep the source current; interpretations remain in fakta for review.
+        if (current and not okand(current)
+                and (current.get('status') == 'kunden uppger' or current.get('kalla') == 'kundstart')
+                and okand(x)):
+            if str(x.get('kalla', '')).startswith('kundstart'):
+                # Prefix/status räcker inte för att dra tillbaka ett kundsvar.
+                # Sökvägen kommer från las(), inte från JSON eller FAKTA-filen.
+                import kundstart
+                kund = getattr(s, 'kund', None)
+                if kund is None or not (kund / 'KUNDSTART.json').is_file():
+                    continue
+                try:
+                    belagd = kundstart.kundrad_belagd(kund, x)
+                except kundstart.Vagrad as e:
+                    raise Vagrad(str(e)) from None
+                if not belagd:
+                    continue
+            elif x.get('status') != 'kunden uppger':
+                continue  # En utföraranteckning drar inte tillbaka kundens ord.
+        rows[x['nyckel']] = x
+    return rows
+
+
+def okanda_uppgifter(s):
+    return {n: x for n, x in aktuella_uppgifter(s).items() if okand(x)}
 
 
 def kanda_nycklar(s):
-    return {f['nyckel'] for f in s['fakta'] if f['status'] != 'okänt'} | {sv['nyckel'] for sv in s['svar']}
+    return {n for n, x in aktuella_uppgifter(s).items() if not okand(x)}
 
 
 def fro_verksamhet(kund):
@@ -233,14 +288,14 @@ def start(kund, kanal, testdialog=False, om=False):
 
 def tolka_svarsfil(text):
     """### <id> följt av kundens svar ordagrant, till nästa ###."""
-    delar = re.split(r'(?m)^###\s+([A-Z]+\d+)\s*$', text)
+    delar = re.split(r'(?m)^###\s+((?:[A-Z]+\d+|(?:RET|BEH)\d+_\d+))\s*$', text)
     ut = {}
     for i in range(1, len(delar) - 1, 2):
         ut[delar[i]] = delar[i + 1].strip()
     return ut
 
 
-def svar(kund, omgang, fil):
+def svar(kund, omgang, fil, kallmetadata=None):
     s = las(kund)
     o = next((x for x in s['omgangar'] if x['nr'] == omgang), None)
     if not o:
@@ -260,6 +315,8 @@ def svar(kund, omgang, fil):
             if HEMLIGT.search(t):
                 raise Vagrad('svaret på %s ser ut att innehålla ett lösenord eller en nyckel; vägras och sparas inte — be kunden ta bort det och använd säker åtkomstväg' % q['id'])
             s['svar'].append({'fraga_id': q['id'], 'omgang': oo['nr'], 'svarsfil_omgang': omgang, 'nyckel': q['nyckel'], 'omrade': q['omrade'], 'text': t, 'mottaget': nu(), 'status': 'kunden uppger'})
+            if kallmetadata and fid in kallmetadata:
+                s['svar'][-1].update(kallmetadata[fid])
             for oo2 in s['omgangar']:
                 for q2 in oo2['fragor']:
                     if q2['id'] == fid:
@@ -286,7 +343,6 @@ def svar(kund, omgang, fil):
     for f in foljd:
         if f['id'] not in kanda_id:
             s['vantande_foljdfragor'].append(f); kanda_id.add(f['id'])
-    spara(kund, s)
     s.setdefault('okanda_svar', []).extend({'omgang': omgang, 'fraga_id': fid, 'tid': nu()} for fid in okanda)
     spara(kund, s)
     return s, 'omgång %d: %d svar registrerade ordagrant; %d följdfrågor väntar (regler: %s)%s' % (omgang, nya, len(s['vantande_foljdfragor']), ', '.join(sorted({u['regel'] for u in s['foljdregler_utlosta']})) or 'inga', ('; VARNING: okända fråge-id ignorerade: ' + ', '.join(okanda)) if okanda else '')
@@ -310,7 +366,9 @@ def fakta(kund, fil):
         if HEMLIGT.search(str(r['varde'])):
             raise Vagrad('faktaraden %s ser ut att innehålla ett lösenord eller en nyckel; vägras' % r['nyckel'])
         r.setdefault('datum', nu()[:10])
-        bef = next((f for f in s['fakta'] if f['nyckel'] == r['nyckel'] and f.get('varde') != r['varde'] and not f.get('ersatt')), None)
+        # Okänt är en kunskapslucka, inte ett motstridigt sakpåstående.
+        bef = next((f for f in s['fakta'] if f['nyckel'] == r['nyckel'] and f.get('varde') != r['varde']
+                    and not f.get('ersatt') and not okand(f) and not okand(r)), None)
         if bef:
             mid = 'MOT%d' % (len(s['motsagelser']) + 1)
             s['motsagelser'].append({'id': mid, 'nyckel': r['nyckel'], 'uppgift_1': {'varde': bef['varde'], 'status': bef['status'], 'kalla': bef['kalla'], 'datum': bef.get('datum')}, 'uppgift_2': {'varde': r['varde'], 'status': r['status'], 'kalla': r['kalla'], 'datum': r['datum']}, 'lage': 'oavgjord', 'tid': nu()})
@@ -321,8 +379,8 @@ def fakta(kund, fil):
     return s, '%d fakta registrerade; %d motsägelser oavgjorda' % (nya, sum(1 for m in s['motsagelser'] if m['lage'] == 'oavgjord'))
 
 
-def avgor(kund, mid, galler, skal):
-    s = las(kund)
+def avgor_i(s, mid, galler, skal):
+    """Avgör i minnet; den skrivande anroparen ansvarar för beständigheten."""
     m = next((x for x in s['motsagelser'] if x['id'] == mid), None)
     if not m:
         raise Vagrad('motsägelsen finns inte')
@@ -331,8 +389,13 @@ def avgor(kund, mid, galler, skal):
     for f in s['fakta']:
         if f.get('motsagelse') == mid:
             f['ersatt'] = f['varde'] != galler
-    spara(kund, s)
     return s, 'motsägelsen %s avgjord: %s' % (mid, galler)
+
+
+def avgor(kund, mid, galler, skal):
+    s, msg = avgor_i(las(kund), mid, galler, skal)
+    spara(kund, s)
+    return s, msg
 
 
 def nasta(kund):
@@ -343,9 +406,11 @@ def nasta(kund):
     vantande = s.get('vantande_foljdfragor', [])
     igen = [{'id': f['id'], 'omrade': f['omrade'], 'nyckel': f['nyckel'], 'text': '(ställdes i omgång %s utan svar) ' % ', '.join(map(str, f['omgangar'])) + f['text'], 'paverkar': f['paverkar'], 'utlost_av': f.get('utlost_av')}
             for f in obesvarade_foljdfragor_objekt(s) if f['id'] not in {v['id'] for v in vantande}]
-    grund = [{'id': g[0], 'omrade': g[1], 'nyckel': g[2], 'text': (('(ställdes i omgång %s utan svar) ' % ', '.join(map(str, g[6]))) if g[6] else '') + g[3], 'paverkar': g[4]} for g in luckor(s)]
+    grund = [{'id': g[0], 'omrade': g[1], 'nyckel': g[2], 'text': (('(ställdes i omgång %s utan svar) ' % ', '.join(map(str, g[6]))) if g[6] else '') + g[3], 'paverkar': g[4]} for g in luckor(s) if g[2] not in okanda_uppgifter(s)]
     fragor = (vantande + igen + grund)[:PER_OMGANG]
     if not fragor:
+        if okanda_uppgifter(s):
+            return s, 'mottagna okända uppgifter kvarstår: %s; upprepa inte samma fråga automatiskt. Research behöver annan källa eller en riktad returfråga; oberoende arbete kan fortsätta' % ', '.join(okanda_uppgifter(s))
         return s, 'inga luckor som påverkar lösningen kvar; intervjun kan avslutas (research skriver avsnittet)'
     s['vantande_foljdfragor'] = vantande[len([f for f in fragor if f in vantande]):]
     o = ny_omgang(s, fragor, 'följdfrågor ur svaren (%d) och kvarvarande luckor (%d)' % (sum(1 for f in fragor if f.get('utlost_av')), sum(1 for f in fragor if not f.get('utlost_av'))))
@@ -357,6 +422,7 @@ def nasta(kund):
 
 def status(s):
     return {'kund': s['kund'], 'testdialog': s.get('testdialog', False), 'kanal': s['kanal'], 'omgangar': len(s['omgangar']), 'svar': len(s['svar']), 'fakta': len(s['fakta']),
+            'okanda_uppgifter': list(okanda_uppgifter(s)),
             'vantar_pa_svar': [o['nr'] for o in s['omgangar'] if o['svar_mottagna'] is None], 'foljdfragor_vantande': len(s.get('vantande_foljdfragor', [])),
             'luckor_kvar': [g[0] + ('(ställd utan svar i omgång %s)' % ','.join(map(str, g[6])) if g[6] else '') for g in luckor(s)] + obesvarade_foljdfragor(s), 'motsagelser_oavgjorda': [m['id'] for m in s['motsagelser'] if m['lage'] == 'oavgjord'], 'uppdaterad': s.get('uppdaterad')}
 
@@ -365,15 +431,15 @@ def anvandbarhet(s):
     """De fyra frågorna research.md ska kunna besvara; 'okänt' när underlaget saknas."""
     def hitta(*nycklar):
         for n in nycklar:
-            f = [x for x in s['fakta'] if x['nyckel'] == n and not x.get('ersatt') and x['status'] != 'okänt']
-            if f:
-                return '%s (%s, %s)' % (f[-1]['varde'], f[-1]['status'], f[-1]['kalla'])
-            sv = [x for x in s['svar'] if x['nyckel'] == n]
-            if sv:
-                return 'kunden uppger (svar %s): %s' % (sv[-1]['fraga_id'], sv[-1]['text'][:200])
+            x = aktuella_uppgifter(s).get(n)
+            if x:
+                source = x.get('kalla') or 'svar ' + x.get('fraga_id', '?')
+                if okand(x):
+                    return 'okänt (%s; mottaget svar är inte ett nej)' % source
+                return '%s (%s, %s)' % (str(x.get('varde', x.get('text')))[:200], x['status'], source)
         return 'okänt'
     return {'viktigaste uppgift': hitta('viktigaste_uppgift', 'senaste_forfragan', 'besokare'), 'vad formuläret ska åstadkomma efter inskick': hitta('efter_inskick', 'bokning_bekraftelse'),
-            'vilket befintligt system som ska ta emot': hitta('mottagande_system', 'system', 'bokning_system', 'crm_falt'), 'vad vi ännu inte vet': ', '.join([g[2] for g in luckor(s)] + [f['id'] + ' (följdfråga utan svar)' for f in obesvarade_foljdfragor_objekt(s)]) or 'inga öppna grundluckor eller obesvarade följdfrågor; se motsägelser'}
+            'vilket befintligt system som ska ta emot': hitta('mottagande_system', 'system', 'bokning_system', 'crm_falt'), 'vad vi ännu inte vet': ', '.join(dict.fromkeys([g[2] for g in luckor(s)] + list(okanda_uppgifter(s)) + [f['id'] + ' (följdfråga utan svar)' for f in obesvarade_foljdfragor_objekt(s)])) or 'inga öppna grundluckor eller obesvarade följdfrågor; se motsägelser'}
 
 
 def research_md(s):
@@ -385,12 +451,14 @@ def research_md(s):
         if not sv and not fk:
             lines += ['- inte utrett', '']; continue
         for x in sv:
-            lines += ['> **%s** (%s, %s): %s' % (x['fraga_id'], x['mottaget'][:10], x['status'], x['text'].replace('\n', ' ')), '']
+            lines += ['> **%s** (%s, %s%s): %s' % (x['fraga_id'], x['mottaget'][:10], x['status'], ' — uppgiften okänd' if okand(x) else '', x['text'].replace('\n', ' ')), '']
         if fk:
             lines += ['| Uppgift | Värde | Status | Källa | Datum |', '|---|---|---|---|---|'] + ['| %s | %s | %s | %s | %s |' % (x['nyckel'], str(x['varde']).replace('|', '/'), x['status'] + (' — motsägelse ' + x['motsagelse'] if x.get('motsagelse') else ''), x['kalla'], x.get('datum', '')) for x in fk] + ['']
     lines += ['### Motsägelser', ''] + (['- %s (%s): "%s" (%s) mot "%s" (%s) — %s%s' % (mm['id'], mm['nyckel'], mm['uppgift_1']['varde'], mm['uppgift_1']['kalla'], mm['uppgift_2']['varde'], mm['uppgift_2']['kalla'], mm['lage'], (': gäller "%s" — %s' % (mm.get('galler'), mm.get('skal'))) if mm['lage'] == 'avgjord' else '') for mm in s['motsagelser']] or ['- inga']) + ['']
     luck = ['- %s (%s%s): %s' % (g[2], g[0], (', ställd utan svar i omgång %s' % ','.join(map(str, g[6]))) if g[6] else '', g[4]) for g in luckor(s)] + ['- %s (följdfråga, ställd utan svar i omgång %s): %s' % (f['id'], ','.join(map(str, f['omgangar'])), f['paverkar']) for f in obesvarade_foljdfragor_objekt(s)]
     lines += ['### Luckor som påverkar lösningen', ''] + (luck or ['- inga öppna grundfrågor eller obesvarade följdfrågor']) + ['']
+    if okanda_uppgifter(s):
+        lines += ['### Mottaget men fortfarande okänt', ''] + ['- %s (%s): okänt är inte nej; pröva annan källa eller riktad returfråga före ett beroende beslut.' % (n, x.get('kalla') or 'svar ' + x.get('fraga_id', '?')) for n, x in okanda_uppgifter(s).items()] + ['']
     if s.get('okanda_svar'):
         lines += ['- svar med okända fråge-id ignorerades: ' + ', '.join(x['fraga_id'] for x in s['okanda_svar']), '']
     lines += ['### Kan research.md besvara', ''] + ['- %s: %s' % (k, v) for k, v in anvandbarhet(s).items()] + ['']

@@ -180,6 +180,73 @@ class Intervju(unittest.TestCase):
         code, r = kor('start', '--kund', str(k2), '--kanal', 'telefon')
         self.assertIn('finns redan', r['meddelande']); self.assertEqual(r['omgangar'], 1)
 
+    def test_mottaget_okant_ar_inte_kant_nej_eller_automatisk_upprepning(self):
+        iv.start(str(self.k), 'syntetiskt', True)
+        s = iv.las(self.k)
+        for o in s['omgangar']:
+            o['svar_mottagna'] = iv.nu()
+        s['fakta'] = [{'nyckel': g[2], 'varde': 'syntetiskt känt värde', 'status': 'kunden uppger', 'kalla': 'syntetiskt prov', 'omrade': g[1]} for g in iv.GRUND]
+        n = iv.GRUND[0][2]
+        s['fakta'][0]['ersatt'] = True
+        s['svar'] = [{'nyckel': n, 'fraga_id': iv.GRUND[0][0], 'text': 'Ansvarig måste kontrollera.', 'vet_inte': True, 'status': 'kunden uppger', 'omrade': 'A', 'mottaget': iv.nu()}]
+        iv.spara(self.k, s)
+        before = len(s['omgangar']); s, message = iv.nasta(self.k)
+        self.assertEqual(len(s['omgangar']), before)
+        self.assertNotIn(n, iv.kanda_nycklar(s)); self.assertIn(n, iv.status(s)['okanda_uppgifter'])
+        self.assertIn('annan källa', message); self.assertNotIn('inga luckor', message)
+        self.assertIn('uppgiften okänd', iv.research_md(s))
+        self.assertFalse(iv.okand({'text': 'Jag vet inte priset, men vi behöver bokning.'}))
+        self.assertFalse(iv.okand({'text': 'Nej, vi behöver ingen betalning på webbplatsen.'}))
+        self.assertTrue(iv.okand({'text': 'Vet inte.'}))
+
+    def test_kundens_svar_star_over_tolkning_men_ny_belagd_uppgift_kan_galla(self):
+        iv.start(self.k, 'syntetisk manuell kanal', True)
+        svarfil = self.k / 'svar.md'
+        svarfil.write_text('### C1\nAnsvarig tar emot förfrågan i kundregistret.\n')
+        iv.svar(self.k, 1, str(svarfil))
+        faktafil = self.k / 'fakta.json'
+        for status in ('tolkning', 'hypotes', 'preferens'):
+            with self.subTest(status=status):
+                faktafil.write_text(json.dumps([{'nyckel': 'efter_inskick', 'varde': 'Ingen mottagare behövs: ' + status,
+                                                'status': status, 'kalla': 'syntetisk intern bedömning', 'omrade': 'C'}]))
+                s, _ = iv.fakta(self.k, str(faktafil))
+                self.assertEqual(iv.aktuella_uppgifter(s)['efter_inskick'].get('text'), 'Ansvarig tar emot förfrågan i kundregistret.')
+                self.assertIn('kunden uppger', iv.anvandbarhet(s)['vad formuläret ska åstadkomma efter inskick'])
+                self.assertTrue(any(x['status'] == status for x in s['fakta']), 'tolkningar bevaras som underlag')
+        faktafil.write_text(json.dumps([{'nyckel': 'efter_inskick', 'varde': 'En ny ansvarig tar emot efter systembytet.',
+                                        'status': 'externt belagt', 'kalla': 'syntetiskt senare protokoll 2026-09-29',
+                                        'datum': '2026-09-29', 'omrade': 'C'}]))
+        s, _ = iv.fakta(self.k, str(faktafil))
+        self.assertEqual(iv.aktuella_uppgifter(s)['efter_inskick']['varde'], 'En ny ansvarig tar emot efter systembytet.')
+        self.assertIn('externt belagt', iv.anvandbarhet(s)['vad formuläret ska åstadkomma efter inskick'])
+        self.assertIn('Ansvarig tar emot förfrågan i kundregistret.', iv.research_md(s))
+
+    def test_korta_okanda_manuella_svar_bevaras_som_okanda(self):
+        for index, text in enumerate(('Vet ej.', 'ingen aning', 'Jag vet ej!', 'Jag har ingen aning.',
+                                      'Osäker', 'Inte säker.', "Don't know", 'I do not know.')):
+            with self.subTest(text=text):
+                kund = Path(self.tmp.name) / ('manuell-' + str(index)); kund.mkdir()
+                iv.start(kund, 'syntetisk manuell kanal', True)
+                svarfil = kund / 'svar.md'; svarfil.write_text('### A1\n' + text + '\n')
+                s, _ = iv.svar(kund, 1, str(svarfil))
+                self.assertEqual(s['svar'][0]['text'], text)
+                self.assertIn('verksamhetsmal', iv.status(s)['okanda_uppgifter'])
+                self.assertNotIn('verksamhetsmal', iv.kanda_nycklar(s))
+                self.assertIn('uppgiften okänd', iv.research_md(s))
+                s, _ = iv.nasta(kund)
+                self.assertNotIn('A1', [q['id'] for q in s['omgangar'][-1]['fragor']], 'frågan upprepas inte som obesvarad')
+
+    def test_okant_kortform_helmatchar_inte_blandat_svar_eller_nej(self):
+        for text in ('Vi vet inte.', 'Vi vet ej!', 'Vi har ingen aning.', 'Vi är inte säkra.', "We don't know."):
+            with self.subTest(text=text):
+                self.assertTrue(iv.okand({'text': text}))
+        for text in ('Vet ej priset, men vi behöver bokning.', 'Ingen aning om verktyget; ta emot i kundregistret.',
+                     'Inte säker på datumet. Vi erbjuder två tjänster.', 'Nej, vi behöver ingen betalning.',
+                     'Vi vet inte priset, men vi behöver kunna betala.',
+                     "I don't know the cost, but we need bookings."):
+            with self.subTest(text=text):
+                self.assertFalse(iv.okand({'text': text}))
+
 
 if __name__ == '__main__':
     unittest.main()

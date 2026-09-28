@@ -2,8 +2,8 @@
 
 Professionsfil (HELHET-20260927, avsnitt 5), återvunnen ur det arkiverade repots premiumchecklista och
 exemplarlista (verifierade renderbara 2026-07-27; adresserna kan ha ändrats), omgjord från kriterier med poäng till
-jämförelsedimensioner utan poäng. Valfritt underlag i steget `koncept` och vid kritik: används när briefen motiverar
-en jämförelse. Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet; kriterierna är
+jämförelsedimensioner utan poäng. Vid ny formgivning och kvalitetsomarbetning används faktisk, öppnad
+referensjämförelse i koncept och kritik även när en äldre brief saknar den (kritik/BEDOMNING-v2.md). Ingen ensam referens, egen leverans eller stilpoäng definierar god kvalitet; kriterierna är
 KVALITET.md:s, kund- och uppgiftsmotiverade.
 
 ## Åtta jämförelsedimensioner — inga kriterier
@@ -11,7 +11,8 @@ KVALITET.md:s, kund- och uppgiftsmotiverade.
 Dimensionerna är frågor att ställa till ett konkret drag i kandidaten, bredvid ett exempel som löst samma sak.
 Ingen av dem är ett krav: vilka som gäller för en kund väljs i konceptsteget ur briefens §1–§2 och §7 med skäl, och
 ett drag som inte gäller (en informationssida utan handling, en portfölj där bilden bär) skrivs som "gäller inte"
-med skäl. Där en dimension strider mot briefen vinner briefen och avvikelsen står i konfliktraden. Kvantiteter i
+med skäl. Styrkta kundbehov och mandat väger högre än den interna briefen; en svag designhypotes omprövas
+med skäl i konfliktraden. Kvantiteter i
 parentes är exemplens vanliga lägen, inte gränser.
 
 1. **Hållning** — kan sajten beskrivas i en mening; känns den igen utan logotyp; finns ett motiverat avsteg från
@@ -30,10 +31,18 @@ parentes är exemplens vanliga lägen, inte gränser.
 
 ## Urval av exempel att jämföra med
 
-Ett exempel duger som jämförelse när det är erkänt professionellt (studio, premiumvarumärke, kuraterat galleri;
-inte en branschkonkurrent, som är research), när draget går att flytta till kundens sajt utan att bryta
-tillgänglighets- eller prestandakrav, och när draget håller genom sajten. Prisgallerier är filtrerat sällskap, aldrig
-huvudreferens. Att ett exempel visar en handling i första vyn säger inget om vad kundens uppgift kräver.
+En källa väljs för en konkret uppgift och får flera roller: bransch, hantverk och UX/funktion enligt
+referensjakt.md. En branschkonkurrent kan vara en stark professionell referens. Erkännande och utmärkelser
+är sökingångar; den faktiskt öppnade lösningen och dess relevans bär hantverksomdömet. Företagsbetyg eller
+lokal närhet ersätter inte det. Prisgallerier får bidra även till små företags riktning när lösningen är
+ändamålsenlig, tillgänglig, rimlig att driva och faktiskt undersökt. Ingen stil eller källa är alltid överordnad.
+
+Visa kandidat och referens intill varandra i jämförbara vyer och relevanta tillstånd. Beskriv den konkreta
+skillnaden i innehåll, typografisk hierarki, bildroll, komposition, rytm eller interaktion, och konsekvensen
+för kunduppgiften. Varför behålls eller ändras kandidatens lösning? Att båda är beige, har serif eller att
+kandidaten är bättre än en svag föregångare räcker inte. Stillbilder bevisar inte interaktion; komplettera
+med faktiskt observerat beteende där slutsatsen kräver det. Bedöm också undersidor och relevanta fel-,
+tom-, laddnings- och redaktörslägen; en välgjord hero bevisar inte en sammanhängande upplevelse.
 
 ## Exemplar (ett drag per sajt; kontrollera renderingen på nytt innan de används)
 
@@ -47,6 +56,6 @@ huvudreferens. Att ett exempel visar en handling i första vyn säger inget om v
 | 6 | aman.com | förtroende genom verkliga platser och detaljer, inte märken |
 | 8 | notion.com | konsekvens: samma system i första vyn, sektioner och sidfot |
 
-Dimension 7 (mobil ergonomi) saknar exempel i källan; hämta ett per fall ur mönsterbibliotek (t.ex. mobbin.com) med
+Dimension 7 (mobil ergonomi) saknar exempel i källan; välj uppgiftsrelevant faktiskt öppnat beteende, exempelvis ur ett mönsterbibliotek, med
 motivering. Jämförelsen skrivs som: kandidatens drag · exemplarets lösning · vad som skiljer · vad som ändras eller
 behålls, och varför. Aldrig kopiering av layout, palett eller typsnitt.

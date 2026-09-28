@@ -78,7 +78,7 @@ class Bygg(unittest.TestCase):
         vf2 = self.d / 'V2.json'; vf2.write_text(json.dumps(exempel(fiktiv=False)))
         with contextlib.redirect_stdout(io.StringIO()) as o:
             self.assertEqual(ab.main(['overfor', '--verksamhet', str(vf2), '--ut', str(self.d / 'K.json')]), 2)
-        self.assertIn('ingen överföringsväg', json.loads(o.getvalue())['vagrad'][0])
+        self.assertIn('privat --konfiguration', json.loads(o.getvalue())['vagrad'][0])
         exp = self.d / 'export.csv'; exp.write_text('campaign,cost,clicks,impressions,conversions\nA,120.50,40,1000,2\nA,79.50,10,500,0\nB,10,1,50,0\n')
         r = ab.rapport(str(exp))
         self.assertEqual(r['kampanjer']['A']['kostnad_per_konvertering'], 100.0); self.assertIsNone(r['kampanjer']['B']['kostnad_per_konvertering'])

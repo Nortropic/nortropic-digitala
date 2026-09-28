@@ -27,9 +27,37 @@ före aktivering. En fiktiv verksamhet får kampanjutkast för systemprov men al
 10. **Resultatläsning**: `rapport --export` läser plattformens export; affärsnytta (konverteringar, kostnad per
     konvertering) skilt från proxy (klick, visningar); plattformens attribution jämförs med kundens verkliga inflöde.
 
-## Överföring och aktivering — externa beroenden
+## Överföring och återläsning
 
-Google Ads API: utvecklartoken (ansökan), OAuth-klient, kund-id under ett förvaltarkonto; Meta Marketing API:
-app med behörighet ads_management, systemanvändartoken, annonskonto. **Ingen av dessa finns (2026-09-27).**
-Utkasten är kompletta objekt som kan föras över av en behörig människa i plattformarnas gränssnitt eller av ett
-senare verktyg med åtkomst; status PAUSED tills mandatet säger annat. Ett utkast är inte en körd kampanj.
+`annonsberedning.py overfor --kanal google|meta --verksamhet ... --kanalplan ... --bygge ...
+--konfiguration /privat/konto.json --ut /privat/KVITTO.json` använder begränsade API-adaptrar. Fiktivspärren
+prövas först. Öppna beredningsfynd stoppar all överföring. Konfigurationsfilen ska ligga utanför repot med
+rättighet 0600; inga standardhemligheter eller konton söks. Inga värden får kopieras till leveransdokument.
+
+Konfiguration: schema `digitala-annonskonto/1`, `kanal`, `verksamhet`, `plan_sha256` (kanonisk hash genom
+annonsadapter.sha av exakt kanalplan), `tillat_paused_overforing: true`, namngivet `mandat`, `valuta: SEK`,
+`api_version`, `access_token`, samt `kampanjer` med planens kampanjnamn som nycklar. Google kräver dessutom
+`developer_token`, `customer_id` och valfritt `login_customer_id`. Meta kräver `ad_account_id` utan act_-prefix.
+Alla id och API-versioner anges explicit; inget konto skapas. Token skickas enbart till respektive plattforms
+fasta HTTPS-värd, aldrig genom omdirigering. Felbody med möjliga känsliga värden skrivs inte ut.
+
+Google stöder Search med manuell CPC, pausad kampanj/grupp/responsiv annons och positiva sökord, negativa
+sökord samt explicit geo-/språk-id. Varje kampanjmapping kräver `geo_ids`, `language_ids`, `cpc_bid_micros`
+och sakbeslutet `eu_politiskt_innehall: false`; andra politiska klassningar stöds inte av adaptern.
+Meta stöder webbtrafik med pausad kampanj/adset/annons. Mapping kräver befintlig `page_id`, uppladdad
+`image_hash`, `bildrattighet` och verifierad `targeting` inklusive `geo_locations`. Creative byggs av den
+bundna planens text och UTM-länk. Andra Meta-mål vägras: lead/sales kräver separat konto-, händelse- och
+konverteringskontrakt. Ingen adapter verifierar mottagna konverteringar eller tillskriver annonser resultat.
+
+Kontots valuta återläses före skrivning. Varje anropsavsikt sparas före HTTP, skapade id och råsvar bevaras,
+och kampanj/grupp/annons återläses efteråt med samma id/konto och PAUSED-status. Ingen aktiveringsväg finns.
+Befintligt utkvittot stoppar nytt skapande. `aterlas --konfiguration ... --ut befintligt-kvitto.json` läser bara;
+en partiell överföring blir aldrig komplett enbart för att dess återstående objekt är pausade. Tappat svar
+med okänt skapandeutfall kräver avstämning mot plattformen, inte blind POST-retry. Testtransport märks tydligt;
+en lyckad sådan körning bevisar inget om kontoåtkomst eller extern mottagning.
+
+Tekniska primärkällor: [Google REST mutate](https://developers.google.com/google-ads/api/rest/common/mutate),
+[Google REST examples/search](https://developers.google.com/google-ads/api/rest/examples) och
+[Metas officiella AdAccount SDK-kontrakt](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adaccount.py).
+Granskade 2026-09-28. Liveacceptans återstår tills behörig kontokonfiguration, explicit överföringsmandat och
+plattformens verkliga svar finns. Åtkomst är ett namngivet beroende, ingen allmän utsaga om vilka konton som finns.

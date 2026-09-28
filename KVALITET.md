@@ -1,5 +1,8 @@
 # Kvalitet — kriterier och kvalitetsbilden
 
+Gällande bedömningskontrakt: `digitala-kvalitet/2`, [BEDOMNING-v2](kritik/BEDOMNING-v2.md).
+Det styr hur kriterierna används genom brief, koncept, kritik och leverans. Tidigare domar ändras inte retroaktivt.
+
 ## Kriterier (professionens, för alla kunder; kund- och uppgiftsmotiverade, inte stilregler)
 
 1. **Användarnytta och begriplighet**: besökaren förstår vad som erbjuds, för vem och hur man går vidare; de viktigaste
@@ -8,7 +11,9 @@
    val → mening → formulär → slutbesked hänger ihop (L2); inga påhittade insikter, omdömen, meriter eller personer som
    framställs som verkliga.
 3. **Formgivet för just denna kund**: typografiskt hantverk, komposition, rytm och luft, bildspråk och en sammanhängande
-   mobilupplevelse som svarar mot kundens verksamhet och målgrupp. Särprägel är värdefull när den hjälper uppdraget och
+   mobilupplevelse som svarar mot kundens verksamhet och målgrupp. Bildernas relevans och beskärning,
+   tjänsternas tydliga skillnader, avsiktlig hierarki och rytm samt sammanhängande sidor och lägen är positiv
+   miniminivå; en professionellt otillräcklig helhet kan blockera även med fungerande teknik. Särprägel är värdefull när den hjälper uppdraget och
    ersätter aldrig funktion eller saklighet. Inga generella stilregler (fasta färger, en obligatorisk handling ovanför
    vikningen, universella dial-värden, fast antal koncept) och ingen rangordning där särprägel går före allt annat;
    externa professionella referenser används för jämförelse med motivering, inte kopiering, och ingen ensam referens,
@@ -50,3 +55,15 @@ omdöme, och det skrivs så; ägarens bedömning görs på den färdiga sajten.
 
 `verktyg/kvalitetsbild.py` bygger bilden ur fallets `KORNING-*.json` och deras kvitton; det som saknas i kvittona
 står som "ej prövat" och fylls aldrig i av verktyget.
+
+## Tillämpningsbeslut 2026-09-28 — fokuserade jämförelser och omprov
+
+Referensjaktens tre roller är bransch, hantverk och UX/funktion; rollerna får överlappa. Ingen lokalitetskvot,
+företagsbetygströskel, företagsstorlek eller stil avgör vilka professionella exempel som får jämföras.
+Visa öppnad referens intill kandidatens relevanta vy och förklara lösning, skillnad och användarkonsekvens.
+Jämför hantverk och sammanhängande beteende, inte bara färg eller förbättring mot egen föregångare.
+
+Omprov avgränsas efter ändringens faktiska direkta/indirekta följder enligt konsekvensgranskning.md. Det minskar
+irrelevant läsning, inte kvalitetsnivå, kandidatbindning eller förhandsbestämd täckning. Produkt, kod och rapport
+har skilda domar. Token, kostnad, modellkvot, väntetid, omtag och ägararbete redovisas var för sig med källa eller
+som okända; ett mindre paket är inte automatiskt bättre kvalitet. `digitala-kvalitet/2` och dess domfilter består.

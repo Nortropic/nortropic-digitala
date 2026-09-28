@@ -1,27 +1,511 @@
 {
-  "type": "object", "additionalProperties": false,
-  "required": ["komp", "specificitet", "specificitet_skal", "hypotes", "styrkor", "brister_prioriterade", "mot_dagens", "mot_referenserna", "mall_kvar", "fors_vidare", "heuristik_0_4", "kognitiv_last_forsta_vyn", "okant", "sett_kontra_last", "omdome_en_mening", "seen_files"],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "komp",
+    "specificitet",
+    "specificitet_skal",
+    "hypotes",
+    "styrkor",
+    "brister_prioriterade",
+    "mot_referenserna",
+    "mall_kvar",
+    "fors_vidare",
+    "heuristik_0_4",
+    "kognitiv_last_forsta_vyn",
+    "okant",
+    "sett_kontra_last",
+    "omdome_en_mening",
+    "seen_files",
+    "kriterieversion",
+    "referensjamforelser",
+    "verdict",
+    "blocking_findings",
+    "could_not_review",
+    "bedomningsbindning",
+    "dagensjamforelser"
+  ],
   "properties": {
-    "komp": {"type": "string", "maxLength": 40},
-    "specificitet": {"type": "string", "enum": ["specifik för kunden", "annorlunda men utbytbar", "generisk"]},
-    "specificitet_skal": {"type": "string", "maxLength": 2000},
-    "hypotes": {"type": "string", "maxLength": 1500},
-    "styrkor": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
-    "brister_prioriterade": {"type": "array", "maxItems": 20, "items": {"type": "object", "additionalProperties": false,
-      "required": ["vad", "var", "varfor", "atgard"],
-      "properties": {"vad": {"type": "string", "maxLength": 600}, "var": {"type": "string", "maxLength": 300}, "varfor": {"type": "string", "maxLength": 600}, "atgard": {"type": "string", "maxLength": 600}}}},
-    "mot_dagens": {"type": "object", "additionalProperties": false, "required": ["v390", "v1440"],
-      "properties": {"v390": {"type": "string", "maxLength": 1500}, "v1440": {"type": "string", "maxLength": 1500}}},
-    "mot_referenserna": {"type": "string", "maxLength": 1500},
-    "mall_kvar": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
-    "fors_vidare": {"type": "array", "items": {"type": "string", "maxLength": 600}, "maxItems": 12},
-    "heuristik_0_4": {"type": "object", "additionalProperties": false,
-      "required": ["synlighet", "match_verklighet", "kontroll", "konsekvens", "felforebyggande", "igenkanning", "flexibilitet", "minimalism", "felhantering", "hjalp"],
-      "properties": {"synlighet": {"type": "integer", "minimum": 0, "maximum": 4}, "match_verklighet": {"type": "integer", "minimum": 0, "maximum": 4}, "kontroll": {"type": "integer", "minimum": 0, "maximum": 4}, "konsekvens": {"type": "integer", "minimum": 0, "maximum": 4}, "felforebyggande": {"type": "integer", "minimum": 0, "maximum": 4}, "igenkanning": {"type": "integer", "minimum": 0, "maximum": 4}, "flexibilitet": {"type": "integer", "minimum": 0, "maximum": 4}, "minimalism": {"type": "integer", "minimum": 0, "maximum": 4}, "felhantering": {"type": "integer", "minimum": 0, "maximum": 4}, "hjalp": {"type": "integer", "minimum": 0, "maximum": 4}}},
-    "kognitiv_last_forsta_vyn": {"type": "string", "maxLength": 1000},
-    "okant": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 12},
-    "sett_kontra_last": {"type": "string", "maxLength": 1500},
-    "omdome_en_mening": {"type": "string", "maxLength": 400},
-    "seen_files": {"type": "array", "items": {"type": "string", "maxLength": 200}, "maxItems": 200}
+    "komp": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "specificitet": {
+      "type": "string",
+      "enum": [
+        "specifik för kunden",
+        "annorlunda men utbytbar",
+        "generisk"
+      ]
+    },
+    "specificitet_skal": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "hypotes": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "styrkor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "maxItems": 12
+    },
+    "brister_prioriterade": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "vad",
+          "var",
+          "varfor",
+          "atgard"
+        ],
+        "properties": {
+          "vad": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "var": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "varfor": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "atgard": {
+            "type": "string",
+            "maxLength": 600
+          }
+        }
+      }
+    },
+    "mot_referenserna": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "mall_kvar": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "maxItems": 12
+    },
+    "fors_vidare": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "maxItems": 12
+    },
+    "heuristik_0_4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synlighet",
+        "match_verklighet",
+        "kontroll",
+        "konsekvens",
+        "felforebyggande",
+        "igenkanning",
+        "flexibilitet",
+        "minimalism",
+        "felhantering",
+        "hjalp"
+      ],
+      "properties": {
+        "synlighet": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "match_verklighet": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "kontroll": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "konsekvens": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "felforebyggande": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "igenkanning": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "flexibilitet": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "minimalism": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "felhantering": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        },
+        "hjalp": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "okant",
+            "inte-tillampligt"
+          ]
+        }
+      }
+    },
+    "kognitiv_last_forsta_vyn": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "okant": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 12
+    },
+    "sett_kontra_last": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "omdome_en_mening": {
+      "type": "string",
+      "maxLength": 400
+    },
+    "seen_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200,
+        "description": "Exakt en faktiskt läst paketplats, utan kommentarer eller radintervall. Lästa delar/begränsningar anges i saktext, inte här."
+      },
+      "maxItems": 200
+    },
+    "kriterieversion": {
+      "type": "string",
+      "enum": [
+        "digitala-kvalitet/2"
+      ]
+    },
+    "referensjamforelser": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kandidatbild",
+          "referensbild",
+          "observation",
+          "konsekvens",
+          "kalla",
+          "tid",
+          "vy",
+          "drag",
+          "beslut_och_skal"
+        ],
+        "properties": {
+          "kandidatbild": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll kandidat, utan tillägg eller flera filnamn."
+          },
+          "referensbild": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll referens, utan tillägg eller flera filnamn."
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "konsekvens": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "kalla": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera kalla ordagrant från samma manifestpost som referensbild."
+          },
+          "tid": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera tid ordagrant från samma manifestpost som referensbild."
+          },
+          "vy": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera vy ordagrant från samma manifestpost som referensbild."
+          },
+          "drag": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "beslut_och_skal": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "ej_bedombart"
+      ]
+    },
+    "blocking_findings": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "where",
+          "finding",
+          "fix",
+          "criterion",
+          "consequence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "where": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "finding": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "fix": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "criterion": {
+            "type": "string",
+            "maxLength": 800
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 800
+          }
+        }
+      }
+    },
+    "could_not_review": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 30
+    },
+    "bedomningsbindning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "underlag_sha256",
+        "kriterier_sha256",
+        "kandidat",
+        "miljo",
+        "konfiguration",
+        "rackvidd",
+        "krav_sha256",
+        "domkod_sha256"
+      ],
+      "properties": {
+        "underlag_sha256": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "kriterier_sha256": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "kandidat": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "miljo": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "konfiguration": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "rackvidd": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "krav_sha256": {
+          "type": "string"
+        },
+        "domkod_sha256": {
+          "type": "string"
+        }
+      }
+    },
+    "dagensjamforelser": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kandidatbild",
+          "dagensbild",
+          "observation",
+          "konsekvens",
+          "kalla",
+          "tid",
+          "vy",
+          "drag",
+          "beslut_och_skal"
+        ],
+        "properties": {
+          "kandidatbild": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll kandidat, utan tillägg eller flera filnamn."
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "konsekvens": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "kalla": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera kalla ordagrant från samma manifestpost som dagensbild."
+          },
+          "tid": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera tid ordagrant från samma manifestpost som dagensbild."
+          },
+          "vy": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Kopiera vy ordagrant från samma manifestpost som dagensbild."
+          },
+          "drag": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "beslut_och_skal": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "dagensbild": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Exakt en bilder[].plats med roll dagens, utan tillägg eller flera filnamn."
+          }
+        }
+      }
+    }
   }
 }

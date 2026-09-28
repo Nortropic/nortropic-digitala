@@ -31,6 +31,9 @@ import re
 import subprocess
 import sys
 import time
+import contextlib
+import tempfile
+import kritikbevis
 
 ROT = Path(__file__).resolve().parents[1]
 ETIKETT = re.compile(r'\A[a-z0-9][a-z0-9-]{0,39}\Z')
@@ -111,7 +114,7 @@ def laddad_fil(receipt, fil):
 
 
 def verktygshashar():
-    return {name: hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() for name in ('kor_profil.py', 'ladda_steg.py', 'kvalitetsbild.py') if (ROT / 'verktyg' / name).is_file()}
+    return {name: hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() for name in kritikbevis.DOMKOD if (ROT / 'verktyg' / name).is_file()}
 
 
 def bindning_ur(args, receipt, release):
@@ -172,6 +175,67 @@ def bygg_matning(args, release, root, receipt):
     return argv, {'profil_val': valda, 'kodens_varden': kod, 'hur': hur}
 
 
+def bind_bildschema(schema_text, bilddata):
+    """Begränsa den laddade mallen till det verifierade manifestet, före Runtime-start.
+
+    Runtime stöder enum men inte villkorliga scheman. Proveniensvärden begränsas
+    därför per roll; kritikbevis.dom kontrollerar fortsatt att de hör till SAMMA bild.
+    Inga modellsvar eller kvalitetskriterier ändras här.
+    """
+    schema = json.loads(schema_text)
+
+    def bind_enum(node, values):
+        values = sorted(set(values))
+        if (node.get('type') != 'string' or not values
+                or any(not isinstance(v, str) or len(v) > node.get('maxLength', len(v)) for v in values)
+                or ('enum' in node and not set(values) <= set(node['enum']))):
+            raise Vagrad('bildmanifestet ryms inte i den laddade schemamallen')
+        node['enum'] = values
+
+    try:
+        candidates = [b['plats'] for b in bilddata['bilder'] if b['roll'] == 'kandidat']
+        for field, role, image_key in (('referensjamforelser', 'referens', 'referensbild'),
+                                        ('dagensjamforelser', 'dagens', 'dagensbild')):
+            array = schema['properties'][field]
+            if array.get('type') != 'array' or array['items'].get('type') != 'object':
+                raise Vagrad('den laddade schemamallen saknar jämförelseobjekt')
+            props = array['items']['properties']
+            bind_enum(props['kandidatbild'], candidates)
+            images = [b for b in bilddata['bilder'] if b['roll'] == role]
+            if not images:
+                # Inga DAGENS-bilder: tom lista, aldrig en påhittad bild eller tom enum.
+                if role != 'dagens' or array.get('minItems', 0) > 0:
+                    raise Vagrad('den laddade schemamallen kräver saknade jämförelsebilder')
+                array['maxItems'] = 0
+                continue
+            bind_enum(props[image_key], [b['plats'] for b in images])
+            for key in ('kalla', 'tid', 'vy'):
+                bind_enum(props[key], [b[key] for b in images])
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar bild-/proveniensfält') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
+def bind_sedda_filer(schema_text, files):
+    """Exakta paketplatser, inte bevis på läsning. Körs efter hela underlagsbygget.
+
+    Runtime web_critique.build_workspace tillför FILES.md och AGENTS.md;
+    load_manifest reserverar samma namn. Inga andra automatiska filer antas.
+    """
+    schema = json.loads(schema_text)
+    try:
+        node = schema['properties']['seen_files']['items']
+        places = sorted({f['plats'] for f in files} | {'FILES.md', 'AGENTS.md'})
+        if (not isinstance(node, dict) or node.get('type') != 'string'
+                or any(not isinstance(p, str) or len(p) > node.get('maxLength', len(p)) for p in places)
+                or ('enum' in node and not set(places) <= set(node['enum']))):
+            raise Vagrad('paketplatserna ryms inte i den laddade seen_files-mallen')
+        node['enum'] = places
+    except (KeyError, TypeError) as e:
+        raise Vagrad('den laddade schemamallen saknar seen_files-items') from e
+    return json.dumps(schema, ensure_ascii=False, indent=2) + '\n'
+
+
 def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.mall not in KRITIKMALLAR:
         raise Vagrad('okänd mall; kända: ' + ', '.join(KRITIKMALLAR))
@@ -192,22 +256,49 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     if rest:
         raise Vagrad('frågan har ofyllda platshållare: ' + ', '.join(rest))
     files = json.loads(Path(args.filer).read_text(encoding='utf-8'))
-    if not isinstance(files, list) or not files:
+    if not isinstance(files, list) or (not files and policy['avskarmad']):
         raise Vagrad('--filer är en JSON-lista av {"kalla","plats","vad"}')
     if policy['avskarmad']:
         for f in files:
             if AVSKARMAD_FORBJUDET.search(str(f.get('plats', ''))) or AVSKARMAD_FORBJUDET.search(str(f.get('kalla', ''))):
                 raise Vagrad('avskärmad bedömning (%s): --filer får bara bära bilder av det renderade resultatet, inte %s' % (args.mall, f.get('plats')))
     arbetsyta = Path(receipt['arbetsyta'])
+    bilddata = None; bildmap = {}; expected = None
+    if not policy['avskarmad']:
+        bildtext = laddad_fil(receipt, kritikbevis.BILDFIL)
+        bilddata = json.loads(bildtext)
+        try:
+            kritikbevis.manifest(bilddata, arbetsyta / 'underlag/kund')
+        except kritikbevis.Vagrad as e:
+            raise Vagrad(str(e)) from e
+        kontrakt = laddad_fil(receipt, kritikbevis.KONTRAKT)
+        if bilddata['kriterier_sha256'] != hashlib.sha256(kontrakt.encode()).hexdigest():
+            raise Vagrad('bildmanifestet gäller annan kriteriefrysning än laddat BEDOMNING-v2')
+        schema = bind_bildschema(schema, bilddata)
+        bildmap = {b['fil']: b for b in bilddata['bilder']}
+        expected = kritikbevis.bindning(bilddata, hashlib.sha256(bildtext.encode()).hexdigest())
+        # Inputs cannot silently substitute unbound images for the required set.
+        if any(Path(f.get('plats', '')).suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp') for f in files):
+            raise Vagrad('kvalificerad kritik laddar bilder ur BEDOMNINGSUNDERLAG; --filer är kompletterande text/mätbevis')
     for r in receipt['underlag']:
-        if r['status'] != 'laddad' or r['fil'] in ('kritik/FRAGA-%s.md' % args.mall, 'kritik/SCHEMA-%s.json' % args.mall) or r['fil'].startswith('kritik/'):
+        if r['status'] != 'laddad' or r['fil'] in ('kritik/FRAGA-%s.md' % args.mall, 'kritik/SCHEMA-%s.json' % args.mall) or (r['fil'].startswith('kritik/') and r['fil'] != 'kritik/BEDOMNING-v2.md'):
             continue
         if r['klass'] == 'profession' and policy['profession']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'UNDERLAG/' + Path(r['plats']).name,
                           'vad': 'professionsunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
+        elif r['klass'] == 'kund' and policy['kund'] and r['fil'] in bildmap:
+            files.append({'kalla': str(arbetsyta / r['plats']), 'plats': bildmap[r['fil']]['plats'], 'vad': bildmap[r['fil']]['drag']})
         elif r['klass'] == 'kund' and policy['kund']:
             files.append({'kalla': str(arbetsyta / r['plats']), 'plats': 'KUND/' + Path(r['plats']).name,
                           'vad': 'kundunderlag (%s): %s' % (r['fil'], r['delar'][:200])})
+    if expected:
+        bind_path = Path(args.fall) / ('kritik-' + args.etikett + '-bindning.json')
+        if not args.torr:
+            if bind_path.exists():raise Vagrad('kritiketiketten har redan en bindning; använd ny etikett för omprov')
+            with bind_path.open('x', encoding='utf-8') as out:
+                json.dump(expected, out, ensure_ascii=False, indent=1)
+        files.append({'kalla': str(bind_path), 'plats': 'UNDERLAG/BEDOMNINGSBINDNING.json', 'vad': 'exakt bedömningsbindning, kopieras till svaret'})
+        schema = bind_sedda_filer(schema, files)
     fraga += '\n\nBindning: laddningskvitto %s (steg %s), sha256 %s.\n' % (laddning_sha[:16], receipt['steg'], receipt['sha256_over_underlag'][:16])
     fall = Path(args.fall)
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
@@ -223,7 +314,179 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
     if args.tid:
         argv += ['--tid', str(args.tid)]
     return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files), 'kontext_policy': policy,
-                  'manifest_platser': [f['plats'] for f in files]}
+                  'schema_sha256': hashlib.sha256(schema.encode()).hexdigest(),
+                  'manifest_platser': [f['plats'] for f in files], 'bedomningsbindning': expected, 'bildbedomningsunderlag': bilddata}
+
+
+@contextlib.contextmanager
+def historisk_domkod(post):
+    """No historical Python is imported. Current semantic code must be byte-identical.
+
+    Older wrapper/loading bytes are only hashed in an isolated evidence directory,
+    so adding this orchestration cannot silently replace the original bound verdict code.
+    """
+    revision = (post.get('bindning') or {}).get('rot_git_head', '')
+    hashes = (post.get('bindning') or {}).get('verktyg') or {}
+    expected = (post.get('bedomningsbindning') or {}).get('domkod_sha256')
+    if not re.fullmatch(r'[0-9a-f]{40}', revision) or set(hashes) != set(kritikbevis.DOMKOD):
+        raise Vagrad('historisk domkod kräver exakt commit och samtliga ursprungliga kodhashar')
+    # These are the only modules that execute for the historical semantic check.
+    for name in ('kritikbevis.py', 'stegbevis.py'):
+        if hashlib.sha256((ROT / 'verktyg' / name).read_bytes()).hexdigest() != hashes.get(name):
+            raise Vagrad('semantisk domkod har ändrats; historisk formåterhämtning kräver ny sakprövning')
+    with tempfile.TemporaryDirectory(prefix='digitala-domhash-') as temporary:
+        snapshot = Path(temporary)
+        for relative in ['steg/DOMKOD.sha256'] + ['verktyg/' + n for n in kritikbevis.DOMKOD]:
+            done = subprocess.run(['git', '-C', str(ROT), 'show', revision + ':' + relative], capture_output=True)
+            if done.returncode:
+                raise Vagrad('ursprunglig domkod saknas i lokal Git-historik')
+            digest = hashlib.sha256(done.stdout).hexdigest()
+            if digest != (expected if relative == 'steg/DOMKOD.sha256' else hashes[Path(relative).name]):
+                raise Vagrad('historisk domkod avviker från ursprunglig bindning')
+            target = snapshot / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(done.stdout)
+        original_root = kritikbevis.ROT
+        try:
+            kritikbevis.ROT = snapshot
+            if kritikbevis.domkod() != expected:
+                raise Vagrad('historisk domkodspin stämmer inte')
+            yield
+        finally:
+            kritikbevis.ROT = original_root
+
+
+def aterhamtningskalla(post):
+    meta = post.get('formaterhamtning') or {}
+    path = Path(meta.get('korning') or '')
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != meta.get('sha256'):
+        raise Vagrad('ursprunglig KORNING saknas eller har ändrats')
+    original = json.loads(path.read_text())
+    if original.get('formaterhamtning') or original.get('profil') != 'kritik' or original.get('mall') != 'renderingslasning':
+        raise Vagrad('formåterhämtning kräver ursprunglig renderingsläsning, inte en återhämtningskedja')
+    for key in ('laddning', 'bedomningsbindning', 'bildbedomningsunderlag'):
+        if post.get(key) != original.get(key):
+            raise Vagrad('återhämtningens ' + key + ' skiljer från originalet')
+    return original
+
+
+def kontrollera_aterhamtningsbevis(post, run, kvitto, svar):
+    """The new answer preserves every protected value and its exact original source."""
+    if not post.get('formaterhamtning'):
+        if kvitto.get('format_recovery'):
+            raise Vagrad('Runtime-formåterhämtning saknar bunden konsumentproveniens')
+        return
+    original_post = aterhamtningskalla(post)
+    if post['formaterhamtning'].get('ursprunglig_bindning') != original_post.get('bindning'):
+        raise Vagrad('redovisad ursprunglig bindning skiljer från källposten')
+    provenance = kvitto.get('format_recovery') or {}
+    oldrun = Path(original_post['resultat']['run'])
+    if (provenance.get('source_receipt_sha256') != original_post.get('runtime_kvitto_sha256')
+            or Path(provenance.get('source_run') or '').resolve() != oldrun.resolve()
+            or provenance.get('changed_fields') != ['summary'] or provenance.get('images_reopened') != 0
+            or provenance.get('error') is not None):
+        raise Vagrad('formåterhämtning saknar samma källkvitto eller avgränsning')
+    if hashlib.sha256((oldrun / 'KVITTO.json').read_bytes()).hexdigest() != original_post['runtime_kvitto_sha256']:
+        raise Vagrad('ursprungligt Runtime-kvitto har ändrats')
+    old_receipt = json.loads((oldrun / 'KVITTO.json').read_text())
+    stream_hash = hashlib.sha256((oldrun / 'strom.jsonl').read_bytes()).hexdigest()
+    if (stream_hash != provenance.get('source_stream_sha256')
+            or stream_hash != old_receipt.get('outputs', {}).get('strom.jsonl', {}).get('sha256')):
+        raise Vagrad('ursprunglig råström har ändrats')
+    required = ['original-svar.json', 'FORMATERHAMTNING.json']
+    for directory in ('formrattning', 'innebordskontroll'):
+        required += [directory + '/' + name for name in ('svar.json', 'SESSION.json', 'strom.jsonl', 'start.json', 'fraga.txt', 'schema.json')]
+    for name in required:
+        path = Path(run) / name
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != kvitto.get('outputs', {}).get(name, {}).get('sha256'):
+            raise Vagrad('formåterhämtningens bundna bevis saknas/ändrat: ' + name)
+    original = json.loads((Path(run) / 'original-svar.json').read_text())
+    if not isinstance(svar, dict) or set(original) != set(svar) or any(svar[k] != v for k, v in original.items() if k != 'summary'):
+        raise Vagrad('formåterhämtning har ändrat dom, fynd, risk eller bevisfält')
+    attempts = []
+    for line in (oldrun / 'strom.jsonl').read_text().splitlines():
+        row = json.loads(line); message = row.get('message')
+        if isinstance(message, dict):
+            attempts += [b.get('input') for b in message.get('content', []) if isinstance(b, dict) and b.get('name') == 'StructuredOutput']
+    if attempts != [original]:
+        raise Vagrad('bevarat råobjekt skiljer från ursprungligt komplett svarsförsök')
+    patch = json.loads((Path(run) / 'formrattning/svar.json').read_text())
+    audit = json.loads((Path(run) / 'innebordskontroll/svar.json').read_text())
+    if patch != {'summary': svar['summary']} or audit.get('preserved') is not True or audit.get('lost_or_changed') != []:
+        raise Vagrad('formrättning eller separat innebördskontroll stämmer inte')
+    sessions = provenance.get('sessions') or []
+    if len(sessions) != 2 or any(s.get('valid_terminal') is not True or s.get('images') != 0 for s in sessions):
+        raise Vagrad('båda nya textsessionernas kvalificerade terminaler krävs')
+    for directory, session in zip(('formrattning', 'innebordskontroll'), sessions):
+        if json.loads((Path(run) / directory / 'SESSION.json').read_text()) != session:
+            raise Vagrad('textsessionens bevis skiljer från Runtime-proveniens')
+    if json.loads((Path(run) / 'FORMATERHAMTNING.json').read_text()) != provenance:
+        raise Vagrad('formåterhämtningens proveniens skiljer från Runtime-kvittot')
+
+
+def aterhamtningsbindning(post, original):
+    """Source judgement and current executor are different provenance objects."""
+    post['laddning'] = original['laddning']
+    bind = post['bindning']
+    bind.update({k: v for k, v in original['bindning'].items() if k not in bind})
+    bind['rot_git_head'] = subprocess.check_output(['git', '-C', str(ROT), 'rev-parse', 'HEAD'], text=True).strip()
+    post['formaterhamtning']['ursprunglig_bindning'] = original['bindning']
+    post['formaterhamtning']['konsument_head'] = bind['rot_git_head']
+    post['formaterhamtning']['konsument_hashar'] = bind['verktyg']
+
+
+@contextlib.contextmanager
+def domkontext(post):
+    if post.get('formaterhamtning'):
+        with historisk_domkod(aterhamtningskalla(post)):
+            yield
+    else:
+        yield
+
+
+def bygg_aterhamtning(args, release, root, receipt, laddning_sha):
+    original_path = Path(args.aterhamta).resolve()
+    original = json.loads(original_path.read_text())
+    extra = {key: original.get(key) for key in ('mall', 'parametrar', 'antal_filer', 'kontext_policy',
+             'schema_sha256', 'manifest_platser', 'bedomningsbindning', 'bildbedomningsunderlag')}
+    extra['formaterhamtning'] = {'korning': str(original_path), 'sha256': hashlib.sha256(original_path.read_bytes()).hexdigest(),
+                               'falt': ['summary'], 'inga_nya_bildlasningar': True}
+    proposal = {**extra, 'laddning': original.get('laddning')}
+    aterhamtningskalla(proposal)
+    if ((original.get('laddning') or {}).get('sha256') != laddning_sha
+            or Path(original['laddning']['fil']).resolve() != Path(args.laddning).resolve()):
+        raise Vagrad('formåterhämtning kräver exakt ursprungligt laddningskvitto')
+    argv = original.get('argv') or []
+    def argument(flag):
+        if argv.count(flag) != 1 or argv.index(flag) + 1 >= len(argv):
+            raise Vagrad('ursprunglig körning saknar entydig parameter ' + flag)
+        return argv[argv.index(flag) + 1]
+    if argv.count('runtime.web_critique') != 1:
+        raise Vagrad('ursprunglig körning är inte Runtimes kritikprofil')
+    args.utforare = argument('--utforare'); args.modell = argument('--modell'); args.mall = original['mall']
+    paths = {flag: argument(flag) for flag in ('--underlag', '--fraga', '--schema')}
+    run = Path((original.get('resultat') or {}).get('run') or '')
+    runtime_receipt = run / 'KVITTO.json'
+    if not runtime_receipt.is_file() or hashlib.sha256(runtime_receipt.read_bytes()).hexdigest() != original.get('runtime_kvitto_sha256'):
+        raise Vagrad('ursprungligt Runtime-kvitto avviker från KORNING')
+    with historisk_domkod(original):
+        expected, underlag = kritikbevis.ur_laddning(args.laddning)
+        if expected != original.get('bedomningsbindning') or underlag != original.get('bildbedomningsunderlag'):
+            raise Vagrad('ursprunglig kandidat, kriterier, domkod eller bildbindning har ändrats')
+    cmd = [release['python'], '-B', '-m', 'runtime.web_critique']
+    for flag, value in paths.items(): cmd += [flag, value]
+    cmd += ['--utforare', args.utforare, '--modell', args.modell, '--etikett', args.etikett,
+            '--aterhamta', str(run), '--formfalt', 'summary', '--formtid', str(args.formtid)]
+    # Run the exact Runtime eligibility check without auth/model startup. This
+    # also refuses an active release that lacks the implementation.
+    probe = ('import sys; from runtime.web_critique import parse; '
+             'from runtime.critique_format import verified_source; '
+             'a=parse(sys.argv[1:]); verified_source(a.aterhamta,a); print("form-preflight-ok")')
+    done = subprocess.run([release['python'], '-B', '-c', probe, *cmd[4:]], cwd=release['kod'], env=miljo(root),
+                          capture_output=True, text=True)
+    if done.returncode or done.stdout.strip() != 'form-preflight-ok':
+        raise Vagrad('Runtime vägrar formåterhämtning före modellstart: ' + done.stderr.strip()[-600:])
+    return cmd, extra
 
 
 def bygg_provare(args, release, root, receipt, laddning_sha):
@@ -266,10 +529,12 @@ def parse(argv):
     m.add_argument('--handling-selektor')
     m.add_argument('--undantag-fil')
     k = sub.add_parser('kritik', parents=[common])
-    k.add_argument('--mall', required=True)
-    k.add_argument('--filer', required=True)
-    k.add_argument('--utforare', choices=('claude', 'codex'), required=True)
-    k.add_argument('--modell', required=True)
+    k.add_argument('--mall')
+    k.add_argument('--filer')
+    k.add_argument('--utforare', choices=('claude', 'codex'))
+    k.add_argument('--modell')
+    k.add_argument('--aterhamta', help='Ursprunglig KORNING.json; endast summary-form, samma laddning och domkod')
+    k.add_argument('--formtid', type=int, default=180)
     k.add_argument('--parameter', action='append')
     k.add_argument('--tid', type=int)
     p = sub.add_parser('provare', parents=[common])
@@ -285,6 +550,12 @@ def parse(argv):
     args = parser.parse_args(argv)
     if not ETIKETT.match(args.etikett):
         raise Vagrad('--etikett är [a-z0-9-], högst 40 tecken')
+    if args.profil == 'kritik':
+        if args.aterhamta:
+            if args.mall or args.filer or args.utforare or args.modell or args.parameter or args.bindning or args.tid:
+                raise Vagrad('formåterhämtning hämtar mall, underlag, modell och bindning oförändrade ur KORNING')
+        elif not all((args.mall, args.filer, args.utforare, args.modell)):
+            raise Vagrad('kritik kräver --mall, --filer, --utforare och --modell')
     return args
 
 
@@ -305,12 +576,15 @@ def run(argv=None):
     if args.profil == 'matning':
         cmd, extra = bygg_matning(args, release, root, receipt)
     elif args.profil == 'kritik':
-        cmd, extra = bygg_kritik(args, release, root, receipt, laddning_sha)
+        cmd, extra = (bygg_aterhamtning if args.aterhamta else bygg_kritik)(args, release, root, receipt, laddning_sha)
     else:
         cmd, extra = bygg_provare(args, release, root, receipt, laddning_sha)
     post = {'schema': 1, 'profil': args.profil, 'etikett': args.etikett, 'laddning': {'fil': str(Path(args.laddning).resolve()),
             'sha256': laddning_sha, 'steg': receipt['steg'], 'sha256_over_underlag': receipt['sha256_over_underlag'],
             'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], 'bindning': bindning_ur(args, receipt, release), **extra}
+    if extra.get('formaterhamtning'):
+        original = json.loads(Path(args.aterhamta).read_text())
+        aterhamtningsbindning(post, original)
     if args.torr:
         print(json.dumps({**post, 'torr': True}, ensure_ascii=False, indent=1))
         return 0
@@ -324,13 +598,31 @@ def run(argv=None):
         post['resultat'] = json.loads(last)
     except ValueError:
         post['resultat'] = {'ra': last[:500]}
+    run_path = Path(post['resultat'].get('run') or '.')
+    digest_path=run_path/'KVITTO.sha256'; receipt_path=run_path/'KVITTO.json'
+    if digest_path.is_file() and receipt_path.is_file():
+        digest=digest_path.read_text().split()[0]
+        if digest==hashlib.sha256(receipt_path.read_bytes()).hexdigest():post['runtime_kvitto_sha256']=digest
+    if args.profil == 'kritik' and extra.get('bedomningsbindning'):
+        run_path = Path(post['resultat'].get('run') or '.')
+        try:
+            answer = json.loads((run_path / 'svar.json').read_text())
+            runtime_receipt = json.loads((run_path / 'KVITTO.json').read_text())
+            if not post.get('runtime_kvitto_sha256'):raise ValueError('Runtime-kvittots hash saknas/avviker')
+            kontrollera_aterhamtningsbevis(post, run_path, runtime_receipt, answer)
+            post['bildbelagg']=kritikbevis.bildbelagg(runtime_receipt)
+            with domkontext(post):
+                post['kvalitetsstatus'] = kritikbevis.dom(answer, extra['bedomningsbindning'], extra['bildbedomningsunderlag'], runtime_receipt)
+        except (OSError, ValueError, Vagrad, kritikbevis.Vagrad) as exc:
+            post['kvalitetsstatus'] = 'ej bedömbart: ' + str(exc)
+            post['kvalitetsfel'] = type(exc).__name__
     post['stderr_sista'] = done.stderr.strip()[-500:]
     name = 'KORNING-%s-%s-%s.json' % (time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()), args.profil, args.etikett)
     with (fall / name).open('x', encoding='utf-8') as stream:
         json.dump(post, stream, indent=1, ensure_ascii=False)
         stream.write('\n')
-    print(json.dumps({'korning': str(fall / name), 'exit': done.returncode, 'resultat': post['resultat']}, ensure_ascii=False))
-    return 0 if done.returncode == 0 else 1
+    print(json.dumps({'korning': str(fall / name), 'exit': done.returncode, 'resultat': post['resultat'], 'kvalitetsstatus': post.get('kvalitetsstatus')}, ensure_ascii=False))
+    return 0 if done.returncode == 0 and post.get('kvalitetsstatus', 'ok') == 'ok' else 1
 
 
 if __name__ == '__main__':
