@@ -733,6 +733,13 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
                   or (m['nyckel'] == 'doman_kontroll' and all(str(m[u].get('kalla', '')).startswith('kundstart domänkontroll ') for u in ('uppgift_1', 'uppgift_2')))):
                 # Samma kunds senare ställningstagande i samma kontroll är ingen sakmotsägelse; det senaste gäller, synligt.
                 s, _ = iv.avgor(kund, m['id'], m['uppgift_2']['varde'], 'kundens senare besked i Kundstart (%s) ersätter det tidigare (%s)' % (m['uppgift_2']['kalla'], m['uppgift_1']['kalla']))
+            elif (all(m[u].get('status') == 'kunden uppger' and re.match(r'^kundstart (rättelse|citat|svar) ', str(m[u].get('kalla', ''))) for u in ('uppgift_1', 'uppgift_2'))
+                  and min(rev_i(m['uppgift_1'].get('kalla')), rev_i(m['uppgift_2'].get('kalla'))) >= 0
+                  and rev_i(m['uppgift_1'].get('kalla')) != rev_i(m['uppgift_2'].get('kalla'))):
+                # Två av kundens egna besked i samma Kundstart-ärende (rättelse, citerat svar): kundens senare besked gäller,
+                # som i kundens egen översikt. Samma revision förblir en motsägelse att avgöra i intervju.py.
+                ny, gammal = sorted((m['uppgift_1'], m['uppgift_2']), key=lambda u: rev_i(u.get('kalla')), reverse=True)
+                s, _ = iv.avgor(kund, m['id'], ny['varde'], 'kundens senare besked i Kundstart (%s) ersätter det tidigare (%s)' % (ny['kalla'], gammal['kalla']))
     hamtade_filer = []
     if med_material:
         for m in paket['material']:

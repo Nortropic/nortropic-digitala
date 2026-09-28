@@ -184,6 +184,20 @@ class Kundstart(unittest.TestCase):
         self.kor('hamta', '--kund', str(self.k))
         self.assertEqual(len([f for f in iv.las(str(self.k))['fakta'] if f['nyckel'] == 'tillval_bokning']), 2, 'kumulativ omhämtning dubblerar inte')
 
+    def test_kundens_senare_rattelse_avgor_motsagelsen_mot_ett_aldre_citat(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'gateway'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        p = self.dialogpaket(revision=9)
+        p['rattelser_fakta'] = [{'nyckel': 'verksamhetsmal', 'varde': 'Kunderna ska boka själva dygnet runt', 'status': 'kunden uppger', 'kalla': 'kundstart rättelse rev 9', 'omrade': 'A', 'datum': '2026-09-28', 'tidigare': 'boka tid direkt på hemsidan'}]
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+        code, r = self.kor('hamta', '--kund', str(self.k))
+        self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k))
+        mot = [m for m in s['motsagelser'] if m['nyckel'] == 'verksamhetsmal']
+        self.assertEqual(len(mot), 1); self.assertEqual(mot[0]['lage'], 'avgjord')
+        self.assertEqual(mot[0]['galler'], 'Kunderna ska boka själva dygnet runt'); self.assertIn('kundstart rättelse rev 9', mot[0]['skal'])
+        self.assertEqual(iv.aktuella_uppgifter(s)['verksamhetsmal']['varde'], 'Kunderna ska boka själva dygnet runt')
+
     def test_tillvalsstatus_skickar_digitalas_status_utan_kundtext(self):
         self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
         self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
