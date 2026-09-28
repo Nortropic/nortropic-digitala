@@ -148,6 +148,7 @@ def samla(fall, leverans=None):
             kontroll = fall / ('KONTROLL-%s.md' % post.get('etikett'))
             entry['kontroll'] = kontroll.read_text(encoding='utf-8') if kontroll.is_file() else None
         entry['bindning'] = post.get('bindning')
+        entry['formaterhamtning'] = post.get('formaterhamtning')
         entry['status'] = bevisstatus(post, entry, leverans)
         rows.append(entry)
     # Playwright-vägens besökarprov (verktyg/webblasare/besok.mjs): FALL/BESOK-*/BESOK.json med efterkontroll av
@@ -235,6 +236,14 @@ def rendera(rows, ej_observerat, leverans=None):
     for r in bedomt:
         out.append('### kritik — %s (%s)' % (r['etikett'], r.get('utfall') or 'okänt'))
         out.append('Bevisstatus: '+r['status']+'. Bildbelägg: '+str(r.get('bildbelagg') or 'ej verifierat')+'.')
+        recovery = (r.get('kvitto') or {}).get('format_recovery')
+        if recovery:
+            source = recovery.get('source_session') or {}
+            out.append('Formåterhämtning av `%s`: originalsession utan giltig terminal (%s, %s s). '
+                       'Endast %s omformulerat; innebördskontrollen är en separat modellbedömning. '
+                       '%s nya bildläsningar. Ursprunglig underkänd körning är bevarad.' %
+                       (recovery.get('source_run'), source.get('end'), source.get('seconds'),
+                        ', '.join(recovery.get('changed_fields') or []), recovery.get('images_reopened')))
         if r.get('mall')=='femsekunderstest':out.append('Avskärmat begriplighetsprov; ingen professionell kvalitetsdom och ingen täckning av kvalitetsgrinden.')
         elif r.get('status')=='ok':out.append('Godkänd leveransbedömning inom den angivna räckvidden.')
         out.append('Körkatalog: `%s`; laddning %s (steg %s); bilder kompletta: %s.' % (

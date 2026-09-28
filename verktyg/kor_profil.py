@@ -373,8 +373,12 @@ def aterhamtningskalla(post):
 def kontrollera_aterhamtningsbevis(post, run, kvitto, svar):
     """The new answer preserves every protected value and its exact original source."""
     if not post.get('formaterhamtning'):
+        if kvitto.get('format_recovery'):
+            raise Vagrad('Runtime-formåterhämtning saknar bunden konsumentproveniens')
         return
     original_post = aterhamtningskalla(post)
+    if post['formaterhamtning'].get('ursprunglig_bindning') != original_post.get('bindning'):
+        raise Vagrad('redovisad ursprunglig bindning skiljer från källposten')
     provenance = kvitto.get('format_recovery') or {}
     oldrun = Path(original_post['resultat']['run'])
     if (provenance.get('source_receipt_sha256') != original_post.get('runtime_kvitto_sha256')
@@ -384,6 +388,11 @@ def kontrollera_aterhamtningsbevis(post, run, kvitto, svar):
         raise Vagrad('formåterhämtning saknar samma källkvitto eller avgränsning')
     if hashlib.sha256((oldrun / 'KVITTO.json').read_bytes()).hexdigest() != original_post['runtime_kvitto_sha256']:
         raise Vagrad('ursprungligt Runtime-kvitto har ändrats')
+    old_receipt = json.loads((oldrun / 'KVITTO.json').read_text())
+    stream_hash = hashlib.sha256((oldrun / 'strom.jsonl').read_bytes()).hexdigest()
+    if (stream_hash != provenance.get('source_stream_sha256')
+            or stream_hash != old_receipt.get('outputs', {}).get('strom.jsonl', {}).get('sha256')):
+        raise Vagrad('ursprunglig råström har ändrats')
     required = ['original-svar.json', 'FORMATERHAMTNING.json']
     for directory in ('formrattning', 'innebordskontroll'):
         required += [directory + '/' + name for name in ('svar.json', 'SESSION.json', 'strom.jsonl', 'start.json', 'fraga.txt', 'schema.json')]
@@ -408,6 +417,22 @@ def kontrollera_aterhamtningsbevis(post, run, kvitto, svar):
     sessions = provenance.get('sessions') or []
     if len(sessions) != 2 or any(s.get('valid_terminal') is not True or s.get('images') != 0 for s in sessions):
         raise Vagrad('båda nya textsessionernas kvalificerade terminaler krävs')
+    for directory, session in zip(('formrattning', 'innebordskontroll'), sessions):
+        if json.loads((Path(run) / directory / 'SESSION.json').read_text()) != session:
+            raise Vagrad('textsessionens bevis skiljer från Runtime-proveniens')
+    if json.loads((Path(run) / 'FORMATERHAMTNING.json').read_text()) != provenance:
+        raise Vagrad('formåterhämtningens proveniens skiljer från Runtime-kvittot')
+
+
+def aterhamtningsbindning(post, original):
+    """Source judgement and current executor are different provenance objects."""
+    post['laddning'] = original['laddning']
+    bind = post['bindning']
+    bind.update({k: v for k, v in original['bindning'].items() if k not in bind})
+    bind['rot_git_head'] = subprocess.check_output(['git', '-C', str(ROT), 'rev-parse', 'HEAD'], text=True).strip()
+    post['formaterhamtning']['ursprunglig_bindning'] = original['bindning']
+    post['formaterhamtning']['konsument_head'] = bind['rot_git_head']
+    post['formaterhamtning']['konsument_hashar'] = bind['verktyg']
 
 
 @contextlib.contextmanager
@@ -559,10 +584,7 @@ def run(argv=None):
             'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], 'bindning': bindning_ur(args, receipt, release), **extra}
     if extra.get('formaterhamtning'):
         original = json.loads(Path(args.aterhamta).read_text())
-        post['laddning'] = original['laddning']
-        post['bindning'] = original['bindning']
-        post['formaterhamtning']['konsument_head'] = subprocess.check_output(['git', '-C', str(ROT), 'rev-parse', 'HEAD'], text=True).strip()
-        post['formaterhamtning']['konsument_hashar'] = verktygshashar()
+        aterhamtningsbindning(post, original)
     if args.torr:
         print(json.dumps({**post, 'torr': True}, ensure_ascii=False, indent=1))
         return 0
@@ -591,8 +613,9 @@ def run(argv=None):
             post['bildbelagg']=kritikbevis.bildbelagg(runtime_receipt)
             with domkontext(post):
                 post['kvalitetsstatus'] = kritikbevis.dom(answer, extra['bedomningsbindning'], extra['bildbedomningsunderlag'], runtime_receipt)
-        except (OSError, ValueError, Vagrad, kritikbevis.Vagrad):
-            post['kvalitetsstatus'] = 'ej bedömbart: saknat faktiskt svar eller Runtime-kvitto'
+        except (OSError, ValueError, Vagrad, kritikbevis.Vagrad) as exc:
+            post['kvalitetsstatus'] = 'ej bedömbart: ' + str(exc)
+            post['kvalitetsfel'] = type(exc).__name__
     post['stderr_sista'] = done.stderr.strip()[-500:]
     name = 'KORNING-%s-%s-%s.json' % (time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()), args.profil, args.etikett)
     with (fall / name).open('x', encoding='utf-8') as stream:
