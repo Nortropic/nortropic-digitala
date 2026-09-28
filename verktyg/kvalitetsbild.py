@@ -21,6 +21,7 @@ import sys
 import time
 import kritikbevis
 import hashlib
+import kor_profil
 
 STANDARD_EJ_OBSERVERAT = ('verkliga besökares beteende och konvertering', 'kundens eller mottagarens omdöme',
                           'läsbarhet utomhus i verkligheten', 'mänskliga användarprov', 'fältdata över tid')
@@ -75,24 +76,41 @@ def bevisstatus(post, entry, leverans):
         if not post.get('bedomningsbindning') or not post.get('bildbedomningsunderlag'):
             return 'oavgjord: historisk kritik saknar kandidat- och bildbindning enligt v2'
         try:
-            expected,underlag=kritikbevis.ur_laddning(fil)
-            if expected!=post['bedomningsbindning'] or underlag!=post['bildbedomningsunderlag']:
-                return 'ogiltig bindning: körningens kopior skiljer från faktiskt laddat manifest'
-            runtime_rows={r['place']:r for r in entry['kvitto'].get('underlag',[])}
-            for b in underlag['bilder']:
-                row=runtime_rows.get(b['plats'],{})
-                if row.get('copy_sha256')!=b['sha256'] or row.get('source_sha256')!=b['sha256']:
-                    return 'ogiltig bindning: Runtime-bildens hash skiljer från laddningen'
-            for output in ('svar.json','strom.jsonl','start.json'):
-                actual=Path(run)/output
-                if not actual.is_file() or entry['kvitto'].get('outputs',{}).get(output,{}).get('sha256')!=kritikbevis.stegbevis.sha(actual):
-                    return 'kvittohash: '+output+' saknas/skiljer från Runtime-kvittot'
-            result = kritikbevis.dom(entry.get('svar'), expected, underlag, entry['kvitto'])
-            entry['bildbelagg']=kritikbevis.bildbelagg(entry['kvitto'])
-        except (kritikbevis.Vagrad,kritikbevis.stegbevis.Vagrad,OSError,KeyError,TypeError,ValueError) as e:
-            return 'inaktuell/ogiltig beviskedja: '+str(e)
-        if result != 'ok':
-            return result
+            with kor_profil.domkontext(post):
+                return kritikstatus(post, entry, leverans)
+        except (kor_profil.Vagrad, kritikbevis.Vagrad, OSError, KeyError, TypeError, ValueError) as e:
+            return 'inaktuell/ogiltig beviskedja: ' + str(e)
+    return ovrig_status(post, entry, leverans)
+
+
+def kritikstatus(post, entry, leverans):
+    """Ordinarie dom; återhämtning kör samma funktion med exakt historisk dompin."""
+    run = entry.get('run')
+    fil = (post.get('laddning') or {}).get('fil')
+    try:
+        kor_profil.kontrollera_aterhamtningsbevis(post, run, entry['kvitto'], entry.get('svar'))
+        expected,underlag=kritikbevis.ur_laddning(fil)
+        if expected!=post['bedomningsbindning'] or underlag!=post['bildbedomningsunderlag']:
+            return 'ogiltig bindning: körningens kopior skiljer från faktiskt laddat manifest'
+        runtime_rows={r['place']:r for r in entry['kvitto'].get('underlag',[])}
+        for b in underlag['bilder']:
+            row=runtime_rows.get(b['plats'],{})
+            if row.get('copy_sha256')!=b['sha256'] or row.get('source_sha256')!=b['sha256']:
+                return 'ogiltig bindning: Runtime-bildens hash skiljer från laddningen'
+        for output in ('svar.json','strom.jsonl','start.json'):
+            actual=Path(run)/output
+            if not actual.is_file() or entry['kvitto'].get('outputs',{}).get(output,{}).get('sha256')!=kritikbevis.stegbevis.sha(actual):
+                return 'kvittohash: '+output+' saknas/skiljer från Runtime-kvittot'
+        result = kritikbevis.dom(entry.get('svar'), expected, underlag, entry['kvitto'])
+        entry['bildbelagg']=kritikbevis.bildbelagg(entry['kvitto'])
+    except (kor_profil.Vagrad,kritikbevis.Vagrad,kritikbevis.stegbevis.Vagrad,OSError,KeyError,TypeError,ValueError) as e:
+        return 'inaktuell/ogiltig beviskedja: '+str(e)
+    if result != 'ok':
+        return result
+    return ovrig_status(post, entry, leverans)
+
+
+def ovrig_status(post, entry, leverans):
     if post.get('profil') == 'provare' and not entry.get('kontroll'):
         return 'oavgjord: KONTROLL SAKNAS — kontrollantens bedömning finns inte; provarens rapport räknas inte'
     if leverans:
