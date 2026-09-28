@@ -211,3 +211,13 @@ obalanserade bild/textkolumner och mindre genomarbetad mobilprioritering trots v
 referens. Skapandeunderlaget kräver därför ett konkret kompositionsbeslut och ett
 avgränsat renderat omprov med verkligt innehåll före utbyggnad. Metoden prövas på
 befintligt material; de egna proven blir ingen estetisk mall och inför inga stilkrav.
+
+## Beslut 2026-09-28: avgränsad formåterhämtning av kritik
+
+Ordinarie profilkonsument och kvalitetsbild får återhämta ett komplett tidigare sakligt
+råsvar när endast ett tillåtet prosafälts form är ogiltig. Exakta originalbindningar
+till kandidat, fråga, schema, bilder, kriterier och domkod består; originalet bevaras.
+En liten formrättning och separat innebördskontroll måste lyckas. Ändrad dom, blockerare,
+risk, bevisräckvidd eller semantisk domkod vägras. Historiska kodbytes används endast
+som hashunderlag; ingen äldre godtycklig kod importeras. Ny pinnversion gäller den
+ändrade konsumentkopplingen, inte en ändring av professionens v2-bedömningskriterier.
