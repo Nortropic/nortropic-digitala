@@ -362,6 +362,15 @@ class Kundkedja(unittest.TestCase):
         self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift']['varde'], 'Besökaren ska jämföra och avsluta avtal.')
         self.assertTrue(any(f['kalla'] == 'researchanteckning' for f in s['fakta']))
 
+    def test_uttrycklig_kunduppgift_okant_blir_aktuell_aven_utan_kundstartprefix(self):
+        self._okant_till_kant()
+        facts = self.k / 'kundrattelse.json'
+        facts.write_text(json.dumps([{'nyckel': 'viktigaste_uppgift', 'varde': 'vet inte', 'status': 'kunden uppger', 'kalla': 'kundrättelse vid samtal', 'omrade': 'A'}]))
+        s, _ = iv.fakta(self.k, str(facts))
+        self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift']['kalla'], 'kundrättelse vid samtal')
+        self.assertIn('viktigaste_uppgift', iv.okanda_uppgifter(s))
+        self.assertEqual(s['motsagelser'], [])
+
     def test_senare_okant_bevaras_utan_falsk_konflikt_men_kanda_konflikter_kvarstar(self):
         self._okant_till_kant()
         self.ny_revision()

@@ -177,7 +177,8 @@ def aktuella_uppgifter(s):
             continue  # Keep the source current; interpretations remain in fakta for review.
         if (current and not okand(current)
                 and (current.get('status') == 'kunden uppger' or current.get('kalla') == 'kundstart')
-                and okand(x) and not str(x.get('kalla', '')).startswith('kundstart')):
+                and okand(x) and x.get('status') != 'kunden uppger'
+                and not str(x.get('kalla', '')).startswith('kundstart')):
             continue  # An unconfirmed performer note cannot withdraw the customer's answer.
         rows[x['nyckel']] = x
     return rows
