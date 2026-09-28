@@ -24,6 +24,26 @@ Skriv kort, med källpekare och behovs-id ur aktuellt kundunderlag:
 Mandat och aktuella kundfakta gäller framför sammanfattningen. Vid konflikt rättas sammanfattningen och berörda
 val. Oberoende arbete fortsätter vid avgränsad åtkomstbrist; ett provblockerat efterled blir aldrig fakeframgång.
 
+## Pröva kompositionen med verkligt innehåll före full utbyggnad
+
+Använd den första representativa delen för att fatta ett konkret kompositionsbeslut,
+inte bara välja typsnitt och färg. Öppna relevanta referensvyer och jämför hur bild,
+rubrik, erbjudandets fakta och nästa handling delar utrymmet på mobil och dator.
+Skriv i SKAPARUPPDRAG.md vilket innehåll som behöver synas tillsammans för just denna
+uppgift, vad referensen lär oss om placering/beskärning och vad som inte passar.
+
+Rendera samma verkliga innehåll vid de avsedda bredderna. Kontrollera om tomrum,
+obalanserade kolumner, navigationsbrytning eller bildhöjd är avsiktliga och hjälper
+besökarens uppgift. Pröva en annan fördelning om helheten faller; lösningen kan vara
+mer bild, mindre bild, annan ordning eller annan riktning. Inget generellt viknings-,
+serif-, färg- eller bildförstkrav följer av detta. Bevara fakta, sanningsmärkning och
+fungerande interaktion medan den avgränsade kompositionen prövas.
+
+Bedömningen ska kunna underkänna riktningen, inte bara beställa putsning. Redovisa den
+synliga förändringen mot samma innehåll och vy, det behov den tjänar och kvarstående
+brister. Att instruktionen finns eller ett lokalt prov lyckas bevisar inte generell
+bättre formgivning; bevara tidigare sid-/lägeskrav och deras domar.
+
 ## Maskinläsbar koppling till den vanliga laddaren
 
 `SKAPARUNDERLAG.json` har exakt dessa fält (alla listor får vara tomma när sakskäl finns i uppdraget):

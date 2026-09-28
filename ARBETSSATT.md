@@ -205,3 +205,9 @@ gäller fortfarande. Detta gäller avskilda laddade arbetsytor, inte kundspecifi
 Researchunderlaget skiljer dessutom uttrycklig kunduppgift från extern verifiering och
 från okänt. Rättningen motiveras av den observerade felklassningen i kundfortsättningen;
 modellens allmänna semantiska förmåga är inte därmed verifierad.
+
+Kompositionsprecisering i samma fortsättning: tidigare keramik-/energiprov visade
+obalanserade bild/textkolumner och mindre genomarbetad mobilprioritering trots vald
+referens. Skapandeunderlaget kräver därför ett konkret kompositionsbeslut och ett
+avgränsat renderat omprov med verkligt innehåll före utbyggnad. Metoden prövas på
+befintligt material; de egna proven blir ingen estetisk mall och inför inga stilkrav.
