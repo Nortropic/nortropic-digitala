@@ -166,3 +166,12 @@ Alternativa riktningar följer osäkerheten, inte fast kvot/enaxelkrav. Granskni
 med öppnade professionella referenser. Omprov får ett fokuserat konsekvensunderlag, medan bedömningskontrakt
 v2 och fastställd täckning gäller oförändrat. Befintliga körspår används för sann resursredovisning; ingen
 ny full läsning bara för att samla godkännanden. Skapandeunderlag.md och konsekvensgranskning.md anger formen.
+
+
+### Behovsval till fungerande integrationsprov
+
+Research/brief laddar daterade standardvägar; välj bara kundens relevanta behov och dokumentera
+plan, konto, kostnad, begränsningar och ansvar. Bygge/prov använder `verktyg/integrationer.py`
+och dess exempel, samt befintliga kanalverktyg via delegaten. Kontraktsprov, provider-test och
+verklig integration är skilda nivåer. Prelaunch/leverans/drift återläser vad som faktiskt
+fungerar och vilket externt led som återstår, utan att gömma saknad kod bakom en token.

@@ -48,3 +48,17 @@ efter behov (bygge-referens.md). Redigeringsvägen prövas: en ändring görs av
 Kundens formulär, bokningar och andra besökarfunktioner körs hos värdplattformen och tjänsterna, aldrig genom en
 byggsession eller ägarens dator. Nortropics förvaltningsarbete (kontroll, rapport, ändringar enligt mandat) är skilt
 från kundlösningens driftmiljö. Övervakning, ansvar och återgång står i drift.md och lansering.md.
+
+
+## Körbara etablerade standardvägar – 2026-09-28
+
+Vid relevant behov används [integrationer-standardvagar.md](integrationer-standardvagar.md) och
+[exempel/integrationer/README.md](../exempel/integrationer/README.md). `verktyg/integrationer.py`
+kopplar val, testad mottagning och provideradaptrar till befintliga kanalverktyg. En gratis
+leverantörsvy är inte gratis API eller verifierad kundintegration. Kundens befintliga system
+och riktiga krav styr valet; gruppkapacitet/resursdelning prövas separat när de behövs.
+Vikskärs särskilda femtonminutersreservation är ett historiskt kundfall, ingen generell norm.
+
+Exemplens lokala server är ett prov. Kunddrift kräver kundens host och beständig lagring;
+Johnnys Mac och en byggsession får inte vara kundens mottagnings-/bokningsdrift. Bevara
+redaktörsroller, preview/återgång, CRM-ansvar och faktiska kanalutfall från tidigare krav.
