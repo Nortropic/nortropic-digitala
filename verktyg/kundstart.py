@@ -49,7 +49,14 @@ import intervju as iv  # noqa: E402
 KALLA_LASBAR = 'det vi redan hade antecknat om er'  # VERKSAMHET.json:s belägg är interna; kunden ser en neutral, sann källa
 MATERIAL_ID = re.compile(r'^m_[A-Za-z0-9_-]{6,24}$')
 FRAGA_ID = re.compile(r'^(?:[A-Z]+\d+|(?:RET|BEH)\d+_\d+)$')
-TILLVAL_ID = re.compile(r'^(?:[a-z][a-z_]{1,39}|annat_\d{1,3})$')
+TILLVAL_ID = re.compile(r'(?:[a-z][a-z_]{1,39}|annat_\d{1,3})')  # används med fullmatch (ingen avslutande radbrytning)
+# Digitalas egna faktanycklar för tillvalen och domänkontrollen; kundens rättelser och citerade uppgifter får inte låna dem.
+RESERVERAD_NYCKEL = re.compile(r'tillval_.*|doman_kontroll', re.S)
+# Verksamhetsord för Kundstarts katalog, när exporten bara bär id (val gjorda i kontrollerna).
+TILLVAL_NAMN = {'doman': 'Egen domän', 'formular': 'Formulär och bilagor', 'epost': 'E-postmottagning', 'bokning': 'Bokning och kalender',
+                'betalning': 'Betalning eller deposition', 'crm': 'Kundregister (CRM)', 'nyhetsbrev': 'Nyhetsbrev',
+                'cms': 'Redigera innehållet själva', 'search_console': 'Google Search Console', 'foretagsprofil': 'Google-företagsprofil',
+                'google_ads': 'Google Ads', 'meta_ads': 'Meta-annonser (Facebook och Instagram)', 'matning': 'Analys och mätning av förfrågningar'}
 KUNDVAL_TEXT = {'onskat': 'Kunden vill ha', 'har_system': 'Kunden har redan', 'hjalp': 'Kunden vill ha hjälp att välja', 'inte_nu': 'Inte nu enligt kunden'}
 TILLVAL_STATUS = ('inkluderat', 'vantar_atkomst', 'anslutet_provat')
 
@@ -249,9 +256,9 @@ def _ren(v, n):
 
 def _tillval_rad(t):
     """Kundens aktuella ställningstagande till ett tillval som kundens uppgift; ett ångrat val bevaras som ett eget besked."""
-    if not isinstance(t, dict) or not TILLVAL_ID.match(str(t.get('id', ''))):
+    if not isinstance(t, dict) or not TILLVAL_ID.fullmatch(str(t.get('id', ''))):
         return None
-    namn = _ren(t.get('namn') or t.get('beskrivning') or t['id'], 120)
+    namn = _ren(t.get('namn') or t.get('beskrivning') or TILLVAL_NAMN.get(t['id']) or t['id'], 120)
     if t.get('kundval') in KUNDVAL_TEXT:
         varde = '%s: %s' % (KUNDVAL_TEXT[t['kundval']], namn) + (' (%s)' % _ren(t['system'], 80) if t.get('system') else '')
     elif t.get('historik'):
@@ -273,7 +280,8 @@ def _domankontroll_rad(t):
     if k.get('fel'):
         varde = '%s kunde inte kontrolleras (%s)' % (_ren(k['doman'], 120), _ren(k['fel'], 120))
     else:
-        reg = {True: 'registrerad', False: 'verkar ledig', None: 'registrering okänd'}.get(k.get('registrerad'), 'registrering okänd')
+        r = k.get('registrerad')
+        reg = {True: 'registrerad', False: 'verkar ledig', None: 'registrering okänd'}[r] if r is None or type(r) is bool else 'registrering okänd'
         delar = ['%s: %s (%s)' % (_ren(k['doman'], 120), reg, _ren(k.get('kalla_registrering'), 10))]
         if k.get('registrar'):
             delar.append('registrar ' + _ren(k['registrar'], 80))
@@ -288,7 +296,7 @@ def _domankontroll_rad(t):
             'kalla': 'kundstart domänkontroll %s (öppen DNS/RDAP)' % _ren(k.get('tid'), 25), 'omrade': 'D', 'datum': str(k.get('tid') or nu())[:10]}
 
 
-def tillvalsutdrag(paket):
+def tillvalsutdrag(paket, s=None):
     """Intagsutdragets avsnitt om tillval, domän, kunduppgifter med citat och beställd research."""
     ut = '\n### Kundens tillval (Kundstart; kundens val, inte köp eller aktivering)\n'
     rader = [_tillval_rad(t) for t in paket.get('tillval', [])]
@@ -302,7 +310,9 @@ def tillvalsutdrag(paket):
         ut += '\n\n### Domänkontroll (observerat i öppna uppgifter)\n\n- %s [%s]\n' % (dom[0]['varde'], dom[0]['kalla'])
     ku = paket.get('kunduppgifter', [])
     ut += '\n### Kunduppgifter med ordagrant citat (agentens noteringar; citatet är verifierat mot samma export)\n'
-    ut += ''.join('\n- %s: "%s" [%s %s rev %s]' % (_ren(u.get('nyckel'), 60), _ren(u.get('varde'), 400), _ren(u.get('kalla_typ'), 10), _ren(u.get('kalla_id'), 30), u.get('kalla_revision')) for u in ku if _citat_belagt(paket, u)) or '\n- inga'
+    ersatta = {(f.get('nyckel'), f.get('varde')) for f in (s or {}).get('fakta', []) if f.get('ersatt')}
+    ut += ''.join('\n- %s: "%s" [%s %s rev %s]%s' % (_ren(u.get('nyckel'), 60), _ren(u.get('varde'), 400), _ren(u.get('kalla_typ'), 10), _ren(u.get('kalla_id'), 30), u.get('kalla_revision'),
+                                                    ' (ersatt av kundens senare besked; se Motsägelser)' if (u.get('nyckel'), u.get('varde')) in ersatta else '') for u in ku if _citat_belagt(paket, u)) or '\n- inga'
     rs = paket.get('research', [])
     ut += '\n\n### Beställd avgränsad research från samtalet (inte påbörjad)\n'
     ut += ''.join('\n- %s: %s%s' % (_ren(r.get('id'), 20), _ren(r.get('fraga'), 300), (' (varför: %s)' % _ren(r.get('varfor'), 200)) if r.get('varfor') else '') for r in rs) or '\n- ingen'
@@ -317,7 +327,7 @@ def intagsutdrag(s, paket):
         research += '\n- %s [%s], källa %s rev %s: %s\n' % (n.get('nyckel'), n.get('status'), n.get('kalla_fraga'), n.get('revision'), n.get('citat'))
     research += '\n### Öppen täckning enligt kundytan (status bevarad)\n' + '\n'.join('- %s: %s' % (x.get('nyckel'), x.get('status')) for x in paket.get('tackning', []) if x.get('status') != 'uppgift_finns') + '\n'
     if any(paket.get(k) for k in ('tillval', 'kunduppgifter', 'research')):
-        research += tillvalsutdrag(paket)
+        research += tillvalsutdrag(paket, s)
     return research
 
 
@@ -363,8 +373,12 @@ def validera_export(paket, arende_id):
     for u in paket.get('kunduppgifter', []):
         strings(u, ('id', 'nyckel', 'varde', 'citat', 'kalla_typ', 'kalla_id'), 'kunduppgifter.', True)
         krav(type(u.get('kalla_revision')) is int and 1 <= u['kalla_revision'] <= ar['revision'], 'kunduppgifter.kalla_revision')
+        krav(u['kalla_typ'] in ('svar', 'material'), 'kunduppgifter.kalla_typ')
+        krav((FRAGA_ID if u['kalla_typ'] == 'svar' else MATERIAL_ID).fullmatch(u['kalla_id']) is not None, 'kunduppgifter.kalla_id')
+        krav(not RESERVERAD_NYCKEL.fullmatch(u['nyckel']), 'kunduppgifter.nyckel')
     for t in paket.get('tillval', []):
         strings(t, ('id',), 'tillval.', True)
+        krav(TILLVAL_ID.fullmatch(t['id']) is not None, 'tillval.id')
         krav(t.get('kundval') in (None, 'onskat', 'har_system', 'hjalp', 'inte_nu'), 'tillval.kundval')
         krav(type(t.get('revision')) is int and 0 <= t['revision'] <= ar['revision'], 'tillval.revision')
         krav(isinstance(t.get('historik', []), list), 'tillval.historik')
@@ -374,6 +388,15 @@ def validera_export(paket, arende_id):
         for field in ('kontroll', 'rekommendation', 'digitala'):
             if t.get(field) is not None:
                 krav(isinstance(t[field], dict), 'tillval.' + field)
+        k = t.get('kontroll')
+        if k is not None:
+            krav(isinstance(k.get('doman'), str), 'tillval.kontroll.doman')
+            krav(k.get('registrerad') is None or type(k.get('registrerad')) is bool, 'tillval.kontroll.registrerad')
+            for field in ('tid', 'fel', 'registrar', 'dns_leverantor', 'kalla_registrering'):
+                krav(k.get(field) is None or isinstance(k[field], str), 'tillval.kontroll.' + field)
+            for field in ('epost', 'webb'):
+                krav(k.get(field) is None or isinstance(k[field], dict), 'tillval.kontroll.' + field)
+            krav(k.get('anmarkningar') is None or (isinstance(k['anmarkningar'], list) and all(isinstance(x, str) for x in k['anmarkningar'])), 'tillval.kontroll.anmarkningar')
     for r in paket.get('research', []):
         strings(r, ('id', 'fraga'), 'research.', True)
     if 'signal' in paket:
@@ -390,8 +413,10 @@ def validera_export(paket, arende_id):
     for field in ('rattelser', 'fakta_ai', 'rattelser_fakta'):
         for f in paket[field]:
             strings(f, ('nyckel', 'varde', 'status', 'kalla', 'omrade', 'datum'), field + '.')
-            if 'revision' in f:
-                krav(type(f['revision']) is int and 1 <= f['revision'] <= ar['revision'], field + '.revision')
+            if 'revision' in f or field == 'rattelser':
+                krav(type(f.get('revision')) is int and 1 <= f['revision'] <= ar['revision'], field + '.revision')
+            if field != 'fakta_ai':
+                krav(not RESERVERAD_NYCKEL.fullmatch(str(f.get('nyckel', ''))), field + '.nyckel')
     for m in paket['material']:
         strings(m, ('id', 'typ', 'filnamn', 'sha256', 'mime'), 'material.')
         ex = m.get('extraktion')
@@ -677,7 +702,7 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         rad = {'nyckel': u.get('nyckel'), 'varde': u.get('varde'), 'omrade': u.get('omrade') if str(u.get('omrade')) in iv.OMRADEN else 'H'}
         if not _citat_belagt(paket, u) or not giltig_rad(rad):
             ej_registrerade.append({'omgang': None, 'skal': 'kunduppgift utan ordagrant stöd i exportens svar eller material (finns kvar i exportfilen)', 'fragor': [str(u.get('nyckel'))[:60]]}); continue
-        kund_rader.append({**rad, 'status': 'kunden uppger', 'kalla': 'kundstart citat %s rev %d' % (_ren(u['kalla_id'], 30), u['kalla_revision']), 'datum': nu()[:10]})
+        kund_rader.append({**rad, 'status': 'kunden uppger', 'kalla': 'kundstart %s %s rev %d' % ('materialcitat' if u['kalla_typ'] == 'material' else 'citat', u['kalla_id'], u['kalla_revision']), 'datum': nu()[:10]})
     # Tillvalen: kundens ställningstagande (kontroll eller citat i samtalet) är kundens uppgift; ett nyare ersätter ett äldre.
     for t in paket.get('tillval', []):
         rad = _tillval_rad(t)
@@ -723,23 +748,46 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
             s = iv.las(kund); fakta_rader = []
         nya_fakta = len(fakta_rader)
         # En motsägelse där den äldre uppgiften bara var vår tolkning avgörs till kundens ord (rättelse eller ändrat svar), synligt och med skäl.
+        # Kundens egna besked som går att belägga i den validerade exporten, med revision ur exportens fält; källtexten
+        # (kalla) är bara en etikett och avgör aldrig ordningen.
+        belagd = {}
+        def belagg(nyckel, varde, rev):
+            belagd[(nyckel, varde)] = max(belagd.get((nyckel, varde), -1), rev)
+        for r in paket['rattelser']:
+            belagg(r.get('nyckel'), r.get('varde'), r['revision'])
+        for u in paket.get('kunduppgifter', []):
+            if _citat_belagt(paket, u):
+                belagg(u['nyckel'], u['varde'], u['kalla_revision'])
+        for o in paket['omgangar']:
+            fragenycklar = {q.get('id'): q.get('nyckel') for q in o.get('fragor', [])}
+            for sv in o.get('svar', []):
+                if fragenycklar.get(sv['fraga_id']) and isinstance(sv.get('text'), str):
+                    belagg(fragenycklar[sv['fraga_id']], sv['text'], sv['revision'])
+        aktuella = {r['nyckel']: r for r in (_tillval_rad(t) for t in paket.get('tillval', [])) if r}
+        aktuella.update({r['nyckel']: r for r in (_domankontroll_rad(t) for t in paket.get('tillval', [])) if r})
         for m in s['motsagelser']:
             if m['lage'] != 'oavgjord':
                 continue
             r = next((x for x in kund_rader if x['nyckel'] == m['nyckel'] and x['varde'] == m['uppgift_2']['varde']), None)
-            if r and m['uppgift_1']['status'] in ('tolkning', 'hypotes'):
-                s, _ = iv.avgor(kund, m['id'], r['varde'], 'kundens ord i Kundstart (%s) ersätter vår %s' % (r['kalla'], m['uppgift_1']['status']))
-            elif ((m['nyckel'].startswith('tillval_') and all(str(m[u].get('kalla', '')).startswith('kundstart tillval ') for u in ('uppgift_1', 'uppgift_2')))
-                  or (m['nyckel'] == 'doman_kontroll' and all(str(m[u].get('kalla', '')).startswith('kundstart domänkontroll ') for u in ('uppgift_1', 'uppgift_2')))):
-                # Samma kunds senare ställningstagande i samma kontroll är ingen sakmotsägelse; det senaste gäller, synligt.
-                s, _ = iv.avgor(kund, m['id'], m['uppgift_2']['varde'], 'kundens senare besked i Kundstart (%s) ersätter det tidigare (%s)' % (m['uppgift_2']['kalla'], m['uppgift_1']['kalla']))
-            elif (all(m[u].get('status') == 'kunden uppger' and re.match(r'^kundstart (rättelse|citat|svar) ', str(m[u].get('kalla', ''))) for u in ('uppgift_1', 'uppgift_2'))
-                  and min(rev_i(m['uppgift_1'].get('kalla')), rev_i(m['uppgift_2'].get('kalla'))) >= 0
-                  and rev_i(m['uppgift_1'].get('kalla')) != rev_i(m['uppgift_2'].get('kalla'))):
-                # Två av kundens egna besked i samma Kundstart-ärende (rättelse, citerat svar): kundens senare besked gäller,
-                # som i kundens egen översikt. Samma revision förblir en motsägelse att avgöra i intervju.py.
-                ny, gammal = sorted((m['uppgift_1'], m['uppgift_2']), key=lambda u: rev_i(u.get('kalla')), reverse=True)
-                s, _ = iv.avgor(kund, m['id'], ny['varde'], 'kundens senare besked i Kundstart (%s) ersätter det tidigare (%s)' % (ny['kalla'], gammal['kalla']))
+            u1, u2 = m['uppgift_1'], m['uppgift_2']
+            if r and u1['status'] in ('tolkning', 'hypotes'):
+                s, _ = iv.avgor(kund, m['id'], r['varde'], 'kundens ord i Kundstart (%s) ersätter vår %s' % (r['kalla'], u1['status']))
+            elif m['nyckel'] in aktuella and (m['nyckel'].startswith('tillval_') or m['nyckel'] == 'doman_kontroll'):
+                # Samma kunds ställningstagande i samma kontroll: exportens aktuella läge gäller, synligt. Den andra sidan
+                # måste vara ett tidigare Kundstart-besked om samma tillval (eller domänkontroll).
+                akt = aktuella[m['nyckel']]
+                prefix = 'kundstart domänkontroll ' if m['nyckel'] == 'doman_kontroll' else 'kundstart tillval %s rev ' % m['nyckel'][len('tillval_'):]
+                sidor = [u for u in (u1, u2) if u['varde'] == akt['varde'] and u.get('kalla') == akt['kalla']]
+                if len(sidor) == 1 and all(str(u.get('kalla', '')).startswith(prefix) for u in (u1, u2)):
+                    gammal = u2 if sidor[0] is u1 else u1
+                    s, _ = iv.avgor(kund, m['id'], akt['varde'], 'kundens aktuella besked i Kundstart (%s) ersätter det tidigare (%s)' % (akt['kalla'], gammal['kalla']))
+            elif (all(u['status'] == 'kunden uppger' and re.match(r'kundstart (rättelse|citat|materialcitat|ändrat svar) ', str(u.get('kalla', ''))) for u in (u1, u2))
+                  and (m['nyckel'], u1['varde']) in belagd and (m['nyckel'], u2['varde']) in belagd
+                  and belagd[(m['nyckel'], u1['varde'])] != belagd[(m['nyckel'], u2['varde'])]):
+                # Två av kundens egna besked i samma Kundstart-ärende: det senare gäller, som i kundens egen översikt.
+                # Samma revision, eller ett besked som inte går att belägga i exporten, förblir en motsägelse att avgöra.
+                ny, gammal = (u1, u2) if belagd[(m['nyckel'], u1['varde'])] > belagd[(m['nyckel'], u2['varde'])] else (u2, u1)
+                s, _ = iv.avgor(kund, m['id'], ny['varde'], 'kundens senare besked i Kundstart (%s, rev %d) ersätter det tidigare (%s, rev %d)' % (ny['kalla'], belagd[(m['nyckel'], ny['varde'])], gammal['kalla'], belagd[(m['nyckel'], gammal['varde'])]))
     hamtade_filer = []
     if med_material:
         for m in paket['material']:
@@ -930,7 +978,7 @@ def material_last(kund, bas, nyckel, bypass, mid, path, utforare):
 
 def tillvalsstatus(kund, bas, nyckel, bypass, utforare, tillval, status_, kalla, not_=''):
     """Digitalas status för ett tillval i kundens översikt: ingår i uppdraget, väntar på åtkomst, anslutet och prövat, eller ingen."""
-    if not utforare or not tillval or not TILLVAL_ID.match(tillval) or status_ not in TILLVAL_STATUS + ('ingen',) or not (kalla or '').strip():
+    if not utforare or not tillval or not TILLVAL_ID.fullmatch(tillval) or status_ not in TILLVAL_STATUS + ('ingen',) or not (kalla or '').strip():
         raise Vagrad('tillvalsstatus kräver --utforare, giltigt --tillval, --status inkluderat|vantar_atkomst|anslutet_provat|ingen och --kalla')
     d = las_kundstart(kund)
     bunden(d, bas)

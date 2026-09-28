@@ -5,6 +5,7 @@ beräknas. Ett återupptaget, delvis skrivet paket får samma journal och bytes.
 """
 import hashlib
 import json
+import re
 import os
 from pathlib import Path
 import tempfile
@@ -28,7 +29,12 @@ def kundtillval_krav(customer):
         task = json.loads(path.read_bytes())
     except (ValueError, UnicodeError):
         raise ls.Vagrad('KUNDSTART-ARBETSUPPGIFT.json kan inte läsas; importera intaget på nytt före brief')
-    return {t['id']: t.get('kundval') for t in task.get('tillval', []) if isinstance(t, dict) and isinstance(t.get('id'), str)}
+    if not isinstance(task, dict) or not isinstance(task.get('tillval', []), list):
+        raise ls.Vagrad('KUNDSTART-ARBETSUPPGIFT.json har fel form; importera intaget på nytt före brief')
+    # Samma id-regel som importen: ett id som importen vägrat kan inte blockera briefen.
+    return {t['id']: t.get('kundval') for t in task.get('tillval', [])
+            if isinstance(t, dict) and isinstance(t.get('id'), str) and re.fullmatch(r'(?:[a-z][a-z_]{1,39}|annat_\d{1,3})', t['id'])
+            and t.get('kundval') in (None, 'onskat', 'har_system', 'hjalp', 'inte_nu')}
 
 
 def prova_kundtillval(customer, integrationsval):
