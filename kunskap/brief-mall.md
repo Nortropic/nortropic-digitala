@@ -3,9 +3,14 @@
 Professionsfil (HELHET-20260927, avsnitt 3–4). Laddas i steget `brief`. Briefen skrivs i kundmappen och är
 kedjans arbetsdokument, underordnat styrkta kundbehov, sakuppgifter och ägarens mandat.
 Skilj kundkrav från interna designhypoteser. En hypotes kan omprövas med skäl och behovsspår; bevara föregående
-version. Att följa en svag brief ger inte godkänt resultat (kritik/BEDOMNING-v2.md). Bevisregel: varje värde citerar en
-research-rad, en referensfil eller en beredningsrad; antaganden märks. Riktning väljs internt utan ägarstopp och
-redovisas i leveransen; ägaren tar ställning efteråt.
+version. Att följa en svag brief ger inte godkänt resultat (kritik/BEDOMNING-v2.md). Bevisregel: varje sakuppgift
+anger källa och status. Läs aktuell kundutsaga och laddat material före intern researchsyntes när de bär
+uppgiften; vid skillnad avgör källan, inte den interna formuleringen. Ett laddat eller extraherat utdrag är
+inte redan läst. Återge bara vad lästa bytes stöder: behov av verifiering bevisar varken att ett innehåll finns
+eller vad det innehåller; frånvaro i laddningen bevisar inte frånvaro hos kunden. Bevara uppgivet, okänt och
+extern verifiering som skilda statusar. Research-, referens- och beredningsrader får sammanfatta källan;
+egna urval och anpassningar märks som hypoteser. Riktning väljs internt utan ägarstopp och redovisas i
+leveransen; ägaren tar ställning efteråt.
 
 ## §0 Läsanvisning och konfliktrad
 
@@ -95,6 +100,9 @@ vad vi inte vet, med vem som kan svara (`DOMÄNEXPERT` = kunden om sakfakta, `AN
 
 Taggade `STRATEGISK`, `FAKTA` eller `BESLUT`. En fråga som ryms i uppdraget besvaras med ett dokumenterat antagande
 och arbetet fortsätter; till ägaren går bara verkliga vägval om mandat, kostnad eller rättighet, med rekommendation.
+En saknad uppgift blockerar bara den åtgärd eller det påstående som faktiskt beror på den. Namnge beroendet
+och fortsätt oberoende delar inom accepterad omfattning. En liten representation med synligt okända uppgifter
+behöver inte invänta hela kundprojektets ramar; okända sakfakta får samtidigt inte fyllas med antagna värden.
 
 ## Skapandeöverlämning och konsekvens
 

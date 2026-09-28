@@ -225,3 +225,25 @@ som hashunderlag; ingen äldre godtycklig kod importeras. Ny pinnversion gäller
 Separat kundpaketgranskning B1–B3/O1–O7 preciserar överföringen: valfritt skaparpaket i brief, historisk omladdning utan förfalskad färskhet, kanoniska filnamn/bevispekare, dynamiskt skiftlägesoberoende skrivskydd, symlinkfri historik och validerade valfria research-/integrationsutdata. Oförändrade sak-/beviskrav kvarstår. Ny pinnversion binder denna rättning; ingen kundpreferens eller produktsida blir metodpraxis.
 
 Separat formgranskning skärper samma återhämtningsväg: konsumentens aktuella kodbindning skiljs från ursprunglig bedömningsbindning; råström, sessionsbevis och Runtime-proveniens jämförs. Kvalitetsbilden visar att ursprungssessionen saknade terminal och att innebördskontrollen är en modellbedömning. Pinnuppdateringen omfattar dessa konsumenträttningar och historikladdaren; gränser, sakdom och beviskrav ändras inte.
+
+## Beslut 2026-09-28: aktuell materialkälla också i brief
+
+Ett faktiskt kontinuitetsprov visade att briefsteget fick intern research men inte kundmaterialets
+utdrag och sedan skärpte en verifieringsuppgift till ett obelagt existenspåstående. Samma befintliga
+hash- och sökvägskontroll för aktuella materialutdrag gäller därför både research och brief. Utdragen
+är obetrodda, laddade och inte redan lästa; koncept/bygge får fortfarande det motiverade urvalet via
+skaparpaketet. Historiska körningar och kundfiler ändras inte.
+
+Briefens bevisregel prioriterar aktuell kundkälla före intern syntes, skiljer verifieringsbehov från
+belagt innehåll och binder en saknad uppgift till just dess beroende åtgärd. Oberoende arbete inom
+accepterad omfattning fortsätter utan generell spärr på hela projektet. Detta är en generell
+käll- och proportioneringsrättning, ingen kundspecifik innehållsregel eller visad modellaccept.
+Ny läsning av briefmallen och laddarens kontrollmotivering ligger till grund för berörda nya pinnar.
+
+Separat kundpaketgranskning r2 prövar också omladdning efter historiska schema-/resursfel:
+brief bevarar originalpaketet som råhistorik utan valauktoritet och markerar fel; otillgängliga
+val aktiveras inte och osäkra källor följs inte. Koncept/bygge behåller strikt validering med
+anvisning att ompröva brief. En ändrad historisk fil får en separat hash av nu observerade bytes,
+aldrig ny godkänd paketbindning, så omarbetning kan skydda mot ännu en samtidig ändring.
+Överföringen bokför förberedd historik före första kundskrivning och återläser dess bindningar
+före avbrottsåterhämtning; befintliga filrättigheter bevaras och valda bevispekare får kanoniska namn.

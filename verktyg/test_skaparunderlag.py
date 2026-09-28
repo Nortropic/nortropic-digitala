@@ -116,6 +116,106 @@ class Skaparpaket(unittest.TestCase):
         self.assertEqual((Path(r['arbetsyta'])/row['plats']).read_bytes(),(self.k/row['fil']).read_bytes())
         r=self.load('bygge');self.assertNotIn('KUNDSTART/material-utdrag.txt',[x['fil'] for x in r['underlag']])
 
+    def test_brief_far_aktuellt_materialutdrag_utan_pastadd_lasning(self):
+        task=self.task()
+        current=self.k/'KUNDSTART'/'signal-2'/'utdrag.txt';current.parent.mkdir()
+        current.write_text('Obetrott aktuellt kundmaterial. Uppgiften behöver kontrolleras.')
+        task.update(exportrevision=2)
+        task['material'][0].update(lasstatus='extraherad',utdrag={
+            'fil':'KUNDSTART/signal-2/utdrag.txt','sha256':sha(current),'kalla_sha256':'a'*64})
+        task_path=self.k/'KUNDSTART-ARBETSUPPGIFT.json';task_path.write_text(json.dumps(task))
+        original_task=task_path.read_bytes()
+        (self.k/'research.md').write_text('Intern syntes ersätter inte aktuell kundkälla.')
+        r=self.load('brief');rows={x['fil']:x for x in r['underlag']}
+        row=rows['KUNDSTART/signal-2/utdrag.txt']
+        self.assertNotIn('KUNDSTART/material-utdrag.txt',rows)
+        self.assertEqual(row['sha256'],sha(current))
+        self.assertEqual((Path(r['arbetsyta'])/row['plats']).read_bytes(),current.read_bytes())
+        self.assertEqual(row['status'],'laddad')
+        self.assertIn('obetrott',row['delar']);self.assertIn('inte redan läst',row['delar'])
+        self.assertIn('originalsha256 '+'a'*64,row['delar'])
+        self.assertEqual(task_path.read_bytes(),original_task)
+        self.assertEqual(json.loads(task_path.read_text())['material'][0]['lasstatus'],'extraherad')
+
+    def test_brief_vagrar_andrat_material_fore_skrivning(self):
+        task=self.task();task_path=self.k/'KUNDSTART-ARBETSUPPGIFT.json'
+        task_path.write_text(json.dumps(task));original_task=task_path.read_bytes()
+        (self.k/'research.md').write_text('Syntetisk research.')
+        (self.k/'KUNDSTART/material-utdrag.txt').write_text('Ändrat efter intagsbindningen.')
+        with self.assertRaisesRegex(ls.Vagrad,'materialutdrag saknas eller har ändrats'):self.load('brief')
+        self.assertFalse((self.root/'run-1').exists())
+        self.assertEqual(task_path.read_bytes(),original_task)
+
+    def historical_resource(self):
+        name='kunskap/externa/historisk-SKILL.md'
+        self.d['resurser']=[{'fil':name,'form':'metod','delar':'hela','skal':'Syntetiskt val','historik':'Syntetisk tidigare version'}]
+        self.write()
+        fixture=self.root/'professionsrot';source=fixture/name;source.parent.mkdir(parents=True)
+        source.write_text('Syntetisk professionsresurs.')
+        return name,fixture.resolve(),source
+
+    def test_borttagen_historisk_resurs_stoppar_inte_brief_eller_aktiveras(self):
+        name,fixture,source=self.historical_resource();pins={name:sha(source)}
+        ls.skaparplan(self.k.resolve(),fixture,pins)  # det tidigare valet var giltigt
+        source.unlink()
+        with self.assertRaisesRegex(ls.Vagrad,'pinnad professionsfil'):ls.skaparplan(self.k.resolve(),fixture,pins)
+        (self.k/'research.md').write_text('Aktuell research.')
+        original=(self.k/ls.SKAPARFIL).read_bytes();r=self.load('brief')
+        package=next(x for x in r['underlag'] if x['fil']==ls.SKAPARFIL)
+        self.assertIn('inaktuellt historiskt resursval; inte laddat',package['delar'])
+        self.assertIn('utan valauktoritet',package['delar'])
+        self.assertEqual((Path(r['arbetsyta'])/package['plats']).read_bytes(),original)
+        self.assertEqual((Path(r['arbetsyta'])/'underlag/kund/ref.png').read_bytes(),(self.k/'ref.png').read_bytes())
+        self.assertFalse((Path(r['arbetsyta'])/'underlag/profession'/name).exists())
+        self.assertFalse((Path(r['arbetsyta'])/'SKAPARPAKET.md').exists())
+        with self.assertRaisesRegex(ls.Vagrad,'omprova.*--steg brief'):self.load('koncept')
+
+    def test_ompinnad_tillganglig_resurs_ar_inte_i_sig_en_historisk_blockering(self):
+        name,fixture,source=self.historical_resource()
+        source.write_text('Ny läst och beslutad professionsversion.')
+        pins={name:sha(source)}
+        _,_,strict=ls.skaparplan(self.k.resolve(),fixture,pins)
+        _,_,historical=ls.skaparplan(self.k.resolve(),fixture,pins,historiskt=True)
+        self.assertIn(name,strict);self.assertEqual(historical,{})
+
+    def test_historiskt_felaktigt_paket_laddas_som_original_inte_nytt_val(self):
+        (self.k/'research.md').write_text('Aktuell research.')
+        original=copy.deepcopy(self.d)
+        for mode in ('schema','form'):
+            self.d=copy.deepcopy(original)
+            if mode=='schema':self.d['schema']='digitala-skaparunderlag/0'
+            else:self.d['bilagor'][0]['roll']='historisk-okand-roll'
+            self.write();raw=(self.k/ls.SKAPARFIL).read_bytes()
+            with self.subTest(mode=mode):
+                r=self.load('brief');rows={x['fil']:x for x in r['underlag']}
+                self.assertIn('utan valauktoritet',rows[ls.SKAPARFIL]['delar'])
+                self.assertEqual((Path(r['arbetsyta'])/rows[ls.SKAPARFIL]['plats']).read_bytes(),raw)
+                self.assertNotIn('ref.png',rows)
+                self.assertFalse((Path(r['arbetsyta'])/'SKAPARPAKET.md').exists())
+                with self.assertRaisesRegex(ls.Vagrad,'omprova.*--steg brief'):self.load('koncept')
+
+    def test_historik_foljer_inte_osaker_kalla_och_paketlank_vagras(self):
+        (self.k/'research.md').write_text('Aktuell research.')
+        outside=self.root/'outside.png';outside.write_bytes((self.k/'ref.png').read_bytes())
+        (self.k/'ref.png').unlink();(self.k/'ref.png').symlink_to(outside)
+        r=self.load('brief');rows={x['fil']:x for x in r['underlag']}
+        self.assertIn('symbolisk länk',rows[ls.SKAPARFIL]['delar'])
+        self.assertNotIn('ref.png',rows)
+        self.assertFalse((Path(r['arbetsyta'])/'underlag/kund/ref.png').exists())
+        raw=(self.k/ls.SKAPARFIL).read_bytes();outside_package=self.root/'paket.json';outside_package.write_bytes(raw)
+        (self.k/ls.SKAPARFIL).unlink();(self.k/ls.SKAPARFIL).symlink_to(outside_package)
+        with self.assertRaisesRegex(ls.Vagrad,'symbolisk länk'):self.load('brief')
+
+    def test_stale_historisk_fil_observeras_utan_ny_valbindning(self):
+        (self.k/'research.md').write_text('Aktuell research.')
+        old=self.d['bilagor'][0]['sha256'];(self.k/'ref.png').write_bytes(b'Annans senare material')
+        r=self.load('brief');row=next(x for x in r['underlag'] if x['fil']=='ref.png')
+        self.assertEqual(row['sha256'],old)
+        self.assertEqual(row['aktuell_sha256'],sha(self.k/'ref.png'))
+        self.assertIsNone(row['plats']);self.assertIn('inte laddat',row['status'])
+        self.assertFalse((Path(r['arbetsyta'])/'underlag/kund/ref.png').exists())
+        with self.assertRaisesRegex(ls.Vagrad,'har ändrats'):self.load('koncept')
+
     def test_stale_eller_osakert_material_vagras_men_aldre_task_bevaras(self):
         task=self.task();p=self.k/'KUNDSTART-ARBETSUPPGIFT.json'
         for bad in ('../outside.txt','KUNDSTART/saknas.txt'):

@@ -131,6 +131,20 @@ def git_lage(rot):
 
 def skaparplan(kund, rot, pinnar, historiskt=False):
     """Validera ett litet kundvalt skaparpaket. Hash är bindning, aldrig bevis på användning."""
+    # Brief får läsa originalpaketet som data även när dess gamla form inte längre
+    # kan vara ett aktivt val. Paketets egen källväg måste fortfarande vara säker.
+    if historiskt:
+        path = utan_lankar(kund / SKAPARFIL, kund)
+        if not inuti(path, kund) or not path.is_file():
+            raise Vagrad('historiskt skaparpaket är ingen vanlig kundfil')
+        try:
+            return _skaparplan(kund, rot, pinnar, historiskt=True)
+        except Vagrad as error:
+            return {'historiska_fel': [str(error)]}, [], {}
+    return _skaparplan(kund, rot, pinnar)
+
+
+def _skaparplan(kund, rot, pinnar, historiskt=False):
     path = utan_lankar(kund / SKAPARFIL, kund)
     try:
         d = json.loads(path.read_text(encoding='utf-8'))
@@ -155,6 +169,7 @@ def skaparplan(kund, rot, pinnar, historiskt=False):
             if historiskt and inuti(source, kund):
                 return {'fil': item['fil'], 'klass': 'kund', 'obligatorisk': False,
                         'delar': 'historiskt skaparpaket: omarbeta bindningen före användning',
+                        'aktuell_sha256': sha256_file(source) if source.is_file() else None,
                         'sha256': item['sha256'], 'status': 'inaktuellt historiskt paketunderlag; inte laddat', 'plats': None}
             raise Vagrad('skaparpaketets fil saknas eller har ändrats: ' + item['fil'])
         if role == 'referensbild':
@@ -196,6 +211,7 @@ def skaparplan(kund, rot, pinnar, historiskt=False):
         if ref['observation'] != 'otillganglig' and not ref['bevis']:
             raise Vagrad('observerad referens saknar underlag: ' + ref['id'])
     resources = {}
+    historical_errors = []
     for item in d['resurser']:
         if (not isinstance(item, dict) or set(item) != {'fil', 'form', 'delar', 'skal', 'historik'}
                 or any(not text(item[k]) for k in item)
@@ -206,8 +222,13 @@ def skaparplan(kund, rot, pinnar, historiskt=False):
             raise Vagrad('dubbelt resursval: ' + item['fil'])
         source = utan_lankar(rot / item['fil'], rot)
         if not inuti(source, rot) or not source.is_file() or pinnar.get(item['fil']) != sha256_file(source):
+            if historiskt:
+                historical_errors.append('inaktuellt historiskt resursval; inte laddat: ' + item['fil'])
+                continue
             raise Vagrad('resursen är inte en tillgänglig pinnad professionsfil: ' + item['fil'])
         resources[item['fil']] = item
+    if historical_errors:
+        d['historiska_fel'] = historical_errors
     return d, rows, {} if historiskt else resources
 
 
@@ -255,7 +276,13 @@ def planera(rot, steg_namn, kund, bestallning):
             raise Vagrad('sammanblandning: kundmappen får inte ligga i repot (och repot inte i kundmappen)')
     skapar, bilagor, resurser = None, [], {}
     if kund_dir and any(i['fil'] == SKAPARFIL for i in step['underlag']) and (kund_dir / SKAPARFIL).exists():
-        skapar, bilagor, resurser = skaparplan(kund_dir, rot, pinnar, historiskt=steg_namn == 'brief')
+        try:
+            skapar, bilagor, resurser = skaparplan(kund_dir, rot, pinnar, historiskt=steg_namn == 'brief')
+        except Vagrad as error:
+            if steg_namn in ('koncept', 'bygge'):
+                raise Vagrad(str(error) + '; omarbeta paketet via fortsatt.py omprova --fall FALL --steg brief '
+                             '--not SKAL --utforare claude|codex, därefter fortsatt och nytt skaparpaket') from error
+            raise
     items = [dict(i) for i in step['underlag']]
     existing = {i['fil'] for i in items if i['klass'] == 'profession'}
     for name, item in resurser.items():
@@ -309,11 +336,15 @@ def planera(rot, steg_namn, kund, bestallning):
             if item['obligatorisk']:
                 saknade.append('%s/%s' % (item['klass'], item['fil']))
             row['status'] = row['status'].replace('saknas', 'saknas (valfri)') if not item['obligatorisk'] else row['status']
+        if item['fil'] == SKAPARFIL and steg_namn == 'brief' and skapar:
+            row['delar'] = 'historiskt skaparpaket utan valauktoritet; originalbytes för omarbetning, inte nytt val'
+            if skapar.get('historiska_fel'):
+                row['delar'] += '; ' + '; '.join(skapar['historiska_fel'])
         rows.append(row)
     if saknade:
         raise Vagrad('saknat obligatoriskt underlag: ' + ', '.join(saknade))
     task = next((r for r in rows if r['fil'] == 'KUNDSTART-ARBETSUPPGIFT.json' and r['status'] == 'laddad'), None)
-    if task and steg_namn == 'research':
+    if task and steg_namn in ('research', 'brief'):
         try:
             task_data = json.loads(Path(task['kalla']).read_text(encoding='utf-8'))
             if not isinstance(task_data, dict) or task_data.get('schema') != 'digitala-intagsarbete/1':
@@ -447,7 +478,8 @@ def ladda(rot, steg_namn, ut, kund=None, bestallning=None, utforare=None):
     receipt = {'schema': 1, 'steg': steg_namn, 'mandat': step['mandat'], 'bestallning': bestallning, 'utforare': utforare,
                'laddat_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'rot': str(rot), 'rot_git_head': head,
                'rot_git_ren': ren, 'kundmapp': str(kund_dir) if kund_dir else None, 'arbetsyta': str(ut),
-               'underlag': [{k: r.get(k) for k in ('plats', 'fil', 'klass', 'obligatorisk', 'delar', 'status', 'sha256', 'pinnad_sha256', 'byte')} for r in rows],
+               'underlag': [{**{k: r.get(k) for k in ('plats', 'fil', 'klass', 'obligatorisk', 'delar', 'status', 'sha256', 'pinnad_sha256', 'byte')},
+                             **({'aktuell_sha256': r['aktuell_sha256']} if 'aktuell_sha256' in r else {})} for r in rows],
                'sha256_over_underlag': over}
     (ut / 'UNDERLAG.md').write_text(underlag_md(steg_namn, step, rows, bestallning), encoding='utf-8')
     (ut / 'ANVANDNINGSNOTER.md').write_text(noter_md(steg_namn, rows), encoding='utf-8')
