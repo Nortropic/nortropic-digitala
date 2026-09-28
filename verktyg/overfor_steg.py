@@ -43,7 +43,7 @@ def protected_inputs(rot, customer, receipt):
              for r in step['underlag'] if r['klass'] == 'kund'}
     names.update(n.casefold() for n in FAKTA + INTAG)
     names.update(r['fil'].casefold() for r in receipt['underlag'] if r['klass'] == 'kund'
-                 and not r.get('delar', '').startswith('historiskt val'))
+                 and not r.get('delar', '').startswith(('historiskt val', 'historiskt skaparpaket')))
     names.update({'lage.json', 'laddning.json', 'bestallning.json', 'beviskrav.json', 'skaparunderlag.json', 'skaparpaket.md'})
     names.update(p.name.casefold() for p in customer.glob('research-r*.md'))
     return names
@@ -57,8 +57,17 @@ def previous_outputs(s, st, steg):
             record = json.loads(safe(Path(s['fall']), str(path.relative_to(s['fall']))).read_bytes())
             if record.get('schema') == 'digitala-stegoverforing/1' and record['bindning']['steg'] == steg:
                 ident = sha(json.dumps(record['bindning'], sort_keys=True).encode())
-                if path.parent.name != 'overforing-' + ident or record.get('lage') != 'överförd':
-                    raise ls.Vagrad('tidigare överföringsjournal har ändrats eller är inte färdig')
+                if path.parent.name != 'overforing-' + ident or record.get('lage') not in ('förberedd', 'överförd'):
+                    raise ls.Vagrad('tidigare överföringsjournal har ändrats eller har okänt läge')
+                history = path.parent
+                if sha(safe(history, 'LADDNING.json').read_bytes()) != record['bindning']['laddning_sha256']:
+                    raise ls.Vagrad('tidigare överföringsjournal har ändrad laddning')
+                for name, digest in record['bindning']['original'].items():
+                    if sha(safe(history, 'original/' + name).read_bytes()) != digest:
+                        raise ls.Vagrad('tidigare överföringsjournal har ändrat original')
+                for name, digest in record['fore'].items():
+                    if digest is not None and sha(safe(history, 'fore/' + name).read_bytes()) != digest:
+                        raise ls.Vagrad('tidigare överföringsjournal har ändrad historik')
                 previous.update(record['bindning']['filer'])
     return previous
 
@@ -68,6 +77,8 @@ def write(path, raw):
     fd, tmp = tempfile.mkstemp(prefix='.overfor-', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:
+            if path.is_file():
+                os.fchmod(stream.fileno(), path.stat().st_mode & 0o777)
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
@@ -77,13 +88,16 @@ def write(path, raw):
             os.unlink(tmp)
 
 
-def transfer(s, steg, rot):
+def transfer(s, steg, rot, checkpoint=None):
     if steg not in ('research', 'brief'):
         raise ls.Vagrad('överföring stöder research eller brief')
     st = s['steg'][steg]
     receipt_path = Path(st['laddning'])
     work = receipt_path.parent.resolve()
     customer = Path(s['kund']).resolve()
+    if not receipt_path.is_file():
+        raise ls.Vagrad('laddningen saknas: ' + str(receipt_path)
+                        + '; markera steget underkand och kör fortsatt för ny arbetsyta')
     raw_receipt = receipt_path.read_bytes()
     receipt = json.loads(raw_receipt)
     if (receipt.get('steg') != steg or Path(receipt.get('kundmapp', '')).resolve() != customer
@@ -91,7 +105,11 @@ def transfer(s, steg, rot):
         raise ls.Vagrad('överföringens laddning gäller annan arbetsyta, kund eller steg')
     loaded = {}
     current_sources = {}
+    historical_current = {}
     for row in receipt['underlag']:
+        if (row['klass'] == 'kund' and row.get('delar', '').startswith('historiskt skaparpaket')
+                and row.get('aktuell_sha256')):
+            historical_current[row['fil']] = row['aktuell_sha256']
         if row['status'] != 'laddad':
             continue
         path = safe(work, row['plats'])
@@ -138,7 +156,7 @@ def transfer(s, steg, rot):
         if (not isinstance(d, dict) or not isinstance(d.get('uppdrag'), dict)
                 or not isinstance(d.get('bilagor'), list)):
             raise ls.Vagrad('skaparpaket har fel form')
-        aliases = {}
+        aliases = {name: canonical for name, (canonical, _) in loaded.items()}
         for row in [d['uppdrag']] + d['bilagor']:
             if not isinstance(row, dict):
                 raise ls.Vagrad('skaparpaketets filrad har fel form')
@@ -197,8 +215,10 @@ def transfer(s, steg, rot):
     targets = {n: safe(customer, n) for n in files}
     before = {n: p.read_bytes() if p.exists() else None for n, p in targets.items()}
     for name, raw in before.items():
-        if raw is not None and name not in current_sources and raw != files[name] and sha(raw) != previous.get(name):
-            raise ls.Vagrad('målet har ändrats efter överföring eller fanns inte i laddningen; ladda om: ' + name)
+        if (raw is not None and name not in current_sources and raw != files[name]
+                and sha(raw) not in (previous.get(name), historical_current.get(name))):
+            raise ls.Vagrad('målet har ändrats efter överföring eller fanns inte i laddningen: ' + name
+                            + '; markera steget underkand och kör fortsatt för aktuell laddning')
     if journal.exists():
         record = json.loads(journal.read_bytes())
         if record.get('bindning') != binding:
@@ -223,6 +243,12 @@ def transfer(s, steg, rot):
             write(safe(history, 'original/' + name), raw)
         write(safe(history, 'LADDNING.json'), raw_receipt)
         write(journal, (json.dumps(record, ensure_ascii=False, indent=2) + '\n').encode())
+    # Persist the prepared journal before the first customer write, including
+    # process termination. Only bytes bound by that journal count as our output.
+    if str(journal) not in st['kvitton']:
+        st['kvitton'].append(str(journal))
+        if checkpoint is not None:
+            checkpoint()
     for name, raw in files.items():
         if before[name] != raw:
             write(targets[name], raw)

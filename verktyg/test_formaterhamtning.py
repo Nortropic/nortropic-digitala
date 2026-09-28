@@ -313,6 +313,12 @@ class Formaterhamtning(unittest.TestCase):
         self.assertEqual(recovered['status'], 'ok')
         self.assertEqual(recovered['formaterhamtning'], post['formaterhamtning'])
         self.assertEqual(recovered['kvitto']['format_recovery'], receipt['format_recovery'])
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(kvalitetsbild.main(['--fall', str(self.root), '--ut', str(self.root/'kvalitetsbild.md'), '--json']), 0)
+        exported = next(r for r in json.loads(output.getvalue())['rader'] if r['etikett'] == 'aterhamtad')
+        self.assertEqual(exported['formaterhamtning'], post['formaterhamtning'])
+        self.assertEqual(exported['format_recovery'], receipt['format_recovery'])
         self.assertEqual(len(rows), 2)
         self.assertNotEqual(next(r for r in rows if r['etikett'] == 'ursprung')['status'], 'ok')
         text = kvalitetsbild.rendera(rows, [])

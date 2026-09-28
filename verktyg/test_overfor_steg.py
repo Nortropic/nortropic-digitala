@@ -77,7 +77,8 @@ class Overforing(unittest.TestCase):
         self.assertFalse(any(r['fil']==resource and r['status']=='laddad' for r in receipt['underlag']))
         self.package=json.loads(original)
         for row in [self.package['uppdrag']]+self.package['bilagor']:
-            row['fil']='underlag/kund/'+row['fil']
+            if row['fil'] != 'ref.png':
+                row['fil']='underlag/kund/'+row['fil']
         self.package['referenser'][0]['bevis']=['underlag/kund/ref.png']
         self.save_package();(self.work/'PROJECT-BRIEF.md').write_text('Omarbetad brief')
         _,r=fs.overfor(self.f,'brief','codex')
@@ -267,3 +268,47 @@ class Overforing(unittest.TestCase):
         self.assertEqual(fs.las(self.f)['steg']['research']['status'],'påbörjat')
         (self.k/'research.md').write_text('Någon annans senare research')
         with self.assertRaisesRegex(ls.Vagrad,'målet har ändrats'):fs.overfor(self.f,'research','codex')
+
+    def test_delvis_skrivet_paket_kan_rattas_efter_processavbrott(self):
+        self.brief();fs.overfor(self.f,'brief','codex');self.reopen_brief()
+        (self.work/'PROJECT-BRIEF.md').write_text('Andra briefen')
+        (self.work/'SKAPARUPPDRAG.md').write_text('Andra uppdraget')
+        (self.work/'FAKTABAS.md').write_text('Andra faktabasen')
+        self.save_package();real_write=tr.write
+        def fail(path,raw):
+            if path==self.k/ls.SKAPARFIL:raise SystemExit('syntetiskt processavbrott')
+            real_write(path,raw)
+        with patch.object(tr,'write',fail),self.assertRaises(SystemExit):
+            fs.overfor(self.f,'brief','codex')
+        state=fs.las(self.f)
+        partial=[Path(p) for p in state['steg']['brief']['kvitton'] if Path(p).name=='KVITTO.json'
+                 and json.loads(Path(p).read_bytes())['lage']=='förberedd']
+        self.assertEqual(len(partial),1)
+        (self.work/'SKAPARUPPDRAG.md').write_text('Rättat efter avbrottet')
+        _,result=fs.overfor(self.f,'brief','codex')
+        self.assertEqual((self.k/'SKAPARUPPDRAG.md').read_text(),'Rättat efter avbrottet')
+        self.assertEqual((Path(result['kvitto']).parent/'fore/SKAPARUPPDRAG.md').read_text(),'Andra uppdraget')
+        self.assertEqual(json.loads(partial[0].read_bytes())['lage'],'förberedd')
+        ls.skaparplan(self.k,fs.ROT,ls.las_pinnar(fs.ROT))
+
+    def test_stale_bilaga_far_nytt_arbetsresultat_efter_farsk_laddning(self):
+        self.brief();fs.overfor(self.f,'brief','codex')
+        fs.klart(self.f,'brief','klar','syntetiskt mekanismprov','codex',bevis=bevis(self.f,self.k,'brief'))
+        (self.k/'FAKTABAS.md').write_text('Extern rättelse före omladdning')
+        fs.omprova(self.f,'brief','ta hänsyn till rättelsen','codex')
+        _,r=fs.fortsatt(self.f,self.k,None,'codex');self.work=Path(r['arbetsyta'])
+        (self.work/'PROJECT-BRIEF.md').write_text('Rättad brief')
+        (self.work/'FAKTABAS.md').write_text('Nytt uttryckligt arbetsresultat')
+        self.save_package()
+        (self.k/'FAKTABAS.md').write_text('Ändring efter omladdning')
+        with self.assertRaisesRegex(ls.Vagrad,'ändrat'):fs.overfor(self.f,'brief','codex')
+        (self.k/'FAKTABAS.md').write_text('Extern rättelse före omladdning')
+        _,result=fs.overfor(self.f,'brief','codex')
+        self.assertEqual((self.k/'FAKTABAS.md').read_text(),'Nytt uttryckligt arbetsresultat')
+        self.assertEqual((Path(result['kvitto']).parent/'fore/FAKTABAS.md').read_text(),'Extern rättelse före omladdning')
+
+    def test_ateroverforing_bevarar_befintlig_filrattighet(self):
+        (self.work/'research.md').write_text('Första research');fs.overfor(self.f,'research','codex')
+        (self.k/'research.md').chmod(0o640)
+        (self.work/'research.md').write_text('Rättad research');fs.overfor(self.f,'research','codex')
+        self.assertEqual((self.k/'research.md').stat().st_mode & 0o777,0o640)

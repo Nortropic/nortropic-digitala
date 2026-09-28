@@ -149,6 +149,7 @@ def samla(fall, leverans=None):
             entry['kontroll'] = kontroll.read_text(encoding='utf-8') if kontroll.is_file() else None
         entry['bindning'] = post.get('bindning')
         entry['formaterhamtning'] = post.get('formaterhamtning')
+        entry['format_recovery'] = (entry.get('kvitto') or {}).get('format_recovery')
         entry['status'] = bevisstatus(post, entry, leverans)
         rows.append(entry)
     # Playwright-vägens besökarprov (verktyg/webblasare/besok.mjs): FALL/BESOK-*/BESOK.json med efterkontroll av
@@ -290,7 +291,7 @@ def main(argv=None):
     with Path(args.ut).open('x', encoding='utf-8') as stream:
         stream.write(text)
     if args.json:
-        print(json.dumps({'korningar': len(rows), 'aktuella': sum(1 for r in rows if r['status'] == 'ok'), 'ut': args.ut, 'rader': [{k: r.get(k) for k in ('fil', 'profil', 'etikett', 'utfall', 'status', 'run')} for r in rows]}, ensure_ascii=False, indent=1))
+        print(json.dumps({'korningar': len(rows), 'aktuella': sum(1 for r in rows if r['status'] == 'ok'), 'ut': args.ut, 'rader': [{k: r.get(k) for k in ('fil', 'profil', 'etikett', 'utfall', 'status', 'run', 'formaterhamtning', 'format_recovery')} for r in rows]}, ensure_ascii=False, indent=1))
     else:
         print(json.dumps({'korningar': len(rows), 'aktuella': sum(1 for r in rows if r['status'] == 'ok'), 'ut': args.ut}, ensure_ascii=False))
     return 0

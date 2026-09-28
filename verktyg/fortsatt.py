@@ -419,7 +419,7 @@ def overfor(fall, steg, utforare, rot=ROT):
         spara(fall, s)
         raise Vagrad('överföring kräver ett aktuellt påbörjat steg; kör fortsatt')
     try:
-        result = overfor_steg.transfer(s, steg, rot)
+        result = overfor_steg.transfer(s, steg, rot, checkpoint=lambda: spara(fall, s))
     except ladda_steg.Vagrad:
         spara(fall, s)
         raise
@@ -429,7 +429,7 @@ def overfor(fall, steg, utforare, rot=ROT):
     st = s['steg'][steg]
     if result['kvitto'] not in st['kvitton']:
         st['kvitton'].append(result['kvitto'])
-        logga(s, utforare, 'överfört', steg, result['kvitto'])
+    logga(s, utforare, 'överfört', steg, result['kvitto'])
     spara(fall, s)
     return s, result
 
