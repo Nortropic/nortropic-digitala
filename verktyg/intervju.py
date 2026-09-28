@@ -341,7 +341,9 @@ def fakta(kund, fil):
         if HEMLIGT.search(str(r['varde'])):
             raise Vagrad('faktaraden %s ser ut att innehålla ett lösenord eller en nyckel; vägras' % r['nyckel'])
         r.setdefault('datum', nu()[:10])
-        bef = next((f for f in s['fakta'] if f['nyckel'] == r['nyckel'] and f.get('varde') != r['varde'] and not f.get('ersatt')), None)
+        # Okänt är en kunskapslucka, inte ett motstridigt sakpåstående.
+        bef = next((f for f in s['fakta'] if f['nyckel'] == r['nyckel'] and f.get('varde') != r['varde']
+                    and not f.get('ersatt') and not okand(f) and not okand(r)), None)
         if bef:
             mid = 'MOT%d' % (len(s['motsagelser']) + 1)
             s['motsagelser'].append({'id': mid, 'nyckel': r['nyckel'], 'uppgift_1': {'varde': bef['varde'], 'status': bef['status'], 'kalla': bef['kalla'], 'datum': bef.get('datum')}, 'uppgift_2': {'varde': r['varde'], 'status': r['status'], 'kalla': r['kalla'], 'datum': r['datum']}, 'lage': 'oavgjord', 'tid': nu()})
@@ -352,8 +354,8 @@ def fakta(kund, fil):
     return s, '%d fakta registrerade; %d motsägelser oavgjorda' % (nya, sum(1 for m in s['motsagelser'] if m['lage'] == 'oavgjord'))
 
 
-def avgor(kund, mid, galler, skal):
-    s = las(kund)
+def avgor_i(s, mid, galler, skal):
+    """Avgör i minnet; den skrivande anroparen ansvarar för beständigheten."""
     m = next((x for x in s['motsagelser'] if x['id'] == mid), None)
     if not m:
         raise Vagrad('motsägelsen finns inte')
@@ -362,8 +364,13 @@ def avgor(kund, mid, galler, skal):
     for f in s['fakta']:
         if f.get('motsagelse') == mid:
             f['ersatt'] = f['varde'] != galler
-    spara(kund, s)
     return s, 'motsägelsen %s avgjord: %s' % (mid, galler)
+
+
+def avgor(kund, mid, galler, skal):
+    s, msg = avgor_i(las(kund), mid, galler, skal)
+    spara(kund, s)
+    return s, msg
 
 
 def nasta(kund):

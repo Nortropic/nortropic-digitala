@@ -179,3 +179,11 @@ fungerar och vilket externt led som återstår, utan att gömma saknad kod bakom
 ### Övergång till starkare kundbindning 2026-09-28
 
 Äldre klarmarkeringar vars kvitton saknar aktuellt intag, skaparpaket eller integrationsval återöppnas vid första kontrollen. Historik, kvitton och utförda sidoeffekter bevaras; publicera/skicka inte samma sak igen. Läs orsaken och ompröva relevant underlag, inte hela historiken av slentrian. research-intervju.md är intervjuns intag; researchsteget skriver sin syntes i research.md. Nytt intag kräver vanlig omladdning.
+
+Vid skrivande Kundstart-import normaliseras också äldre falska motsägelser mellan
+okänt och en strikt senare, fortfarande aktuell kundutsaga från samma fråga.
+Föregående intervju, intagsutdrag och arbetsuppgift sparas privat före ändringen;
+motsägelsen avgörs med skäl och källrevision, den raderas inte. Råexporter och
+kvitterade signaler skickas inte om. Aktuellt intagsutdrag ändras och ordinarie
+faktabindning omprövar research/följdsteg. Två kända motstridiga uppgifter och
+rena statusläsningar lämnas orörda. Okänt skapar inte i sig en ny sakmotsägelse.

@@ -218,6 +218,61 @@ def status(kund, bas, nyckel, bypass):
     return d, {'arende_id': d['arende_id'], 'svar': len(vy['dialog']), 'oppna_fragor': [f['id'] for f in vy['oppna']], 'bild': len(vy['bild']), 'material': len(vy['material']), 'aterstar': vy['aterstar'], 'inlamnad': vy['arende']['inlamnad'], 'ai': r['ai'], 'revision': vy['arende']['revision'], 'hamtat_till_revision': (d['hamtat'][-1]['revision'] if d['hamtat'] else None)}
 
 
+def _avgor_aldre_okant(kund):
+    """Rätta tidigare importmetadata vid skrivande import, utan ny export/kvittens.
+
+    Bara samma Kundstart-fråga med strikt senare, fortfarande aktuell kundutsaga
+    får ersätta okänt. Två kända uppgifter och rena statusläsningar berörs inte.
+    """
+    if not iv.stig(kund).is_file():
+        return []
+    s = iv.las(kund)
+    aktuella = iv.aktuella_uppgifter(s)
+    val = []
+    for m in s['motsagelser']:
+        a, b = m['uppgift_1'], m['uppgift_2']
+        x = re.fullmatch(r'kundstart ändrat svar ([A-Z0-9_]+) rev ([1-9][0-9]*)', str(a.get('kalla', '')))
+        y = re.fullmatch(r'kundstart ändrat svar ([A-Z0-9_]+) rev ([1-9][0-9]*)', str(b.get('kalla', '')))
+        nuvarande = aktuella.get(m['nyckel'], {})
+        if (m['lage'] == 'oavgjord' and a.get('status') == 'okänt'
+                and b.get('status') == 'kunden uppger' and not iv.okand(b)
+                and x and y and x[1] == y[1] and int(x[2]) < int(y[2])
+                and nuvarande.get('status') == 'kunden uppger'
+                and nuvarande.get('varde') == b.get('varde')
+                and nuvarande.get('kalla') == b.get('kalla')):
+            val.append((m['id'], b))
+    if not val:
+        return []
+    kund = Path(kund)
+    fore = {n: (kund / n).read_text(encoding='utf-8') if (kund / n).is_file() else None
+            for n in ('INTERVJU.json', 'research-intervju.md', 'KUNDSTART-ARBETSUPPGIFT.json')}
+    # INTERVJU skrivs sist som commitpunkt. Vid avbrott återanvänds samma
+    # föregångare även om utdrag/arbetsuppgift redan hunnit uppdateras.
+    fore_id = hashlib.sha256(fore['INTERVJU.json'].encode('utf-8')).hexdigest()
+    historik = kund / 'KUNDSTART' / ('metadata-fore-okant-' + fore_id + '.json')
+    historik.parent.mkdir(exist_ok=True)
+    if not historik.exists():
+        privat_json(historik, {'schema': 'digitala-intagskorrigering/1', 'fore_sha256': json_sha(fore), 'fore': fore})
+    sparat = json.loads(historik.read_text(encoding='utf-8'))
+    digest = sparat['fore_sha256']
+    if (json_sha(sparat['fore']) != digest
+            or hashlib.sha256(sparat['fore']['INTERVJU.json'].encode('utf-8')).hexdigest() != fore_id):
+        raise Vagrad('föregående underlagskopia för okänt-korrigering har ändrats')
+    for mid, b in val:
+        s, _ = iv.avgor_i(s, mid, b['varde'], 'tidigare okänt är inget motstridigt sakpåstående; senare kundutsaga från samma fråga (%s); föregående underlag: %s' % (b['kalla'], historik.name))
+    privat_skriv(kund / 'research-intervju.md', iv.research_md(s))
+    task_path = kund / 'KUNDSTART-ARBETSUPPGIFT.json'
+    if task_path.is_file():
+        task = json.loads(task_path.read_text(encoding='utf-8'))
+        history = task.setdefault('metadata_korrigeringar', [])
+        if not any(r.get('fore') == str(historik) for r in history):
+            history.append({'typ': 'aldre_okant_ej_sakmotsagelse', 'motsagelser': [mid for mid, _ in val], 'tid': nu(), 'fore': str(historik), 'fore_sha256': digest})
+        task['research'] = str(kund / 'research-intervju.md')
+        privat_json(task_path, task)
+    iv.spara(kund, s)
+    return [mid for mid, _ in val]
+
+
 def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=None):
     """Exportpaketet in i kundmappen: varje Kundstart-omgång blir en omgång i INTERVJU.json med kundens svar ordagrant
     (intervju.py:s svar-funktion), AI-tolkningar blir FAKTA-rader med status 'tolkning', kundens rättelser FAKTA-rader
@@ -245,9 +300,10 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
     sista = d['hamtat'][-1]['revision'] if d['hamtat'] else 0
     if paket['arende']['revision'] < sista:
         raise Vagrad('äldre export får inte skriva över senare importerad revision')
+    metadata_korrigeringar = _avgor_aldre_okant(kund)
     if (paket['arende']['revision'] == sista and d['hamtat'][-1].get('export_sha256') == digest
             and not d['hamtat'][-1].get('ej_registrerade')):
-        return d, 'inget nytt sedan revision %d' % sista
+        return d, 'inget nytt sedan revision %d%s' % (sista, '; tidigare okänt avgjort: ' + ', '.join(metadata_korrigeringar) if metadata_korrigeringar else '')
     kanal = paket['arende']['kanal']
     if not iv.stig(kund).is_file():
         s = {'schema': 1, 'kund': Path(kund).name, 'kanal': kanal, 'testdialog': bool(paket['arende']['testdialog']), 'startad': nu(), 'omgangar': [], 'svar': [], 'fakta': iv.fro_verksamhet(kund), 'motsagelser': [], 'foljdregler_utlosta': []}
@@ -448,13 +504,15 @@ def konsumera(kund, bas, nyckel, bypass, utforare, avvikelseplan=None):
     with konsumtionslas(kund):
         d = las_kundstart(kund)
         bunden(d, bas)
+        metadata_korrigeringar = _avgor_aldre_okant(kund)
         aktuella = [r for r in signaler(bas, nyckel, bypass) if r.get('arende_id') == d['arende_id']]
         if not aktuella:
             # The server may have committed an ack whose response was lost. Reconcile exactly that ack.
             pending = [json.loads(p.read_text()) for p in (Path(kund) / 'KUNDSTART').glob('signal-*/KONSUMTION.json')]
             aktuella = [p['signal'] for p in pending if p.get('lage') == 'importerad']
             if not aktuella:
-                return d, {'lage': 'inget nytt', 'arende_id': d['arende_id']}
+                return d, {'lage': 'inget nytt', 'arende_id': d['arende_id'],
+                           **({'metadata_korrigeringar': metadata_korrigeringar} if metadata_korrigeringar else {})}
         signal = max(aktuella, key=lambda r: r.get('revision', -1))
         if signal.get('id') != '%s:%s' % (d['arende_id'], signal.get('revision')) or not isinstance(signal.get('revision'), int):
             raise Vagrad('signalens id/revision har fel form')

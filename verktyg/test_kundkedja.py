@@ -251,5 +251,116 @@ class Kundkedja(unittest.TestCase):
                 self.assertIn('ändrat bevis', s['steg']['research']['historik'][-1]['skal'])
 
 
+    def _okant_till_kant(self):
+        self.importera()
+        self.ny_revision()
+        self.packet['omgangar'][0]['svar'].append({'fraga_id': 'A1', 'text': 'Ansvarig behöver undersöka målet.', 'typ': 'vet_inte', 'revision': 2, 'mottaget': '2026-09-28T00:01:00Z'})
+        self.importera()
+        self.ny_revision()
+        self.packet['omgangar'][0]['svar'].append({'fraga_id': 'A1', 'text': 'Besökaren ska jämföra och avsluta avtal.', 'revision': 3, 'mottaget': '2026-09-28T00:02:00Z'})
+        self.importera()
+        return iv.las(self.k)
+
+    def _aldre_okant_konflikt(self):
+        # Exact former conflict shape: unknown revision 2 versus explicit revision 3.
+        s = self._okant_till_kant()
+        a, b = s['fakta'][-2:]
+        keys = ('varde', 'status', 'kalla', 'datum')
+        s['motsagelser'] = [{'id': 'MOT1', 'nyckel': b['nyckel'], 'uppgift_1': {k: a[k] for k in keys}, 'uppgift_2': {k: b[k] for k in keys}, 'lage': 'oavgjord', 'tid': '2026-09-28T00:03:00Z'}]
+        a['motsagelse'] = b['motsagelse'] = 'MOT1'
+        s.setdefault('vantande_foljdfragor', []).append({'id': 'MOT1', 'omrade': 'A', 'nyckel': b['nyckel'], 'text': 'Vilken uppgift gäller?', 'paverkar': 'brief', 'utlost_av': 'motsägelse MOT1'})
+        iv.spara(self.k, s)
+        (self.k / 'research-intervju.md').write_text(iv.research_md(s))
+        return s
+
+    def test_okant_och_kundens_senare_svar_ar_inte_sakmotsagelse(self):
+        s = self._okant_till_kant()
+        self.assertEqual(s['motsagelser'], [])
+        self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift']['varde'], 'Besökaren ska jämföra och avsluta avtal.')
+        self.assertTrue(any(f['status'] == 'okänt' for f in s['fakta']))
+        self.assertFalse(any(f['id'].startswith('MOT') for f in s.get('vantande_foljdfragor', [])))
+
+    def test_aldre_okant_konflikt_rattas_utan_ny_signal_och_ateroppnar(self):
+        self._aldre_okant_konflikt()
+        _, loaded = self.fortsatt('research')
+        (self.k / 'research.md').write_text('Syntetisk äldre syntes som felaktigt såg MOT1 som sakmotsägelse.')
+        self.klar('research', sidoeffekter=['tidigare effekt får inte skickas igen'])
+        original = {n: (self.k / n).read_text() for n in ('INTERVJU.json', 'research-intervju.md', 'KUNDSTART-ARBETSUPPGIFT.json')}
+        exports = {str(p): p.read_bytes() for p in (self.k / 'KUNDSTART').glob('signal-*/EXPORT.json')}
+        _, result = self.importera()  # server returns no signal; no fourth ack
+        self.assertEqual(result['lage'], 'inget nytt')
+        self.assertEqual(result['metadata_korrigeringar'], ['MOT1'])
+        self.assertEqual(len(self.acks), 3)
+        s = iv.las(self.k)
+        self.assertEqual(s['motsagelser'][0]['lage'], 'avgjord')
+        self.assertTrue(s['fakta'][-2]['ersatt'])
+        self.assertFalse(s['fakta'][-1]['ersatt'])
+        self.assertFalse(any(f['id'] == 'MOT1' for f in s['vantande_foljdfragor']))
+        hist = list((self.k / 'KUNDSTART').glob('metadata-fore-okant-*.json'))
+        self.assertEqual(len(hist), 1)
+        self.assertEqual(json.loads(hist[0].read_text())['fore'], original)
+        self.assertTrue(all(Path(p).read_bytes() == data for p, data in exports.items()))
+        task = json.loads((self.k / 'KUNDSTART-ARBETSUPPGIFT.json').read_text())
+        self.assertEqual(Path(task['research']).read_text(), iv.research_md(s))
+        newstate, newload = self.fortsatt('research', 'claude')
+        self.assertNotEqual(newload['arbetsyta'], loaded['arbetsyta'])
+        self.assertEqual(newstate['steg']['research']['sidoeffekter'], ['tidigare effekt får inte skickas igen'])
+        self.assertTrue(newstate['steg']['research']['historik'])
+        after = {n: (self.k / n).read_bytes() for n in original}
+        self.assertNotIn('metadata_korrigeringar', self.importera()[1])
+        self.assertTrue(all((self.k / n).read_bytes() == data for n, data in after.items()))
+        self.assertEqual(len(self.acks), 3)
+
+    def test_okant_migrering_aterhamtar_avbrott_utan_dubbel_historik_eller_kvittens(self):
+        self._aldre_okant_konflikt()
+        before = iv.stig(self.k).read_bytes()
+        real_write = ks.privat_json
+        def fail_task(path, data):
+            if Path(path).name == 'KUNDSTART-ARBETSUPPGIFT.json':
+                raise OSError('syntetiskt skrivavbrott före commitpunkten')
+            real_write(path, data)
+        with patch.object(ks, 'privat_json', fail_task):
+            with self.assertRaisesRegex(OSError, 'skrivavbrott'):
+                self.importera()
+        self.assertEqual(iv.stig(self.k).read_bytes(), before)
+        self.assertEqual(len(self.acks), 3)
+        self.assertEqual(self.importera()[1]['metadata_korrigeringar'], ['MOT1'])
+        hist = list((self.k / 'KUNDSTART').glob('metadata-fore-okant-*.json'))
+        self.assertEqual(len(hist), 1)
+        self.assertEqual(json.loads(hist[0].read_text())['fore']['INTERVJU.json'].encode(), before)
+        task = json.loads((self.k / 'KUNDSTART-ARBETSUPPGIFT.json').read_text())
+        self.assertEqual(len(task['metadata_korrigeringar']), 1)
+        self.assertEqual(iv.las(self.k)['motsagelser'][0]['lage'], 'avgjord')
+        self.assertNotIn('metadata_korrigeringar', self.importera()[1])
+        self.assertEqual(len(self.acks), 3)
+
+    def test_okant_migrering_kraver_samma_fraga_senare_och_aktuell_kundkalla(self):
+        old = self._aldre_okant_konflikt()
+        for variant in ('två kända', 'annan fråga', 'inte senare', 'inte aktuell'):
+            with self.subTest(variant=variant):
+                s = copy.deepcopy(old); m = s['motsagelser'][0]
+                if variant == 'två kända': m['uppgift_1']['status'] = 'kunden uppger'
+                if variant == 'annan fråga': m['uppgift_1']['kalla'] = 'kundstart ändrat svar A2 rev 2'
+                if variant == 'inte senare': m['uppgift_1']['kalla'] = 'kundstart ändrat svar A1 rev 3'
+                if variant == 'inte aktuell': s['fakta'].append({'nyckel': m['nyckel'], 'varde': 'Annat senare kundmål', 'status': 'kunden uppger', 'kalla': 'kundstart ändrat svar A1 rev 4', 'omrade': 'A'})
+                iv.spara(self.k, s); before = iv.stig(self.k).read_bytes()
+                self.assertEqual(ks._avgor_aldre_okant(self.k), [])
+                self.assertEqual(iv.stig(self.k).read_bytes(), before)
+                self.assertEqual(iv.las(self.k)['motsagelser'][0]['lage'], 'oavgjord')
+
+    def test_senare_okant_bevaras_utan_falsk_konflikt_men_kanda_konflikter_kvarstar(self):
+        self._okant_till_kant()
+        self.ny_revision()
+        self.packet['omgangar'][0]['svar'].append({'fraga_id': 'A1', 'text': 'Vi behöver undersöka målet igen.', 'typ': 'vet_inte', 'revision': 4, 'mottaget': '2026-09-28T00:03:00Z'})
+        self.importera(); s = iv.las(self.k)
+        self.assertTrue(iv.okand(iv.aktuella_uppgifter(s)['viktigaste_uppgift']))
+        self.assertEqual(s['motsagelser'], [])
+        facts = self.k / 'nya-fakta.json'
+        facts.write_text(json.dumps([{'nyckel': 'antal_avtal', 'varde': '3', 'status': 'observerat', 'kalla': 'material A', 'omrade': 'A'}, {'nyckel': 'antal_avtal', 'varde': '4', 'status': 'kunden uppger', 'kalla': 'kundsvar B', 'omrade': 'A'}]))
+        s, _ = iv.fakta(self.k, str(facts))
+        self.assertEqual(s['motsagelser'][-1]['lage'], 'oavgjord')
+        self.assertEqual(s['motsagelser'][-1]['nyckel'], 'antal_avtal')
+
+
 if __name__ == '__main__':
     unittest.main()
