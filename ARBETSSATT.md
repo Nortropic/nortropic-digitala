@@ -147,3 +147,49 @@ För nya kvalificerade starter binds därför listans tillåtna värden till det
 inklusive profilens dokumenterade FILES.md/AGENTS.md. Läsomfång anges i saktext. Detta förebygger formatfel;
 enum innebär inte att en fil lästs, och faktisk bildleverans samt den semantiska domkontrollen ändras inte.
 Tidigare domar och råsvar lämnas orörda. Beslutet tillhör ett senare delta efter föregående kodgranskning.
+
+## Beslut DIGITALA-YRKESFORMAGA-20260928 — från research till skapande
+
+De tidigare aktiva referensfiltren för lokalitet, företagsbetyg, galleri och konkurrent ersätts av
+uppgiftsmotiverade källroller (referensjakt.md). Aktuella kundkällor följer research/brief/koncept/bygge;
+research får även hashbundna materialutdrag, uttryckligen obetrodda och inte redan lästa.
+
+Briefarbetet lämnar ett kort skapandeuppdrag och SKAPARUNDERLAG.json vid ny formgivning/större omarbetning.
+Vanliga laddaren kopierar valda bilder/tillgångar med hash och skriver SKAPARPAKET.md först i läsordningen.
+Obligatoriska kriterier, kundfakta och säkerhetskrav består som fördjupning. Valfria externa resurser kräver
+ett motiverat val; ingen automatisk dump av Taste, prototype, PICKER eller Hallmark. Resursens historiska
+beslut läses och hel skill/plugin, metod, anpassning, utdrag eller verktyg avgörs för uppgiften. Laddaren
+installerar/anropar inget; faktisk användning och påverkan dokumenteras separat.
+
+Tidigt skapas en representativ upplevelse med verkligt innehåll och relevant interaktion på mobil/större vy.
+Alternativa riktningar följer osäkerheten, inte fast kvot/enaxelkrav. Granskning jämför faktisk kandidat
+med öppnade professionella referenser. Omprov får ett fokuserat konsekvensunderlag, medan bedömningskontrakt
+v2 och fastställd täckning gäller oförändrat. Befintliga körspår används för sann resursredovisning; ingen
+ny full läsning bara för att samla godkännanden. Skapandeunderlag.md och konsekvensgranskning.md anger formen.
+
+
+### Behovsval till fungerande integrationsprov
+
+Research/brief laddar daterade standardvägar; välj bara kundens relevanta behov och dokumentera
+plan, konto, kostnad, begränsningar och ansvar. Bygge/prov använder `verktyg/integrationer.py`
+och dess exempel, samt befintliga kanalverktyg via delegaten. Kontraktsprov, provider-test och
+verklig integration är skilda nivåer. Prelaunch/leverans/drift återläser vad som faktiskt
+fungerar och vilket externt led som återstår, utan att gömma saknad kod bakom en token.
+
+### Övergång till starkare kundbindning 2026-09-28
+
+Äldre klarmarkeringar vars kvitton saknar aktuellt intag, skaparpaket eller integrationsval återöppnas vid första kontrollen. Historik, kvitton och utförda sidoeffekter bevaras; publicera/skicka inte samma sak igen. Läs orsaken och ompröva relevant underlag, inte hela historiken av slentrian. research-intervju.md är intervjuns intag; researchsteget skriver sin syntes i research.md. Nytt intag kräver vanlig omladdning.
+
+Vid skrivande Kundstart-import normaliseras också äldre falska motsägelser mellan
+okänt och en strikt senare, fortfarande aktuell kundutsaga från samma fråga.
+Föregående intervju, intagsutdrag och arbetsuppgift sparas privat före ändringen;
+motsägelsen avgörs med skäl och källrevision, den raderas inte. Råexporter och
+kvitterade signaler skickas inte om. Aktuellt intagsutdrag ändras och ordinarie
+faktabindning omprövar research/följdsteg. Två kända motstridiga uppgifter och
+rena statusläsningar lämnas orörda. Okänt skapar inte i sig en ny sakmotsägelse.
+
+Normaliseringen kräver att båda svaren återfinns ordagrant i senast importerade,
+hashbundna exporten. Behov och öppen täckning bevaras i det gemensamma intagsutdraget.
+Äldre motsägelser i omvänd riktning eller med en senare ersatt utsaga prövas via
+vanlig `intervju avgor`; de autoavgörs inte. En skadad föregångarkopia bevaras och
+återställs från verifierat underlag före omprov, aldrig genom att radera historiken.

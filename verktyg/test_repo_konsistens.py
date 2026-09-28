@@ -43,7 +43,7 @@ class Konsistens(unittest.TestCase):
         for name, step in data['steg'].items():
             receipt = ladda_steg.ladda(ROT, name, tmp / name, kund=kund,
                                        bestallning='PROV-BESTALLNING-1' if step['mandat'] == 'bestallning' else None)
-            self.assertTrue(all(r['status'] == 'laddad' for r in receipt['underlag'] if r['klass'] == 'profession'), name)
+            self.assertTrue(all(r['status'] == 'laddad' for r in receipt['underlag'] if r['klass'] == 'profession' and r['obligatorisk']), name)
 
     def test_kritikmallarna_har_platshallare_och_scheman_i_runtimes_dialekt(self):
         probe = 'import json,sys; from runtime.web_critique import check_schema; check_schema(json.load(open(sys.argv[1]))); print("ok")'

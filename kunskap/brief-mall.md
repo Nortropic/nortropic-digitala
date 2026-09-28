@@ -95,3 +95,16 @@ vad vi inte vet, med vem som kan svara (`DOMÄNEXPERT` = kunden om sakfakta, `AN
 
 Taggade `STRATEGISK`, `FAKTA` eller `BESLUT`. En fråga som ryms i uppdraget besvaras med ett dokumenterat antagande
 och arbetet fortsätter; till ägaren går bara verkliga vägval om mandat, kostnad eller rättighet, med rekommendation.
+
+## Skapandeöverlämning och konsekvens
+
+Vid ny formgivning eller större omarbetning producerar briefarbetet SKAPARUPPDRAG.md och
+SKAPARUNDERLAG.json enligt skapandeunderlag.md. Gör behov → källa/status → motiverad lösning → resurs →
+prövning läsbart; kundens behovs-id och aktuella intervju/exportrevision följer med när de finns. Den korta
+skapandeingången skiljer fasta fakta, öppna frågor och fria designhypoteser. Referensrollerna bransch,
+hantverk och UX får överlappa; urvalsskäl och faktisk observation ersätter lokalitets-/betygsfilter.
+
+Planera första representativa rendering med riktigt innehåll, bild och relevant interaktion på mobil och
+större vy. Pröva olika riktningar efter osäkerheten; varken enaxelmetod eller visst antal är obligatoriskt.
+Senare rättning beskriver direkt/indirekt påverkan i GRANSKNINGSFOKUS.md enligt konsekvensgranskning.md.
+Kärnpaketet hålls fokuserat, med källor och nödvändig fördjupning tillgängliga.

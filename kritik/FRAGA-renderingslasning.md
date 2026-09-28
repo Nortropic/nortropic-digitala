@@ -18,6 +18,11 @@ nödvändiga bilder eller referenser redovisas i could_not_review och hindrar he
 Svara med ett enda JSON-objekt enligt det givna schemat. verdict är approved endast när både blocking_findings och could_not_review är tomma. Ej bedömbart
 redovisas som avgränsad underlagsbrist, inte som bevisat produktfel.
 
+Respektera schemats maxLength innan du lämnar svaret. Håll summary till högst 1200 tecken
+inklusive blanksteg som marginal till schemats gräns 2000. Lägg fynd och läsgränser i deras
+avsedda fält utan att upprepa dem i summary; korta aldrig bort en invändning för att få approved.
+Kopiera fortfarande bedomningsbindning och exakta bild-/proveniensfält oförändrade.
+
 Läs KUND/BEDOMNINGSUNDERLAG.json och UNDERLAG/BEDOMNINGSBINDNING.json. Kopiera filens samtliga åtta fält
 oförändrade till bedomningsbindning: underlag_sha256 (manifestet), kriterier_sha256 (kriterietexten),
 krav_sha256 (förhandskraven), domkod_sha256 (den pinnade domlogiken), kandidat, miljo, konfiguration och rackvidd. Täck varje obligatorisk rad i manifestets tackning; ange saknat underlag i could_not_review.
@@ -49,3 +54,15 @@ Skriv aldrig tillägg som "(öppnad med Read)", radintervall eller "ej läst" i 
 begränsningar hör till summary/could_not_review eller annan saktext. FILES.md och AGENTS.md får anges
 bara om de faktiskt lästs. En tillåten enum-plats är aldrig bevis för läsning; Runtime-bildbelägget och
 den semantiska konsumentens krav gäller fortfarande. Hitta inte på en läsning för att fylla listan.
+
+
+Jämför kandidat och relevant öppnad referens konkret: innehåll och hierarki, bildens roll/beskärning,
+komposition/rytm och relevant responsivt beteende. Ange vad skillnaden gör för just kundens uppgift och
+varför lösningen behålls eller ändras. Källrollerna bransch, hantverk och UX får överlappa; utmärkelser,
+företagsbetyg eller en känd logotyp är inte bevis för kvalitet. En palett-/typsnittslikhet räcker inte.
+Stillbild säger inget säkert om interaktion; skilj faktiskt observerat beteende från läst avsikt.
+
+Finns GRANSKNINGSFOKUS.md, pröva dess direkta och indirekta konsekvenser samt återanvändningsskäl. Ett
+litet omprov får inte gömma berörda vyer eller ändra förhandskraven. Bedöm den exakt bundna räckvidden,
+inte historiska kandidater eller en annan domtyp. Behövs mer underlag: säg exakt vad som saknas; ingen
+full historikreread för sakens skull. Produktdom bevisar inte kod-, rapport-, drift- eller kundaccept.

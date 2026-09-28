@@ -1,0 +1,30 @@
+{
+  "schema": "digitala-integrationsval/1",
+  "kunddrift": "Leverantörernas egna vyer; eventuell webhook hos kundens host. Detta exempel är inte aktiverat.",
+  "val": [
+    {
+      "id": "bokning",
+      "behov": "En ensam konsult behöver 30 minuters introduktionsmöten",
+      "kalla": "Syntetiskt behov för standardexemplet, inte en kundbeställning",
+      "motivering": "Leverantörens vanliga kalender, bekräftelse och ombokning räcker; ingen egen bokningsmotor",
+      "leverantor": "cal",
+      "niva": "leverantorsvy",
+      "url": "https://cal.com/ERSATT-MED-KONTO/introduktion",
+      "lanktext": "Välj tid för ett introduktionsmöte",
+      "ansvarig": "Kundens kalenderansvariga",
+      "reservvag": "Ange en faktisk kontaktväg före leverans. Exempellänken måste ersättas och provas."
+    },
+    {
+      "id": "fristående-betalning",
+      "behov": "Sälja en fristående tjänst utan platsreservation",
+      "kalla": "Syntetiskt, alternativt behov; kopplas inte automatiskt till mötet ovan",
+      "motivering": "En redan skapad Payment Link räcker när inget gemensamt bokningslager behövs",
+      "leverantor": "stripe-payment-link",
+      "niva": "leverantorsvy",
+      "url": "https://buy.stripe.com/test_ERSATT_MED_TESTLANK",
+      "lanktext": "Öppna säker betalning",
+      "ansvarig": "Kundens betalningsansvariga",
+      "reservvag": "Inget köplöfte från detta exempel. Prov av betalning och återläsning återstår."
+    }
+  ]
+}

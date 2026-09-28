@@ -56,9 +56,10 @@ class Bevis(unittest.TestCase):
         fs.klart(self.f,'uppstart','klar','provad config','codex',bevis=b);cfg.write_text('{"ny":true}')
         s=fs.las(self.f);fs.giltighetskontroll(s,'claude');self.assertEqual(s['steg']['uppstart']['status'],'inte påbörjat')
     def test_bygge_far_inte_klaras_nar_koncept_ateroppnats(self):
-        s=fs.las(self.f);s['steg']['bygge'].update(status='påbörjat',laddning=s['steg']['uppstart']['laddning']);fs.spara(self.f,s)
+        s=fs.las(self.f);s['steg']['bygge'].update(status='påbörjat',laddning=s['steg']['uppstart']['laddning'],indata=fs.faktabindning(s,'bygge',vid_start=True));fs.spara(self.f,s)
         b=bevis(self.f,self.k,'bygge')
-        with self.assertRaisesRegex(fs.Vagrad,'förutsättningar'):fs.klart(self.f,'bygge','klar','syntetiskt byggprov','codex',bevis=b)
+        with self.assertRaisesRegex(fs.Vagrad,'inte laddat'):fs.klart(self.f,'bygge','klar','syntetiskt byggprov','codex',bevis=b)
+        st=fs.las(self.f)['steg']['bygge'];self.assertEqual(st['status'],'inte påbörjat');self.assertIn('förutsättning',st['historik'][-1]['skal'])
     def test_alla_beroenden_kan_losas_och_sparar_historik(self):
         fs.klart(self.f,'uppstart','vantar','saknas','codex',beroende='A');fs.omprova(self.f,'uppstart','mottaget','claude');fs.fortsatt(self.f,None,None,'claude')
         b=bevis(self.f,self.k,'uppstart');s,_=fs.klart(self.f,'uppstart','klar','A verifierat i bevis','claude',bevis=b,losta=['A'])
