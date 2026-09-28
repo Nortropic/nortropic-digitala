@@ -16,11 +16,11 @@
   {
    "fil": "kunskap/LARDOMAR.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/LARDOMAR.md",
-   "sha256": "b6892a5474a6f2b35fb61d602eb1ef02e8baf287155114d03c7c6f100def258a",
-   "byte": 27957,
+   "sha256": "0b5bbb3154cb6ad17ec76754a85446de03abbb0637f4a0cd37ca436ed5ae3624",
+   "byte": 29441,
    "kallans_mtime_utc": "2026-09-27T06:05:45Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte t.o.m. L23; nya poster skrivs här; huvudet ändrat 2026-09-27 (hemvist), i övrigt oförändrat; huvudet skrivet om 2026-09-27 (HELHET etapp 2: klassning i stället för trappa, Norrglänta inte referens), L16 klassad 2026-09-27: L24–L27 tillagda ur slutprovet HELHET-20260927 (prelaunch-kvittot, QA-verktygets honeypot, publiceringsvägens mergeläge och trädbindning, Codex-binären).",
+   "not": "byte för byte t.o.m. L23; nya poster skrivs här; huvudet ändrat 2026-09-27 (hemvist), i övrigt oförändrat; huvudet skrivet om 2026-09-27 (HELHET etapp 2: klassning i stället för trappa, Norrglänta inte referens), L16 klassad 2026-09-27: L24–L27 tillagda ur slutprovet HELHET-20260927 (prelaunch-kvittot, QA-verktygets honeypot, publiceringsvägens mergeläge och trädbindning, Codex-binären).; ändrad 2026-09-28 (Y20260928: begränsad observation om faktisk resursnytta, redaktionell rättning och läsbar graf; ingen ny praxis).",
    "sha256_vid_flytt": "bbdef0425bba0d64baf0748deaae1ef960d7b9fd61c430146b01b751239dfe7e"
   },
   {
