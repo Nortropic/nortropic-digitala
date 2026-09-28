@@ -48,11 +48,12 @@ UTFALL = ('klar', 'underkand', 'inte-tillampligt', 'vantar')
 STATUS_VERKTYG = 'inte tillämpligt'
 STATUS_VANTAR = 'väntar (externt beroende)'
 # A dependent stage cannot use an unfinished predecessor; other work can continue.
-FORUTSATTER = {'koncept': ['brief'], 'bygge': ['koncept'], 'redaktionellt-pass': ['bygge'],
+FORUTSATTER = {'brief': ['research'], 'koncept': ['brief'], 'bygge': ['koncept'], 'redaktionellt-pass': ['bygge'],
               'seo': ['bygge'], 'matning': ['bygge'], 'kritik': ['bygge'], 'granskning-d': ['bygge'],
               'qa': ['bygge'], 'provare': ['bygge'], 'prelaunch': ['bygge', 'matning', 'kritik', 'granskning-d', 'qa', 'provare'],
               'leverans': ['prelaunch'], 'lansering': ['leverans'], 'drift': ['lansering']}
 FAKTA = ('BESTALLNING.json', 'KANALBEHOV.json', 'VERKSAMHET.json', 'PROJECT-BRIEF.md', 'research.md', 'INTERVJU.json')
+INTAG = ('INTERVJU.json', 'KUNDSTART-ARBETSUPPGIFT.json', 'research-intervju.md')
 
 
 class Vagrad(Exception):
@@ -134,24 +135,45 @@ def los_beroenden(st, texter, notering, utforare):
         st.setdefault('losta_beroenden', []).append({'beroende': text, 'skal': notering, 'tid': nu(), 'utforare': utforare})
 
 
-def faktabindning(s, steg):
-    # Preparatory work must not reopen because its own later outputs are newly created.
-    names = FAKTA if steg not in ('uppstart', 'beredning', 'intervju', 'research') else ()
+def faktabindning(s, steg, vid_start=False):
+    # Research consumes the intake; its own research/organisation outputs must not
+    # invalidate it. Later decisions also bind that intake, even needs-only updates.
+    if steg in ('uppstart', 'beredning', 'intervju'):
+        names = ()
+    elif steg == 'research':
+        names = INTAG
+    else:
+        names = tuple(dict.fromkeys(FAKTA + INTAG + ('SKAPARUNDERLAG.json',)))
+    if vid_start and steg == 'brief':
+        names = tuple(n for n in names if n not in ('PROJECT-BRIEF.md', 'SKAPARUNDERLAG.json'))
     return [{'fil': str(Path(s['kund']) / n), 'sha256': stegbevis.sha(Path(s['kund']) / n) if (Path(s['kund']) / n).is_file() else None} for n in names]
 
 
 def giltighetskontroll(s, utforare):
     for n, st in s['steg'].items():
+        if st['status'] == 'påbörjat':
+            expected = faktabindning(s, n, vid_start=True)
+            if expected and st.get('indata') != expected:
+                _ateroppna(s, n, utforare, 'kundunderlaget ändrat eller äldre laddning saknar indatabindning; ladda aktuell källa före fortsatt arbete')
+            else:
+                try:
+                    for r in st.get('intagskallor', []):
+                        stegbevis.fil(r)
+                except (stegbevis.Vagrad, OSError) as e:
+                    _ateroppna(s, n, utforare, 'laddat intagsmaterial ändrat: ' + str(e))
+            continue
         if st['status'] not in ('klar', STATUS_VERKTYG) or st.get('markering') == 'verktyg':
             continue
         try:
             stegbevis.giltigt(st.get('godkannande'), s['fall'], s['kund'], n, st.get('laddning'))
+            if st['godkannande'].get('fakta', []) != faktabindning(s, n):
+                raise stegbevis.Vagrad('kundunderlagets bindning är inte aktuell (inklusive intag och skapandeunderlag)')
         except (stegbevis.Vagrad, OSError, TypeError) as e:
             _ateroppna(s, n, utforare, 'bevisens giltighet upphörde: ' + str(e))
     for n in s['ordning']:
         st = s['steg'][n]
         blocked = [x for x in FORUTSATTER.get(n, []) if s['steg'].get(x, {}).get('status') not in ('klar', STATUS_VERKTYG)]
-        if blocked and st['status'] == 'klar':
+        if blocked and st['status'] in ('klar', 'påbörjat'):
             _ateroppna(s, n, utforare, 'förutsättning omprövas: ' + ', '.join(blocked))
 
 
@@ -235,7 +257,7 @@ def _verktygsmarkera(st, skal):
 
 def _ateroppna(s, n, utforare, skal):
     st = s['steg'][n]
-    st.setdefault('historik', []).append({'status': st['status'], 'godkannande': st.pop('godkannande', None), 'tid': nu(), 'skal': skal})
+    st.setdefault('historik', []).append({'status': st['status'], 'godkannande': st.pop('godkannande', None), 'laddning': st.get('laddning'), 'indata': st.get('indata'), 'intagskallor': st.get('intagskallor'), 'tid': nu(), 'skal': skal})
     st['status'] = 'inte påbörjat'; st.pop('markering', None); _notera(st, '%s återöppnat: %s' % (nu(), skal)); logga(s, utforare, 'återöppnat', n, skal)
 
 
@@ -314,6 +336,12 @@ def nasta_md(s, namn, step, receipt):
             lines.append('- %s: %s' % (n, se))
     if not any(st['sidoeffekter'] for st in s['steg'].values()):
         lines.append('- inga sidoeffekter bokförda')
+    if s['steg'][namn].get('historik'):
+        lines += ['', '## Varför steget omprövas', s['steg'][namn]['historik'][-1]['skal']]
+    task = Path(s['kund']) / 'KUNDSTART-ARBETSUPPGIFT.json'
+    if task.is_file():
+        lines += ['', '## Senaste intag', str(task) + ' (sha256 ' + stegbevis.sha(task) + ')',
+                  'Läs behov, källcitat, täckningsstatus och materialets lässtatus i underlaget. Importkvittens betyder mottaget underlag, inte färdig research. Okänt, ej undersökt och saknad åtkomst är öppna frågor, inte nekade behov. Research prövar uppgifterna; brief och berörda beslut omprövas mot den aktuella källan.']
     vantar = [(n, st) for n, st in s['steg'].items() if st['status'] == STATUS_VANTAR]
     if vantar:
         lines += ['', '## Väntar på externt beroende (omprova när det finns)']
@@ -355,7 +383,15 @@ def fortsatt(fall, kund, bestallning, utforare, rot=ROT, torr=False):
     while ut.exists():
         n += 1; ut = Path(fall) / ('laddning-%s-%d' % (namn, n))
     post = s['bestallning']['post'] if (defs[namn]['mandat'] == 'bestallning' and s.get('bestallning')) else None
+    indata = faktabindning(s, namn, vid_start=True)
     receipt = ladda_steg.ladda(rot, namn, ut, kund=s['kund'], bestallning=post, utforare=utforare)
+    if indata != faktabindning(s, namn, vid_start=True):
+        spara(fall, s)
+        raise Vagrad('kundunderlaget ändrades under laddningen; arbetsytan bevarad, kör fortsatt för aktuell laddning')
+    st['indata'] = indata
+    st['intagskallor'] = [{'fil': str(base / row[key]), 'sha256': row['sha256']}
+                         for row in receipt['underlag'] if row['klass'] == 'kund' and row['status'] == 'laddad' and row['fil'].startswith('KUNDSTART/')
+                         for base, key in ((Path(s['kund']), 'fil'), (Path(receipt['arbetsyta']), 'plats'))]
     st['status'] = 'påbörjat'; st['paborjat'] = st.get('paborjat') or nu(); st['laddning'] = str(ut / 'LADDNING.json'); st.pop('markering', None)
     _skriv_privat(Path(fall) / 'NASTA.md', nasta_md(s, namn, defs[namn], receipt))
     s['nasta'] = {'steg': namn, 'lage': 'påbörjat', 'arbetsyta': receipt['arbetsyta'], 'fil': str(Path(fall) / 'NASTA.md')}
@@ -373,6 +409,7 @@ def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), b
     giltighetskontroll(s, utforare)
     st = s['steg'][steg]
     if st['status'] != 'påbörjat':
+        spara(fall, s)
         raise Vagrad('steget %s är inte laddat och påbörjat (status: %s); kör fortsatt först' % (steg, st['status']))
     if utfall == 'vantar' and not beroende:
         raise Vagrad('utfallet vantar kräver --beroende "vad som saknas"')
@@ -389,6 +426,19 @@ def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), b
         except stegbevis.Vagrad as e:
             raise Vagrad(str(e)) from e
         godkannande['fakta'] = faktabindning(s, steg)
+        godkannande['intagskallor'] = st.get('intagskallor', [])
+        try:
+            for r in godkannande['intagskallor']:
+                stegbevis.fil(r)
+        except (stegbevis.Vagrad, OSError) as e:
+            _ateroppna(s, steg, utforare, 'intagsmaterial ändrades under beviskontrollen: ' + str(e))
+            spara(fall, s)
+            raise Vagrad('intagsmaterial ändrat; kör fortsatt för aktuell laddning') from e
+        current = {r['fil']: r['sha256'] for r in godkannande['fakta']}
+        if any(current.get(r['fil']) != r['sha256'] for r in st.get('indata', [])):
+            _ateroppna(s, steg, utforare, 'kundunderlaget ändrades under beviskontrollen')
+            spara(fall, s)
+            raise Vagrad('kundunderlaget ändrades under beviskontrollen; kör fortsatt för aktuell laddning')
     los_beroenden(st, losta, notering, utforare)
     if utfall in ('klar', 'inte-tillampligt') and st['beroenden']:
         raise Vagrad('olösta beroenden kan inte ge klar; använd --lost-beroende med explicit skäl: ' + '; '.join(st['beroenden']))

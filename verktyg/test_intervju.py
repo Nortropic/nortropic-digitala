@@ -180,6 +180,25 @@ class Intervju(unittest.TestCase):
         code, r = kor('start', '--kund', str(k2), '--kanal', 'telefon')
         self.assertIn('finns redan', r['meddelande']); self.assertEqual(r['omgangar'], 1)
 
+    def test_mottaget_okant_ar_inte_kant_nej_eller_automatisk_upprepning(self):
+        iv.start(str(self.k), 'syntetiskt', True)
+        s = iv.las(self.k)
+        for o in s['omgangar']:
+            o['svar_mottagna'] = iv.nu()
+        s['fakta'] = [{'nyckel': g[2], 'varde': 'syntetiskt känt värde', 'status': 'kunden uppger', 'kalla': 'syntetiskt prov', 'omrade': g[1]} for g in iv.GRUND]
+        n = iv.GRUND[0][2]
+        s['fakta'][0]['ersatt'] = True
+        s['svar'] = [{'nyckel': n, 'fraga_id': iv.GRUND[0][0], 'text': 'Ansvarig måste kontrollera.', 'vet_inte': True, 'status': 'kunden uppger', 'omrade': 'A', 'mottaget': iv.nu()}]
+        iv.spara(self.k, s)
+        before = len(s['omgangar']); s, message = iv.nasta(self.k)
+        self.assertEqual(len(s['omgangar']), before)
+        self.assertNotIn(n, iv.kanda_nycklar(s)); self.assertIn(n, iv.status(s)['okanda_uppgifter'])
+        self.assertIn('annan källa', message); self.assertNotIn('inga luckor', message)
+        self.assertIn('uppgiften okänd', iv.research_md(s))
+        self.assertFalse(iv.okand({'text': 'Jag vet inte priset, men vi behöver bokning.'}))
+        self.assertFalse(iv.okand({'text': 'Nej, vi behöver ingen betalning på webbplatsen.'}))
+        self.assertTrue(iv.okand({'text': 'Vet inte.'}))
+
 
 if __name__ == '__main__':
     unittest.main()

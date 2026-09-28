@@ -159,4 +159,6 @@ def giltigt(g, fall, kund, steg, laddning):
                 raise Vagrad('nytt faktaunderlag: ' + r['fil'])
         else:
             fil(r)
+    for r in g.get('intagskallor', []):
+        fil(r)
     return True

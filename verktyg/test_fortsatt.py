@@ -105,7 +105,7 @@ class Vagen(unittest.TestCase):
         s = fs.las(self.f); self.assertEqual((s['steg']['brief']['status'], s['steg']['brief']['markering']), ('inte tillämpligt', 'verktyg'))
         bestallning(self.k, omfattning='privat-leverans')
         code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('brief', 'påbörjat'))
-        s = fs.las(self.f); self.assertEqual(s['steg']['matning']['status'], 'påbörjat'); self.assertIn('återöppnat', [x['handling'] for x in s['logg']])
+        s = fs.las(self.f); self.assertEqual(s['steg']['matning']['status'], 'inte påbörjat'); self.assertTrue(s['steg']['matning']['historik']); self.assertIn('återöppnat', [x['handling'] for x in s['logg']])
 
     def test_underkant_loopar_samma_steg_och_sidoeffekter_bevaras(self):
         bestallning(self.k)
@@ -151,8 +151,10 @@ class Vagen(unittest.TestCase):
         # ett verkligt saknat externt beroende: vantar, allt annat fortsätter, omprova öppnar igen
         code, r = kor('--fall', self.f, 'klart', '--steg', 'sokkonsol', '--utfall', 'vantar', '--not', 'ingen Google-åtkomst', '--beroende', 'Search Console-egenskap verifierad av kunden')
         self.assertEqual(r['status'], fs.STATUS_VANTAR)
-        code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('drift', 'påbörjat')); self.assertIn('redan laddat', r['meddelande'])
-        self.assertIn('Search Console-egenskap verifierad av kunden', Path(r['nasta_md']).read_text()); self.assertEqual(len([x for x in Path(self.f).iterdir() if x.name.startswith('laddning-drift-')]), 1)
+        code, r = kor('--fall', self.f); self.assertEqual((r['nasta'], r['lage']), ('drift', 'påbörjat'))
+        self.assertTrue(fs.las(self.f)['steg']['drift']['historik'], 'pågående drift laddas om efter nya kanaluppgifter')
+        _, same = kor('--fall', self.f); self.assertEqual(same['arbetsyta'], r['arbetsyta']); self.assertIn('redan laddat', same['meddelande'])
+        self.assertIn('Search Console-egenskap verifierad av kunden', Path(r['nasta_md']).read_text()); self.assertEqual(len([x for x in Path(self.f).iterdir() if x.name.startswith('laddning-drift-')]), 2)
         self.klar('drift')
         code, r = kor('--fall', self.f); self.assertEqual(r['lage'], 'blockerad'); self.assertIn('sokkonsol', r['meddelande']); self.assertNotIn('färdig', r['meddelande'])
         code, r = kor('--fall', self.f, 'omprova', '--steg', 'sokkonsol', '--not', 'egenskapen verifierad'); self.assertEqual(r['var'], fs.STATUS_VANTAR)
