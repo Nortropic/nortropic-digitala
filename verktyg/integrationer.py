@@ -16,7 +16,7 @@ import sqlite3
 import sys
 import urllib.parse
 from pathlib import Path
-from integrationer_adapter import Fel, Journal, ResendTest, StripeTest, cal_readback, las_nyckel, text, privat_fil
+from integrationer_adapter import Fel, Journal, JournalfelEfterAnrop, ResendTest, StripeTest, cal_readback, las_nyckel, text, privat_fil
 from integrationer_mottagning import Inkorg
 
 
@@ -83,6 +83,27 @@ def bindning():
                            for p in sorted(here.glob('integrationer*.py'))}}
 
 
+def las_acceptkvitto(path, account, command, level, version=None):
+    """Läs äldre/nya kvitton utan att migrera eller återsända handlingen."""
+    raw = privat_fil(path).read_bytes()
+    try:
+        value = json.loads(raw)
+    except (ValueError, UnicodeError):
+        raise Fel('ogiltigt_acceptkvitto') from None
+    commands = ('resend-test', 'resend-aterlas') if command == 'resend-aterlas' else ('stripe-checkout-test', 'stripe-aterlas-test')
+    if (not isinstance(value, dict) or value.get('schema') not in
+            ('digitala-integrationsprov/1', 'digitala-integrationsprov/2')
+            or value.get('kontoetikett') != account or value.get('kommando') not in commands
+            or value.get('niva') != level or not isinstance(value.get('accepterat'), dict)
+            or value['accepterat'].get('niva') != level):
+        raise Fel('acceptkvitto_fel_konto_kommando_eller_niva')
+    if version and value.get('api_version') not in (None, version):
+        raise Fel('acceptkvitto_fel_api_version')
+    # /1 saknade explicit api_version. Det äldre beviset skrivs inte om och
+    # tilldelas ingen efterhandskonstruerad versionsbindning.
+    return value['accepterat'], hashlib.sha256(raw).hexdigest()
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == 'kanal':
@@ -103,11 +124,14 @@ def main(argv=None):
     q.add_argument('--success-url', required=True); q.add_argument('--cancel-url', required=True)
     q = sub.add_parser('cal-aterlas')
     q.add_argument('--uid-fil', required=True); q.add_argument('--version', required=True)
-    for name in ('resend-test', 'stripe-checkout-test', 'cal-aterlas'):
+    q = sub.add_parser('resend-aterlas'); q.add_argument('--kvitto', required=True)
+    q = sub.add_parser('stripe-aterlas-test'); q.add_argument('--kvitto', required=True)
+    q.add_argument('--version', required=True)
+    for name in ('resend-test', 'stripe-checkout-test', 'cal-aterlas', 'resend-aterlas', 'stripe-aterlas-test'):
         q = sub.choices[name]
         q.add_argument('--nyckel-fil', required=True); q.add_argument('--konto', required=True)
         q.add_argument('--ut', required=True)
-        if name != 'cal-aterlas':
+        if name in ('resend-test', 'stripe-checkout-test'):
             q.add_argument('--journal', required=True); q.add_argument('--idempotens', required=True)
             q.add_argument('--retry-okant', action='store_true')
     a = p.parse_args(argv)
@@ -132,17 +156,30 @@ def main(argv=None):
     # Före första nätanropet: kvittoplats får inte finnas, nyckelmetadata privat.
     if privat_fil(a.ut).exists():
         raise Fel('kvittot_finns_redan')
-    result = {'schema': 'digitala-integrationsprov/1', 'bindning': bindning(), 'kommando': a.command,
+    result = {'schema': 'digitala-integrationsprov/2', 'bindning': bindning(), 'kommando': a.command,
               'kontoetikett': a.konto, 'niva': 'leverantors_api', 'anrop_genomfort': False,
               'utfall_status': None,
               'livekunddrift_verifierad': False, 'received_by_person': False}
+    if hasattr(a, 'version'):
+        result['api_version'] = a.version
     code = 0
     try:
         key = las_nyckel(a.nyckel_fil)
         if a.command == 'cal-aterlas':
             result['resultat'] = cal_readback(key, las_nyckel(a.uid_fil), a.version)
+        elif a.command in ('resend-aterlas', 'stripe-aterlas-test'):
+            api = (ResendTest(key, None, a.konto) if a.command == 'resend-aterlas'
+                   else StripeTest(key, None, a.konto, a.version))
+            result['niva'] = api.niva
+            receipt, source_hash = las_acceptkvitto(a.kvitto, a.konto, a.command, api.niva,
+                                                   getattr(a, 'version', None))
+            result['accepterat'] = receipt
+            result['kallkvitto_sha256'] = source_hash
+            result['resultat'] = api.readback(receipt)
+            result['journal_avstamd'] = False
         elif a.command == 'resend-test':
             api = ResendTest(key, Journal(a.journal), a.konto)
+            result['niva'] = api.niva
             fields = [a.inkorg, a.lead_key, a.ansvarig]
             if any(fields) and not all(fields):
                 raise Fel('inkorg_lead_key_och_ansvarig_kravs_tillsammans')
@@ -151,15 +188,35 @@ def main(argv=None):
             receipt = api.send(a.idempotens, a.mottagare, retry=a.retry_okant,
                                reference=lead['reference'] if lead else None)
             result['accepterat'] = receipt
+            result['anrop_genomfort'] = True
+            result['resultat'] = receipt
             result['resultat'] = api.readback(receipt) if a.aterlas else receipt
         else:
             api = StripeTest(key, Journal(a.journal), a.konto, a.version)
+            result['niva'] = api.niva
             receipt = api.checkout(a.idempotens, a.pris, a.success_url, a.cancel_url, a.retry_okant)
             result['accepterat'] = receipt
+            result['anrop_genomfort'] = True
+            result['resultat'] = receipt
             result['resultat'] = api.readback(receipt)
         result['anrop_genomfort'] = True
-        result['utfall_status'] = result['resultat'].get(
-            'payment_status' if a.command == 'stripe-checkout-test' else 'status')
+    except JournalfelEfterAnrop as e:
+        result['fel'] = e.kod
+        result['journal_avstamd'] = False
+        code = 1
+        if e.accepted is not None:
+            result['accepterat'] = e.accepted
+            result['resultat'] = e.accepted
+            result['anrop_genomfort'] = True
+            result['nasta_handling'] = 'aterlas_acceptkvitto_innan_journalavstamning_ingen_ny_post'
+            if a.command == 'stripe-checkout-test' or getattr(a, 'aterlas', False):
+                try:
+                    result['resultat'] = api.readback(e.accepted)
+                except Fel as read_error:
+                    result['aterlasningsfel'] = read_error.kod
+        else:
+            result['ursprungligt_fel'] = e.original_error
+            result['utfall_okant'] = not e.original_error.startswith('api_avvisat_')
     except Fel as e:
         result['fel'] = e.kod
         code = 1
@@ -167,6 +224,8 @@ def main(argv=None):
         result['fel'] = 'journal_eller_mottagning_otillganglig'
         code = 1
     finally:
+        outcome = result.get('resultat', {})
+        result['utfall_status'] = outcome.get('payment_status', outcome.get('status'))
         skriv_json(a.ut, result)
     print(json.dumps({'kvitto': a.ut, 'anrop_genomfort': result['anrop_genomfort'],
                       'utfall_status': result['utfall_status'], 'niva': result['niva'],

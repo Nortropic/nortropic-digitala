@@ -53,8 +53,16 @@ Vill du prova hela sparad-fråga → testnotis, lägg till `--inkorg
 Det kräver att just frågan är lagrad. Endast en hashreferens läggs i testmejlet;
 personuppgifter kopieras inte. Ansvarig måste motsvara serverns konfiguration.
 
-Kör samma kommando med en **ny kvittofil** för senare återläsning. Accepterad
-journalpost skickas inte igen. Vid okänt tidigare utfall kan `--retry-okant`
+Återläs ett accepterat mejl med en **ny kvittofil**, utan nytt POST eller krav
+på en fungerande journal:
+
+```sh
+python3 -B verktyg/integrationer.py resend-aterlas \
+  --nyckel-fil /privat/RESEND_TEST.secret --konto kundens-testkonto \
+  --kvitto "$PROV/resend-1.json" --ut "$PROV/resend-aterlast-1.json"
+```
+
+En accepterad journalpost skickas inte igen. Vid verkligt okänt tidigare utfall kan `--retry-okant`
 användas med samma nyckel/kropp; ändrat innehåll och för gammal osäker post vägras.
 `provider_accepted`, `delivered_test` och `received_by_person:false` är olika
 uppgifter. E-post till kundens riktiga mottagare är inte implementerad av denna
@@ -81,6 +89,15 @@ och prova leverantörens dokumenterade testkort för lyckat/avvisat/avbrutet fl�
 återläs därefter samma session. Inget av dessa steg kan ersättas med fixtureutfall.
 Förnyad CLI-körning med samma argument och ny kvittofil återanvänder sessionen.
 `paid:false` efter `complete` är möjligt. Fulfilment ingår inte i inkorgen.
+
+Återläs endast den redan accepterade sessionen (ingen prisläsning eller ny kassa):
+
+```sh
+python3 -B verktyg/integrationer.py stripe-aterlas-test \
+  --nyckel-fil /privat/STRIPE_TEST.secret --konto kundens-testkonto \
+  --version 2025-08-27.basil --kvitto "$PROV/checkout-1.json" \
+  --ut "$PROV/checkout-aterlast-1.json"
+```
 
 ## Cal: använd bokningstjänstens hela kundresa
 
@@ -157,4 +174,25 @@ Kunddrift kräver kundens verkliga host, beständig lagring, åtkomst/ägarskap,
 gallring, reservkontakt, övervakning och återgång. Lokalservern saknar
 produktionshärdning och ska aldrig publiceras som färdig kundprodukt.
 
-API-kvittots `anrop_genomfort` betyder att det angivna anropet genomfördes. Läs alltid `utfall_status`: exempelvis `bounced_test` är inte levererat och `unpaid` är inte betalt, även vid exit 0. SQLite-fel ger namngivet fel och exit 1; den redan sparade avsikten skyddar fortsatt mot blinda dubbelanrop.
+Nya API-kvitton har schema `digitala-integrationsprov/2`. Det skiljer dem från
+äldre `/1`, som förekom både med `klart` och med de senare utfallsfälten.
+`anrop_genomfort` betyder att anropet genomfördes; vid POST kan accepten vara känd
+trots att efterföljande journal eller GET fallerar. Läs alltid `fel`, `accepterat`
+och `utfall_status`: `bounced_test` är inte levererat och `unpaid` är inte betalt.
+
+`journalfel_efter_accepterat_anrop` ger exit 1 men bevarar validerat provider-ID
+i det privata kvittot. Begärd återläsning görs med GET; ett eget `aterlasningsfel`
+döljer aldrig accepten. Nästa handling är återläsning med kommandona ovan och
+avstämning av lagringsfelet, **inte ett nytt POST eller ny idempotensnyckel**.
+GET återställer inte journalen och kvittot säger `journal_avstamd:false`.
+Rätta lagringsfelet och stäm av den sparade avsikten mot provider-ID och kvitto
+innan eventuell fortsatt skrivning. Avsikten, lease, explicit retry och
+23-timmarsgränsen står kvar; ingen automatisk återförsändning införs.
+
+Om både transport och efterföljande journal misslyckas bevaras båda felklasserna;
+det innebär inget säkert uteblivet anrop. Ett låsfel före första nätanropet ger
+fortsatt `journal_eller_mottagning_otillganglig` utan leverantörsanrop.
+Återläsningskommandona accepterar även äldre `/1` med bevarat accept-ID, binder
+källkvittots faktiska bytes med SHA-256 och skriver aldrig om historiken.
+Kontoetikett, tjänst, provnivå och ny explicit API-version måste stämma;
+äldre kvitton utan versionsfält får ingen retroaktiv versionsgaranti.

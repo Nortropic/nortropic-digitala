@@ -22,6 +22,15 @@ class Fel(Exception):
         self.kod, self.status = kod, status
 
 
+class JournalfelEfterAnrop(Fel):
+    """Nätutfallet får inte döljas av ett efterföljande lagringsfel."""
+    def __init__(self, *, accepted=None, original_error=None):
+        super().__init__('journalfel_efter_accepterat_anrop' if accepted is not None
+                         else 'journalfel_efter_anrop', 503)
+        self.accepted = accepted
+        self.original_error = original_error
+
+
 def json_bytes(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True,
                       separators=(',', ':'), allow_nan=False).encode()
@@ -156,24 +165,41 @@ class API:
         previous = self.journal.begin(journal_key, fp, retry)
         if previous is not None:
             return dict(previous, duplicate=True)
+
+        def record_failure(state, error, retry_after=0):
+            try:
+                self.journal.finish(journal_key, state, retry_after=retry_after)
+            except (sqlite3.Error, OSError):
+                # Avsikten från begin finns kvar. Inget nytt anrop görs och inget
+                # leverantörsutfall uppfinns om även felbokföringen misslyckas.
+                raise JournalfelEfterAnrop(original_error=error.kod) from None
+            raise error
+
         try:
             code, result, response_headers = self.transport('POST', origin + path, heads, body)
-            if not 200 <= code < 300:
-                transient = code in (408, 409, 429) or code >= 500
-                delay = response_headers.get('Retry-After', response_headers.get('retry-after', '0'))
-                delay = min(int(delay), 86400) if str(delay).isdigit() else (60 if code == 429 else 0)
-                self.journal.finish(journal_key, 'unknown' if transient else 'rejected', retry_after=delay)
-                raise Fel('api_avvisat_' + str(code), 503 if transient else 502)
-            safe_result = dict(validate(result), niva=self.niva, duplicate=False)
-            self.journal.finish(journal_key, 'accepted', safe_result)
-            return safe_result
         except Fel as e:
-            if not e.kod.startswith('api_avvisat_'):
-                self.journal.finish(journal_key, 'unknown')
-            raise
+            record_failure('unknown', e)
         except Exception:
-            self.journal.finish(journal_key, 'unknown')
-            raise Fel('transportutfall_okant', 503) from None
+            record_failure('unknown', Fel('transportutfall_okant', 503))
+        if not 200 <= code < 300:
+            transient = code in (408, 409, 429) or code >= 500
+            delay = response_headers.get('Retry-After', response_headers.get('retry-after', '0'))
+            delay = min(int(delay), 86400) if str(delay).isdigit() else (60 if code == 429 else 0)
+            record_failure('unknown' if transient else 'rejected',
+                           Fel('api_avvisat_' + str(code), 503 if transient else 502), delay)
+        try:
+            safe_result = dict(validate(result), niva=self.niva, duplicate=False)
+        except Fel as e:
+            record_failure('unknown', e)
+        except Exception:
+            record_failure('unknown', Fel('ogiltigt_api_svar', 502))
+        try:
+            self.journal.finish(journal_key, 'accepted', safe_result)
+        except (sqlite3.Error, OSError):
+            # Ett validerat accept-ID är känt även om journalens commit faller.
+            # Bevara det för kvitto/GET; skriv inte över läget med "unknown".
+            raise JournalfelEfterAnrop(accepted=safe_result) from None
+        return safe_result
 
     def get(self, url, extra=None):
         headers = {'Authorization': 'Bearer ' + self.key}
@@ -209,8 +235,11 @@ class ResendTest(API):
 
     def readback(self, receipt):
         id_ = receipt.get('provider_id', '')
-        if not re.fullmatch(r'[a-f0-9-]{36}', id_):
+        if not isinstance(id_, str) or not re.fullmatch(r'[a-f0-9-]{36}', id_):
             raise Fel('ogiltigt_resend_id')
+        recipient = receipt.get('recipient')
+        if not isinstance(recipient, str) or not re.fullmatch(r'(delivered|bounced|complained)(\+[a-zA-Z0-9_-]{1,60})?@resend\.dev', recipient):
+            raise Fel('endast_resend_syntetisk_testmottagare')
         body = self.get('https://api.resend.com/emails/' + id_)
         if body.get('id') != id_ or body.get('to') != [receipt['recipient']] or 'onboarding@resend.dev' not in body.get('from', ''):
             raise Fel('resend_aterlasning_fel_identitet', 502)
@@ -258,8 +287,9 @@ class StripeTest(API):
 
     def readback(self, receipt):
         id_ = receipt.get('provider_id', '')
-        if not re.fullmatch(r'cs_test_[a-zA-Z0-9]+', id_):
+        if not isinstance(id_, str) or not re.fullmatch(r'cs_test_[a-zA-Z0-9]+', id_):
             raise Fel('ogiltig_testsession')
+        text(receipt.get('reference'), 'idempotens', 500)
         body = self.get('https://api.stripe.com/v1/checkout/sessions/' + id_, self.headers)
         if body.get('id') != id_ or body.get('livemode') is not False or body.get('client_reference_id') != receipt['reference'] or body.get('mode') != 'payment':
             raise Fel('stripe_aterlasning_fel_identitet', 502)
