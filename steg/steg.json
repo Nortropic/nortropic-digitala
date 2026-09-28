@@ -116,7 +116,7 @@
   "research": {
    "mandat": "staende",
    "syfte": "Faktaunderlag före brief: organisation, erbjudande, användare, uppgifter, räckvidd, förtroende, innehåll och bild, röst, transaktioner, integrationer, juridikobservationer, alternativ, designreferenser, framgångsmått, sökintention, kanalobservationer, öppna frågor och kontrollrad; referensjakten är en del.",
-   "anvisning": "Följ research-underlag.md (ryggradens 19 sektioner, status per nyckeluppgift, faktadisciplinen, kontrollraden, användbarhetsfrågorna); intervjun (steget intervju) ger sektion 19 och research prövar och kompletterar den och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv i kundmappens research.md; VERKSAMHET.json skrivs eller uppdateras ur sektion 1 och 5 (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig. Referensroller bransch/hantverk/UX får överlappa; faktisk vy/beteende styr urvalet, inte lokalitetskvot eller företagsbetyg. Materialutdrag ur KUNDSTART-ARBETSUPPGIFT kopieras som obetrodda data, aldrig som redan lästa.",
+   "anvisning": "Följ research-underlag.md (ryggradens 19 sektioner, status per nyckeluppgift, faktadisciplinen, kontrollraden, användbarhetsfrågorna); intervjun (steget intervju) ger sektion 19 och research prövar och kompletterar den och referensjakt.md för sektion 13 och bildinventeringen i sektion 7. Budgeten räknas som frågor (L4). Skriv i kundmappens research.md; VERKSAMHET.json skrivs eller uppdateras ur sektion 1 och 5 (verktyg/verksamhetsuppgifter.py kontrollera). Referenser stödjer designval och kopieras aldrig; observationer fabriceras aldrig. Referensroller bransch/hantverk/UX får överlappa; faktisk vy/beteende styr urvalet, inte lokalitetskvot eller företagsbetyg. Materialutdrag ur KUNDSTART-ARBETSUPPGIFT kopieras som obetrodda data, aldrig som redan lästa. research-intervju.md är intagsunderlag från intervjun, medan detta stegs syntes skrivs till research.md. Krävs ändrat intagsutdrag återöppnas research; ladda om aktuellt underlag, dölj inte versionsbytet.",
    "underlag": [
     {
      "fil": "kunskap/research-underlag.md",
@@ -171,7 +171,7 @@
   "brief": {
    "mandat": "bestallning",
    "syfte": "Samlad brief enligt brief-mall.md (§0–§13): problem, målgrupper och uppgifter, innehållsstruktur, handlingar, sök och kanaler, röst, designriktning, bild, teknik, juridikflaggor, framgångsmått och bedömningsplan, förbjudna påståenden, öppna frågor; riktningen väljs internt utan ägarstopp och redovisas i leveransen.",
-   "anvisning": "Följ brief-mall.md; bevisregeln gäller varje värde. Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Sätt juridikflaggor ur research §11 mot juridikflaggor.md (rapportera, avgör aldrig). Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Styrkta kundbehov och ägarens mandat är överordnade intern brief; interna designhypoteser kan omprövas med spårbara skäl. §5 gäller sök/kanaler; §7 design. Vid ny formgivning/större omarbetning skriv SKAPARUPPDRAG.md och SKAPARUNDERLAG.json enligt skapandeunderlag.md; fakta/källstatus, valt visuellt underlag och resursval ska bära skapandet. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas.",
+   "anvisning": "Följ brief-mall.md; bevisregeln gäller varje värde. Läs frontend-design: 'Design principles', 'Process: plan, review against the brief, build, critique', 'Restraint and self-critique'. Sätt juridikflaggor ur research §11 mot juridikflaggor.md (rapportera, avgör aldrig). Kör kedjekontrollen (redaktionellt-pass.md del 2) på briefen före bygget (L2). Styrkta kundbehov och ägarens mandat är överordnade intern brief; interna designhypoteser kan omprövas med spårbara skäl. §5 gäller sök/kanaler; §7 design. Vid ny formgivning/större omarbetning skriv SKAPARUPPDRAG.md och SKAPARUNDERLAG.json enligt skapandeunderlag.md; fakta/källstatus, valt visuellt underlag och resursval ska bära skapandet. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas. Välj vid relevanta integrationsbehov INTEGRATIONSVAL.json i kundmappen (digitala-integrationsval/1); bind behov/källa/motiv till briefen och kör integrationer.py plan --val på samma fil.",
    "underlag": [
     {
      "fil": "kunskap/brief-mall.md",
@@ -274,13 +274,19 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
   "koncept": {
    "mandat": "bestallning",
    "syfte": "Konceptsteg före bygget: lösningsalternativ utreds internt och en motiverad riktning väljs utan ägarstopp; Design Read och namngivna axlar är metoder, antalet alternativ följer uppgiften, inga universella dial-värden (L16 är en hypotes, inte praxis).",
-   "anvisning": "Läs SKAPARPAKET.md när det finns och därefter obligatoriska gränser/fördjupning i UNDERLAG.md. Utveckla lösningen utifrån kundbehov, riktigt innehåll och observerade bransch-/hantverks-/UX-referenser. Gör tidigt en representativ rendering med bild och relevant interaktion på mobil och större skärm. Pröva olika riktningar när osäkerheten motiverar det, utan fast antal eller obligatorisk axel; Design Read, Taste och prototype är valbara resurser, inte stil- eller metodtvång. Kritisera det nödvändiga genom designkritik-komp, välj internt utan ägarstopp och förklara val/avvisanden. L16 är en historisk hypotes, inte praxis.",
+   "anvisning": "Läs SKAPARPAKET.md när det finns och därefter obligatoriska gränser/fördjupning i UNDERLAG.md. Utveckla lösningen utifrån kundbehov, riktigt innehåll och observerade bransch-/hantverks-/UX-referenser. Gör tidigt en representativ rendering med bild och relevant interaktion på mobil och större skärm. Pröva olika riktningar när osäkerheten motiverar det, utan fast antal eller obligatorisk axel; Design Read, Taste och prototype är valbara resurser, inte stil- eller metodtvång. Kritisera det nödvändiga genom designkritik-komp, välj internt utan ägarstopp och förklara val/avvisanden. L16 är en historisk hypotes, inte praxis. Om nya resurs-/integrationsval behövs, ompröva brief och uppdatera SKAPARUNDERLAG.json/INTEGRATIONSVAL.json där; ladda därefter om berörda steg. Ändra inte valen tyst i en redan laddad kopia.",
    "underlag": [
     {
      "fil": "kunskap/externa/leonxlnx-taste-SKILL-ce26fc25.md",
@@ -371,13 +377,19 @@
      "klass": "profession",
      "obligatorisk": false,
      "delar": "välj efter uppgiften i SKAPARUNDERLAG.json; läs relevant metod, aldrig källans fasta stack/stil som mandat"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
   "bygge": {
    "mandat": "bestallning",
    "syfte": "Bygge i kundrepot enligt brief och vald riktning.",
-   "anvisning": "Läs SKAPARPAKET.md när det finns; följ bygge-referens.md och obligatoriska säkerhets-/kvalitetsunderlag. Välj resurser efter faktiskt behov i SKAPARUNDERLAG.json: mobile-native för mobil, emil-design-eng för interaktions-/komponentkvalitet också utan rörelse, design.md när format/lint hjälper och andra pinnade resurser med skäl. Kopierad text är inte installerad/anropad skill; använd befintlig kvalificerad verktygsväg när den behövs. Dokumentera riktningen i kundrepots DESIGN.md utan påtvingad palett eller stack. Rendera under arbetet: node verktyg/webblasare/inspektera.mjs --adress ADRESS --ut FALL/INSPEKTION-<tid> --vyer 390,1440 --kontext PROJECT-BRIEF.md,<kodfiler> [--hover SEL --fokus SEL --meny SEL]. Bedöm faktisk bild och interaktion i hela uppgiften inklusive undersidor och fel/tom/laddning. Mät mobilens verkliga viewport (L21), rätta vanliga produktfel och för kort arbetslogg. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas.",
+   "anvisning": "Läs SKAPARPAKET.md när det finns; följ bygge-referens.md och obligatoriska säkerhets-/kvalitetsunderlag. Välj resurser efter faktiskt behov i SKAPARUNDERLAG.json: mobile-native för mobil, emil-design-eng för interaktions-/komponentkvalitet också utan rörelse, design.md när format/lint hjälper och andra pinnade resurser med skäl. Kopierad text är inte installerad/anropad skill; använd befintlig kvalificerad verktygsväg när den behövs. Dokumentera riktningen i kundrepots DESIGN.md utan påtvingad palett eller stack. Rendera under arbetet: node verktyg/webblasare/inspektera.mjs --adress ADRESS --ut FALL/INSPEKTION-<tid> --vyer 390,1440 --kontext PROJECT-BRIEF.md,<kodfiler> [--hover SEL --fokus SEL --meny SEL]. Bedöm faktisk bild och interaktion i hela uppgiften inklusive undersidor och fel/tom/laddning. Mät mobilens verkliga viewport (L21), rätta vanliga produktfel och för kort arbetslogg. Vid integrationsbehov välj etablerad standardväg enligt integrationer-standardvagar.md och kör verktyg/integrationer.py; exempel/integrationer/README.md ger exakta provkommandon. Inget leverantörskonto eller livebevis antas. Om nya resurs-/integrationsval behövs, ompröva brief och uppdatera SKAPARUNDERLAG.json/INTEGRATIONSVAL.json där; ladda därefter om berörda steg. Ändra inte valen tyst i en redan laddad kopia.",
    "underlag": [
     {
      "fil": "kunskap/bygge-referens.md",
@@ -486,6 +498,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -947,6 +965,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -1002,6 +1026,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   },
@@ -1083,6 +1113,12 @@
      "klass": "profession",
      "obligatorisk": true,
      "delar": "valda behov, körbar väg, aktuella villkor samt bevis/drift/ansvar; irrelevant kanal införs inte"
+    },
+    {
+     "fil": "INTEGRATIONSVAL.json",
+     "klass": "kund",
+     "obligatorisk": false,
+     "delar": "kundens aktuella behovsmotiverade leverantörsval, samma digitala-integrationsval/1 som integrationer.py plan; inga hemligheter"
     }
    ]
   }

@@ -65,6 +65,8 @@ laddas endast när de valts; frånvaro betyder inte avvisad kompetens. I kritik 
 kandidat-/referensbilder kommer endast genom BEDOMNINGSUNDERLAG.json och dess oförändrade v2-kontrakt.
 Skaparpaketet ersätter aldrig fördefinierad sid-/lägestäckning eller bildbelägg.
 
+Valen är briefutdata. Om koncept eller bygge behöver byta resurser/inriktning, ompröva briefen med skäl, uppdatera paketet och ladda om följdstegen. Kundens integrationsval ligger vid behov i INTEGRATIONSVAL.json med befintligt schema digitala-integrationsval/1; brief och senare steg laddar och hashbinder samma fil. INTEGRATIONSPLAN.json är härledd körutdata, inte en parallell sanningskälla.
+
 ## Resursbeslut och faktiskt bruk
 
 Läs REGISTER §A/D/F/G och relevanta ursprungliga beslut före nya val. En historisk avgränsning är inte ett

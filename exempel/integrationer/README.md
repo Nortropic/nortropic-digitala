@@ -31,6 +31,10 @@ En export är inte leverans till ett CRM. `source_id` är importnyckeln; mappa
 ansvarig och uppföljning till det befintliga systemets fält och återläs där.
 CSV skyddar mot formelinjektion men kundens importer kan ha egna regler.
 
+## Koppling till kundens ordinarie steg
+
+I ett kunduppdrag sparas behovsmotiverade val som `INTEGRATIONSVAL.json` i kundmappen under briefarbetet, med samma `digitala-integrationsval/1` som VAL-exemplet. Ladda och kör `plan --val /privat/kund/INTEGRATIONSVAL.json --ut /privat/fall/val-r1`. Brief/koncept/bygge/prelaunch/leverans/drift laddar denna valfria fil; ändring omprövar berörda steg. En härledd INTEGRATIONSPLAN.json får inte ändras som dold alternativ källa. Ingen valfil krävs om kunden inte behöver integration.
+
 ## Resend: begränsad verklig tjänsteväg
 
 Endast efter att befintlig åtkomst och testmottagning kvalificerats. Rånyckelfilen
@@ -152,3 +156,5 @@ Ett sådant kvitto är inte ett test av Cal/Stripe/Tallys konto eller UI.
 Kunddrift kräver kundens verkliga host, beständig lagring, åtkomst/ägarskap,
 gallring, reservkontakt, övervakning och återgång. Lokalservern saknar
 produktionshärdning och ska aldrig publiceras som färdig kundprodukt.
+
+API-kvittots `anrop_genomfort` betyder att det angivna anropet genomfördes. Läs alltid `utfall_status`: exempelvis `bounced_test` är inte levererat och `unpaid` är inte betalt, även vid exit 0. SQLite-fel ger namngivet fel och exit 1; den redan sparade avsikten skyddar fortsatt mot blinda dubbelanrop.

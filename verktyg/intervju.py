@@ -160,7 +160,8 @@ def spara(kund, s):
 def okand(uppgift):
     # An explicit intake status wins. Only a complete short answer is recognised
     # from free text; "jag vet inte priset, men vi behöver bokning" remains intact.
-    return uppgift.get('vet_inte') is True or uppgift.get('status') == 'okänt' or bool(re.fullmatch(r'\s*(?:vet inte|okänt|okant|jag vet inte)\s*[.!]?\s*', str(uppgift.get('text', uppgift.get('varde', ''))), re.I))
+    kort_svar = r"\s*(?:(?:jag )?vet (?:inte|ej)|(?:jag har )?ingen aning|(?:jag är )?(?:osäker|inte säker)|okänt|okant|(?:i )?(?:don['’]t|do not) know)\s*[.!]?\s*"
+    return uppgift.get('vet_inte') is True or uppgift.get('status') == 'okänt' or bool(re.fullmatch(kort_svar, str(uppgift.get('text', uppgift.get('varde', ''))), re.I))
 
 
 def aktuella_uppgifter(s):
@@ -171,8 +172,9 @@ def aktuella_uppgifter(s):
         current = rows.get(x['nyckel'])
         if current and str(x.get('kalla', '')).startswith('VERKSAMHET.json'):
             continue  # A previous seed cannot override the customer's current answer.
-        if current and okand(current) and x['status'] in ('tolkning', 'hypotes', 'preferens'):
-            continue  # An unconfirmed hypothesis does not resolve uncertainty.
+        if (current and x['status'] in ('tolkning', 'hypotes', 'preferens')
+                and (okand(current) or current.get('status') in ('kunden uppger', 'observerat', 'externt belagt'))):
+            continue  # Keep the source current; interpretations remain in fakta for review.
         rows[x['nyckel']] = x
     return rows
 

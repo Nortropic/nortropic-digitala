@@ -168,6 +168,46 @@ class Kundkedja(unittest.TestCase):
         s['fakta'].append({'nyckel': 'viktigaste_uppgift', 'varde': 'Inget behov finns', 'status': 'hypotes', 'kalla': 'syntetisk intern hypotes', 'omrade': 'A'})
         self.assertTrue(iv.okand(iv.aktuella_uppgifter(s)['viktigaste_uppgift']))
 
+    def test_kant_forstasvar_skyddas_mot_ai_pa_samma_revision(self):
+        self.packet['fakta_ai'] = [
+            {'nyckel': 'viktigaste_uppgift', 'varde': 'Inget jämförelsebehov finns', 'kalla': 'kundstart AI rev 1', 'omrade': 'A'},
+            {'nyckel': 'mojlig_losning', 'varde': 'Pröva en jämförelsetabell', 'kalla': 'kundstart AI rev 1', 'omrade': 'A'}]
+        self.importera()
+        s = iv.las(self.k)
+        self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift'].get('text'), self.packet['omgangar'][0]['svar'][0]['text'])
+        self.assertIn('kunden uppger', iv.anvandbarhet(s)['viktigaste uppgift'])
+        self.assertTrue(any(x['nyckel'] == 'viktigaste_uppgift' and x['status'] == 'tolkning' for x in s['fakta']),
+                        'tolkningen bevaras för granskning men blir inte aktuell framför kundkällan')
+        self.assertTrue(any(x['nyckel'] == 'mojlig_losning' and x['status'] == 'tolkning' for x in s['fakta']))
+        raw = json.loads((self.k / 'KUNDSTART/export-rev1.json').read_text())
+        self.assertEqual(raw['fakta_ai'][0]['varde'], 'Inget jämförelsebehov finns', 'råkällan bevaras')
+
+    def test_senare_ai_bevaras_men_ny_kunduppgift_blir_aktuell(self):
+        self.importera(); self.ny_revision()
+        self.packet['fakta_ai'] = [{'nyckel': 'viktigaste_uppgift', 'varde': 'Inget jämförelsebehov finns',
+                                   'kalla': 'kundstart AI rev 2', 'omrade': 'A'}]
+        self.importera()
+        s = iv.las(self.k)
+        self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift'].get('text'), self.packet['omgangar'][0]['svar'][0]['text'])
+        self.assertTrue(any(x['varde'] == 'Inget jämförelsebehov finns' and x['status'] == 'tolkning' for x in s['fakta']))
+        self.ny_revision()
+        self.packet['omgangar'][0]['svar'].append({'fraga_id': 'A1', 'text': 'Besökaren ska nu avsluta sitt avtal.',
+                                                  'revision': 3, 'mottaget': '2026-09-28T00:02:00Z'})
+        self.importera()
+        s = iv.las(self.k); aktuell = iv.aktuella_uppgifter(s)['viktigaste_uppgift']
+        self.assertEqual(aktuell['varde'], 'Besökaren ska nu avsluta sitt avtal.')
+        self.assertEqual(aktuell['status'], 'kunden uppger')
+        self.assertIn('rev 3', aktuell['kalla'])
+        self.assertTrue(any(x['status'] == 'tolkning' and x.get('ersatt') for x in s['fakta']))
+        self.assertIn('Besökaren behöver jämföra olika serviceavtal.', iv.research_md(s))
+
+    def test_kort_okant_importsvar_utan_flagga_ar_inte_kant(self):
+        self.packet['omgangar'][0]['svar'][0]['text'] = 'Vet ej.'
+        self.importera()
+        s = iv.las(self.k)
+        self.assertNotIn('viktigaste_uppgift', iv.kanda_nycklar(s))
+        self.assertTrue(iv.anvandbarhet(s)['viktigaste uppgift'].startswith('okänt'))
+
     def test_materialutdrag_har_exakta_lokala_bytes_och_originalkalla(self):
         original = hashlib.sha256(b'syntetiskt original').hexdigest()
         self.packet['material'] = [{'id': 'm_test12345678', 'typ': 'lank', 'sha256': original, 'lasstatus': 'extraherad',

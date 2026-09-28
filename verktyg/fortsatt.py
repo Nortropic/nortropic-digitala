@@ -52,7 +52,7 @@ FORUTSATTER = {'brief': ['research'], 'koncept': ['brief'], 'bygge': ['koncept']
               'seo': ['bygge'], 'matning': ['bygge'], 'kritik': ['bygge'], 'granskning-d': ['bygge'],
               'qa': ['bygge'], 'provare': ['bygge'], 'prelaunch': ['bygge', 'matning', 'kritik', 'granskning-d', 'qa', 'provare'],
               'leverans': ['prelaunch'], 'lansering': ['leverans'], 'drift': ['lansering']}
-FAKTA = ('BESTALLNING.json', 'KANALBEHOV.json', 'VERKSAMHET.json', 'PROJECT-BRIEF.md', 'research.md', 'INTERVJU.json')
+FAKTA = ('BESTALLNING.json', 'KANALBEHOV.json', 'VERKSAMHET.json', 'PROJECT-BRIEF.md', 'research.md', 'INTERVJU.json', 'INTEGRATIONSVAL.json')
 INTAG = ('INTERVJU.json', 'KUNDSTART-ARBETSUPPGIFT.json', 'research-intervju.md')
 
 
@@ -145,7 +145,7 @@ def faktabindning(s, steg, vid_start=False):
     else:
         names = tuple(dict.fromkeys(FAKTA + INTAG + ('SKAPARUNDERLAG.json',)))
     if vid_start and steg == 'brief':
-        names = tuple(n for n in names if n not in ('PROJECT-BRIEF.md', 'SKAPARUNDERLAG.json'))
+        names = tuple(n for n in names if n not in ('PROJECT-BRIEF.md', 'SKAPARUNDERLAG.json', 'INTEGRATIONSVAL.json'))
     return [{'fil': str(Path(s['kund']) / n), 'sha256': stegbevis.sha(Path(s['kund']) / n) if (Path(s['kund']) / n).is_file() else None} for n in names]
 
 

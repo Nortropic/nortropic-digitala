@@ -12,6 +12,7 @@ import importlib
 import json
 import os
 import platform
+import sqlite3
 import sys
 import urllib.parse
 from pathlib import Path
@@ -132,7 +133,8 @@ def main(argv=None):
     if privat_fil(a.ut).exists():
         raise Fel('kvittot_finns_redan')
     result = {'schema': 'digitala-integrationsprov/1', 'bindning': bindning(), 'kommando': a.command,
-              'kontoetikett': a.konto, 'niva': 'leverantors_api', 'klart': False,
+              'kontoetikett': a.konto, 'niva': 'leverantors_api', 'anrop_genomfort': False,
+              'utfall_status': None,
               'livekunddrift_verifierad': False, 'received_by_person': False}
     code = 0
     try:
@@ -155,13 +157,20 @@ def main(argv=None):
             receipt = api.checkout(a.idempotens, a.pris, a.success_url, a.cancel_url, a.retry_okant)
             result['accepterat'] = receipt
             result['resultat'] = api.readback(receipt)
-        result['klart'] = True  # Angivet anrop klart; inte full affärskedja.
+        result['anrop_genomfort'] = True
+        result['utfall_status'] = result['resultat'].get(
+            'payment_status' if a.command == 'stripe-checkout-test' else 'status')
     except Fel as e:
         result['fel'] = e.kod
         code = 1
+    except sqlite3.Error:
+        result['fel'] = 'journal_eller_mottagning_otillganglig'
+        code = 1
     finally:
         skriv_json(a.ut, result)
-    print(json.dumps({'kvitto': a.ut, 'klart': result['klart'], 'niva': result['niva']}))
+    print(json.dumps({'kvitto': a.ut, 'anrop_genomfort': result['anrop_genomfort'],
+                      'utfall_status': result['utfall_status'], 'niva': result['niva'],
+                      'fel': result.get('fel')}))
     return code
 
 
