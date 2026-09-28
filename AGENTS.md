@@ -32,12 +32,14 @@ Regler:
   privat fil till Runtimes profiler: en fil med rättighet exakt 0600, en rad om minst 16 tecken, utanför `/tmp`,
   `/etc` och `/var/folders` (Runtime D034), i `~/.nortropic-hemligheter/<kund>/`, given som `--undantag-fil` till
   `verktyg/kor_profil.py matning` eller `provare`; värdet skrivs aldrig ut, och utdata söks efteråt utan utskrift.
-- Ändringar i detta repo: gren, prov gröna (`python3 -B -m unittest discover -s verktyg -p 'test_*.py'`), separat
-  granskning genom Runtimes läsarprofil, sedan main genom PR-vägen med `python3 -B verktyg/publicera.py --gren GREN
-  --granskning KATALOG --titel … --kropp FIL [--ingang DIR]` från en klon eller worktree på kandidatgrenen (vägrar utan
-  godkänd granskning bunden till HEAD eller en commit med identiskt träd, grön svit och rena pinnar; mergeläget verifieras
-  med gh pr view och main hämtas utan checkout; rulesetet main-skydd kräver PR, inget manuellt ägargodkännande). Pinnar (`steg/PINNAR.sha256`) och externa texter ändras bara som
-  nytt beslut med ny läsning.
+- Ändringar i detta repo: gren, verklig helsvit (`python3 -B -m unittest discover -s verktyg -p 'test_*.py'`) i
+  credential-isolerad provmiljö, separat granskning och värdens försegling av exakt uppgift/kandidat/acceptans.
+  Publicera med `python3 -I -B ~/nortropic-repos/nortropic-digitala/verktyg/publicera.py --task ID` från den
+  integrerade primäringången, aldrig kandidatens kopia. Kommandot lämnar endast id:t till Runtimes fasta privata,
+  separat adopterade launcher; den betrodda hållaren verifierar förseglade bevis/pinnar, kör fryst acceptans isolerat
+  och använder Appbundna checks samt skyddad PR/squash/återläsning. Saknad försegling eller launcher är ett namngivet
+  beroende, ingen genväg via kandidatprov eller gh. Äldre --gren/--granskning/--torr-argument gäller inte längre.
+  Pinnar (`steg/PINNAR.sha256`) och externa texter ändras bara som nytt beslut med ny läsning.
 - Lärande per fall: lärdomspost i `kunskap/LARDOMAR.md`, användningsnoter i fallets `ANVANDNINGSNOTER.md` (skelettet
   skrivs av laddningen), förslagsrad till blocket FÖRSLAG ATT PRÖVA I NÄSTA FALL i kontorets `docs/plan.md`. En lärdom
   om arbetssättet går till kontorets lärdomsfil `evidence/forvaltningsutveckling/local/kontoret/LARDOMAR.md`.
