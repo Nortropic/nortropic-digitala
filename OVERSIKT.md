@@ -47,8 +47,9 @@ Vägen bärs av `verktyg/fortsatt.py`: den binder beställningen (kundmappens `B
 beslutsposten med omfattning och eventuellt lanseringsmandat), avgör nästa steg, laddar underlaget, skriver `NASTA.md`,
 bokför utfall och sidoeffekter i fallets `LAGE.json`, gör omprov vid underkänt och bokför saknade externa beroenden
 (`vantar`) utan att stoppa resten; en färsk utförare kör `status` och `fortsatt`.
-Integration i Digitala-repot sker genom `verktyg/publicera.py` (PR-vägen, bara med godkänd separat granskning bunden
-till exakt commit eller en commit med identiskt träd efter rebase på identisk bas). Mekaniskt verkställt: laddningens versionskontroll och kvitton, Runtimes profiler och kvitton,
+Integration i Digitala-repot begärs med primäringångens `verktyg/publicera.py --task ID`: en separat adopterad privat
+hållare verifierar förseglad uppgift/kandidat, isolerade prov och granskning samt Appbundna checks före skyddad PR-väg.
+Kandidatkopian får inte köras som publicerare. Mekaniskt verkställt: laddningens versionskontroll och kvitton, Runtimes profiler och kvitton,
 kontextpolicyn som håller brief och facit borta från den avskärmade bedömaren, ursprungsgränsen i webbläsarvägen,
 fiktiv-spärren i kanalverktygen, rulesetet på main. Sessionsburet: tolkningen av underlagen, valen i brief och koncept,
 bygget, att utfallen rapporteras sant.

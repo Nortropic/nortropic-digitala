@@ -97,10 +97,13 @@ PATH: i slutprovet vägrade ägarens äldre CLI modellen medan den pinnade körd
    `node verktyg/webblasare/inspektera.mjs|utforska.mjs|besok.mjs …` — webbläsarvägen (Playwright 1.63.0 och Playwright MCP 0.0.82
    pinnade i verktyg/webblasare/package.json; `npm ci` där först): utvecklarinspektion med kontext, utforskande QA med
    regressionsprov, avskärmat besökarprov i egen session med efterkontroll av nätverksloggen (`natverk.jsonl`; ingen spårfil).
-   `python3 -B verktyg/publicera.py --gren GREN --granskning KATALOG --titel … --kropp FIL [--torr] [--ingang DIR]` — maskinell
-   integration i main genom PR-vägen från en klon eller worktree på kandidatgrenen, bara med godkänd granskning bunden till
-   HEAD (eller en commit med identiskt träd efter rebase), grön svit och rena pinnar; mergeläget verifieras med gh pr view,
-   main hämtas utan checkout, `--ingang` snabbspolar en ren primärutcheckning; kvitto utanför repot.
+   `python3 -I -B ~/nortropic-repos/nortropic-digitala/verktyg/publicera.py --task ID` — integration genom den
+   integrerade primäringången, aldrig kandidatens kopia. Bara värdens förseglade uppgifts-id lämnas till Runtimes
+   fasta privata launcher. Separat adoption av launcherns exakta bytes kontrolleras före start. Den betrodda hållaren
+   verifierar uppgift, kandidat, acceptans, verklig isolerad helsvit, pinnar och separat granskning samt kör fryst
+   acceptans credential-isolerat före Appbundna checks och skyddad PR/squash/återläsning. Kommandot kör inga
+   kandidatprov/pinnverktyg/gh och skapar inga egna godkännanden. Saknad hållare eller försegling är ett namngivet
+   beroende. Äldre --gren/--granskning/--torr/--ingang-syntax är ersatt; historiska publiceringskvitton bevaras.
    Kanaler, lansering och drift: `seo_kontroll.py`, `sokkonsol.py` (plan utan åtkomst, --live med åtkomst), `lokal_synlighet.py`,
    `annonsberedning.py`, `uppfoljning.py`, `prelaunch.py`, `lansering.py`, `drift_kontroll.py` — alla skriver rapport eller kvitto;
    inget av dem startar annonsering, skapar profiler eller lanserar av sig självt.
