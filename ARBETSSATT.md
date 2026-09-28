@@ -187,3 +187,9 @@ motsägelsen avgörs med skäl och källrevision, den raderas inte. Råexporter 
 kvitterade signaler skickas inte om. Aktuellt intagsutdrag ändras och ordinarie
 faktabindning omprövar research/följdsteg. Två kända motstridiga uppgifter och
 rena statusläsningar lämnas orörda. Okänt skapar inte i sig en ny sakmotsägelse.
+
+Normaliseringen kräver att båda svaren återfinns ordagrant i senast importerade,
+hashbundna exporten. Behov och öppen täckning bevaras i det gemensamma intagsutdraget.
+Äldre motsägelser i omvänd riktning eller med en senare ersatt utsaga prövas via
+vanlig `intervju avgor`; de autoavgörs inte. En skadad föregångarkopia bevaras och
+återställs från verifierat underlag före omprov, aldrig genom att radera historiken.

@@ -270,7 +270,7 @@ class Kundkedja(unittest.TestCase):
         a['motsagelse'] = b['motsagelse'] = 'MOT1'
         s.setdefault('vantande_foljdfragor', []).append({'id': 'MOT1', 'omrade': 'A', 'nyckel': b['nyckel'], 'text': 'Vilken uppgift gäller?', 'paverkar': 'brief', 'utlost_av': 'motsägelse MOT1'})
         iv.spara(self.k, s)
-        (self.k / 'research-intervju.md').write_text(iv.research_md(s))
+        # Keep the actual ordinary import excerpt, including needs and open coverage.
         return s
 
     def test_okant_och_kundens_senare_svar_ar_inte_sakmotsagelse(self):
@@ -301,7 +301,12 @@ class Kundkedja(unittest.TestCase):
         self.assertEqual(json.loads(hist[0].read_text())['fore'], original)
         self.assertTrue(all(Path(p).read_bytes() == data for p, data in exports.items()))
         task = json.loads((self.k / 'KUNDSTART-ARBETSUPPGIFT.json').read_text())
-        self.assertEqual(Path(task['research']).read_text(), iv.research_md(s))
+        new_intake = Path(task['research']).read_text()
+        suffix = '\n### Inkomna behov och täckning'
+        self.assertEqual(new_intake.split(suffix, 1)[1], original['research-intervju.md'].split(suffix, 1)[1])
+        self.assertIn('- betalning: inte_undersokt', new_intake)
+        self.assertIn('jamfora_avtal [oppen], källa A1 rev 1: jämföra olika serviceavtal', new_intake)
+        self.assertIn(iv.research_md(s), new_intake)
         newstate, newload = self.fortsatt('research', 'claude')
         self.assertNotEqual(newload['arbetsyta'], loaded['arbetsyta'])
         self.assertEqual(newstate['steg']['research']['sidoeffekter'], ['tidigare effekt får inte skickas igen'])
@@ -336,17 +341,26 @@ class Kundkedja(unittest.TestCase):
 
     def test_okant_migrering_kraver_samma_fraga_senare_och_aktuell_kundkalla(self):
         old = self._aldre_okant_konflikt()
-        for variant in ('två kända', 'annan fråga', 'inte senare', 'inte aktuell'):
+        for variant in ('två kända', 'annan fråga', 'inte senare', 'inte aktuell', 'ej verkligt svar'):
             with self.subTest(variant=variant):
                 s = copy.deepcopy(old); m = s['motsagelser'][0]
                 if variant == 'två kända': m['uppgift_1']['status'] = 'kunden uppger'
                 if variant == 'annan fråga': m['uppgift_1']['kalla'] = 'kundstart ändrat svar A2 rev 2'
                 if variant == 'inte senare': m['uppgift_1']['kalla'] = 'kundstart ändrat svar A1 rev 3'
                 if variant == 'inte aktuell': s['fakta'].append({'nyckel': m['nyckel'], 'varde': 'Annat senare kundmål', 'status': 'kunden uppger', 'kalla': 'kundstart ändrat svar A1 rev 4', 'omrade': 'A'})
+                if variant == 'ej verkligt svar': m['uppgift_1']['varde'] = 'Påhittat okänt kundsvar'
                 iv.spara(self.k, s); before = iv.stig(self.k).read_bytes()
                 self.assertEqual(ks._avgor_aldre_okant(self.k), [])
                 self.assertEqual(iv.stig(self.k).read_bytes(), before)
                 self.assertEqual(iv.las(self.k)['motsagelser'][0]['lage'], 'oavgjord')
+
+    def test_utforarens_okanda_anteckning_kan_inte_ta_bort_kundens_kanda_svar(self):
+        self._okant_till_kant()
+        facts = self.k / 'osaker-anteckning.json'
+        facts.write_text(json.dumps([{'nyckel': 'viktigaste_uppgift', 'varde': 'Utföraren vet inte än.', 'status': 'okänt', 'kalla': 'researchanteckning', 'omrade': 'A'}]))
+        s, _ = iv.fakta(self.k, str(facts))
+        self.assertEqual(iv.aktuella_uppgifter(s)['viktigaste_uppgift']['varde'], 'Besökaren ska jämföra och avsluta avtal.')
+        self.assertTrue(any(f['kalla'] == 'researchanteckning' for f in s['fakta']))
 
     def test_senare_okant_bevaras_utan_falsk_konflikt_men_kanda_konflikter_kvarstar(self):
         self._okant_till_kant()

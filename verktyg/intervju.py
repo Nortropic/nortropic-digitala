@@ -175,6 +175,10 @@ def aktuella_uppgifter(s):
         if (current and x['status'] in ('tolkning', 'hypotes', 'preferens')
                 and (okand(current) or current.get('status') in ('kunden uppger', 'observerat', 'externt belagt'))):
             continue  # Keep the source current; interpretations remain in fakta for review.
+        if (current and not okand(current)
+                and (current.get('status') == 'kunden uppger' or current.get('kalla') == 'kundstart')
+                and okand(x) and not str(x.get('kalla', '')).startswith('kundstart')):
+            continue  # An unconfirmed performer note cannot withdraw the customer's answer.
         rows[x['nyckel']] = x
     return rows
 
