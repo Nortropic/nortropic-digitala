@@ -52,6 +52,17 @@ live/galleri behöver bildfil, andra observerade källor minst ett underlag. Bil
 ögonblicket; deras hash bevisar inte att utföraren har öppnat dem. Tid/vy/observerat beteende anges i bilagans
 not eller uppdraget och i bedömningsmanifestet när bilden används i kritik. Samma källa får flera roller.
 
+Ordinarie överföring från en avskild utförarmiljö: skriv brief, uppdrag, nya bilagor och
+SKAPARUNDERLAG.json i den laddade arbetsytan. Välj befintliga bilagor med deras laddade
+sökväg (`underlag/kund/...`) eller kundrelativa namn. Kör därefter
+`python3 -B verktyg/fortsatt.py overfor --fall FALL --steg brief` före beviskontroll och
+`klart`. Överföraren läser valda bytes, fyller endast `null` i hashfält, kontrollerar
+angivna hashvärden och använder nästa konsuments paketvalidering innan kundfiler skrivs.
+Originalet, gamla målbytes och kvittot bevaras i fallet; en avbruten överföring återupptas
+med samma bindning. Ingen värd behöver manuellt kopiera en vald bilaga eller fylla hash.
+En ändrad källa kräver ny laddning. Överföringen godkänner inte innehåll eller referensbruk.
+Research använder motsvarande `overfor --steg research` för arbetsytans research.md.
+
 Alla kundfiler är relativa kundmappen, utan symlänkar, och hashkontrolleras före laddning. Resurser pekar på
 befintliga pinnade filer i kunskap/externa; nya resurser kräver vanlig läsning/proveniens/versionsbeslut först.
 Former: `lasunderlag`, `metod`, `skill`, `plugin`, `verktyg`, `anpassning`, `utdrag`. Valet måste motiveras.

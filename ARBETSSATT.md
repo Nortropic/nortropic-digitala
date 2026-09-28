@@ -193,3 +193,15 @@ hashbundna exporten. Behov och öppen täckning bevaras i det gemensamma intagsu
 Äldre motsägelser i omvänd riktning eller med en senare ersatt utsaga prövas via
 vanlig `intervju avgor`; de autoavgörs inte. En skadad föregångarkopia bevaras och
 återställs från verifierat underlag före omprov, aldrig genom att radera historiken.
+
+## Beslut 2026-09-28: överför arbetsresultat med lästa filbytes
+
+Fortsättningsuppdragets bevarade assistans visar att ett privat provskript fyllde tre
+null-hashar och kopierade en modellvald bilaga. Den gemensamma vägen får därför
+`fortsatt.py overfor --fall FALL --steg research|brief`: bevara modelloriginal, validera
+alla valda filer före skrivning, bind faktiskt lästa bytes, bevara tidigare kundfiler
+och återuppta avbrott utan nya externa handlingar. `klart` och dess sak-/beviskrav
+gäller fortfarande. Detta gäller avskilda laddade arbetsytor, inte kundspecifika designval.
+Researchunderlaget skiljer dessutom uttrycklig kunduppgift från extern verifiering och
+från okänt. Rättningen motiveras av den observerade felklassningen i kundfortsättningen;
+modellens allmänna semantiska förmåga är inte därmed verifierad.

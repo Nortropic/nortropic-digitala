@@ -20,7 +20,16 @@ inte ett externt belagt faktum. Motsägelser bevaras med båda uppgifterna, unde
 
 - Belägg per påstående: varje faktauppgift bär en källnot (kundens svar, befintlig sajt, Google-profil, sociala
   kanaler, register, egen sökning, egen observation med datum).
-- Allt obelagt märks `[OSÄKER]`. Konflikter mellan källor registreras som konflikter, aldrig tyst upplösta.
+- En uttrycklig uppgift i kundens svar eller material kan användas som `kunden uppger`, med
+  exakt källpekare/citat. Att extern kontroll saknas gör inte den uppgiften `okänt`.
+  Markera i stället att den inte är oberoende verifierad. `Okänt` gäller det kunden inte
+  uppgett eller uttryckligen inte vet; en citerad uppgift får inte samtidigt beskrivas
+  som saknad utan ett konkret skäl. Det gäller antal, omfattning och verksamhetsvillkor
+  lika väl som namn. Ett källprefix eller vår egen statusetikett bevisar inte kundutsagan:
+  läs den bundna källan. Tillagda detaljer utan stöd märks `[OSÄKER]` eller utelämnas.
+- Bevara verkliga motsägelser och skilj äldre AI-tolkning från aktuell kundutsaga. Följ
+  betalning och andra oundersökta behov som öppna frågor; okänt blir varken nej eller
+  ett nytt beställt krav. Kontrollera dessa skillnader före överföring till brief.
 - Research är skrivskyddad: inga formulär skickas, inga meddelanden till kundens kunder, inga kontoinloggningar,
   inga inköp. Främmande sajter renderas och läses; observationer fabriceras aldrig ("kunde inte öppnas" är ett svar).
 - Fakta är inte strategi: research svarar på vad som är, briefen på vad som ska göras.

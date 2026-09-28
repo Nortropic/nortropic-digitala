@@ -347,6 +347,10 @@ def nasta_md(s, namn, step, receipt):
         lines += ['', '## Väntar på externt beroende (omprova när det finns)']
         for n, st in vantar:
             lines.append('- %s: %s' % (n, '; '.join(st['beroenden']) or '—'))
+    if namn in ('research', 'brief'):
+        lines += ['', '## Överför arbetsresultatet',
+                  'Skriv resultat i arbetsytan. Kör `python3 -B verktyg/fortsatt.py overfor --fall FALL --steg ' + namn + '` före beviskontroll och klart. Överföringen bevarar original/historik och ger ingen sakaccept.',
+                  'Brief: skriv PROJECT-BRIEF.md och SKAPARUNDERLAG.json med valda filer. Befintliga bilagor anges med exakt laddad sökväg under underlag/kund/; nya bilagor skrivs i arbetsytan. Null-hashar beräknas från lästa bytes; en felaktig angiven hash avvisas.']
     lines += ['', '## När steget är gjort', 'python3 -B verktyg/fortsatt.py --kund KUND --fall FALL klart --steg %s --utfall klar|underkand|inte-tillampligt|vantar --not "vad som gjordes" --bevis STEGBEVIS.json [--kvitto FIL] [--sidoeffekt "vad som verkställdes"] [--beroende "vad som saknas"]' % namn,
               '', 'Underkänt: diagnos → åtgärd → omprov av samma steg (KVALITET.md); ingen ägarfråga för sådant som ryms i uppdraget. Saknat externt beroende: --utfall vantar --beroende "vad" — oberoende steg kan fortsätta, nödvändiga efterföljare och slutleverans väntar. Läs kunskap/bevis-och-fortsattning.md; steget omprövas med `omprova` när beroendet finns.']
     return '\n'.join(lines) + '\n'
@@ -398,6 +402,25 @@ def fortsatt(fall, kund, bestallning, utforare, rot=ROT, torr=False):
     logga(s, utforare, 'påbörjat', namn, 'laddning ' + str(ut.name) + (' (omprov %d)' % (n - 1) if n > 1 else ''))
     spara(fall, s)
     return s, {'nasta': namn, 'lage': 'påbörjat', 'arbetsyta': receipt['arbetsyta'], 'nasta_md': str(Path(fall) / 'NASTA.md'), 'meddelande': 'läs NASTA.md och UNDERLAG.md i arbetsytan'}
+
+
+def overfor(fall, steg, utforare, rot=ROT):
+    import overfor_steg
+    s = las(fall, rot=rot)
+    giltighetskontroll(s, utforare)
+    if s['steg'].get(steg, {}).get('status') != 'påbörjat':
+        spara(fall, s)
+        raise Vagrad('överföring kräver ett aktuellt påbörjat steg; kör fortsatt')
+    try:
+        result = overfor_steg.transfer(s, steg, rot)
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise Vagrad('arbetsresultat kan inte överföras: ' + str(e)) from e
+    st = s['steg'][steg]
+    if result['kvitto'] not in st['kvitton']:
+        st['kvitton'].append(result['kvitto'])
+        logga(s, utforare, 'överfört', steg, result['kvitto'])
+    spara(fall, s)
+    return s, result
 
 
 def klart(fall, steg, utfall, notering, utforare, kvitton=(), sidoeffekter=(), beroende=None, rot=ROT, bevis=None, losta=()):
@@ -498,7 +521,7 @@ def status(s):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog='fortsatt', description=__doc__.split('\n\n')[0])
-    p.add_argument('kommando', nargs='?', default='fortsatt', choices=('fortsatt', 'klart', 'omprova', 'status'))
+    p.add_argument('kommando', nargs='?', default='fortsatt', choices=('fortsatt', 'overfor', 'klart', 'omprova', 'status'))
     p.add_argument('--kund'); p.add_argument('--fall', required=True); p.add_argument('--bestallning'); p.add_argument('--utforare', choices=('claude', 'codex'), default='claude'); p.add_argument('--rot', default=str(ROT)); p.add_argument('--torr', action='store_true')
     p.add_argument('--steg'); p.add_argument('--utfall'); p.add_argument('--not', dest='notering'); p.add_argument('--kvitto', action='append', default=[]); p.add_argument('--sidoeffekt', action='append', default=[]); p.add_argument('--beroende'); p.add_argument('--bevis'); p.add_argument('--lost-beroende', action='append', default=[])
     a = p.parse_args(argv)
@@ -513,6 +536,10 @@ def main(argv=None):
             raise Vagrad('fallet uppdateras redan av annan utförare; försök efter avslutad skrivning') from e
         if a.kommando == 'fortsatt':
             s, ut = fortsatt(a.fall, a.kund, a.bestallning, a.utforare, Path(a.rot), a.torr)
+        elif a.kommando == 'overfor':
+            if a.steg not in ('research', 'brief'):
+                raise Vagrad('overfor kräver --steg research|brief')
+            s, ut = overfor(a.fall, a.steg, a.utforare, Path(a.rot))
         elif a.kommando == 'klart':
             if not (a.steg and a.utfall and a.notering):
                 raise Vagrad('klart kräver --steg, --utfall och --not')
