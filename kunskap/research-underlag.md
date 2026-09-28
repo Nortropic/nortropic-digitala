@@ -97,7 +97,7 @@ formuläret (eller bokningen) måste åstadkomma efter inskick och vilket system
 relevanta för just denna kund; vad som är tillräckligt utrett, inte tillämpligt, motsägelsefullt eller ännu okänt.
 Geografisk räckvidd, kontaktkanaler och integrationer beskrivs för den aktuella kunden, inte efter ett tidigare
 falls modell. Nya kundsvar slår igenom i berörda slutsatser, brief, implementation och prov; tidigare versioner bevaras
-(`research-rN.md`), och ett uppdaterat research.md lämnar inga gamla antaganden styrande.
+(fallets `overforing-*/fore/research.md` via ordinarie överföring; äldre research-rN.md bevaras), och ett uppdaterat research.md lämnar inga gamla antaganden styrande.
 
 ## Skärpningar när uppdraget är lokalt
 

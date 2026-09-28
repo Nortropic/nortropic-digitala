@@ -67,6 +67,7 @@ class Integrationsval(unittest.TestCase):
         state=fortsatt.las(fixture.f)
         self.assertNotEqual(state['steg']['bygge']['status'],'påbörjat')
         self.assertTrue(state['steg']['brief']['historik'])
+        self.assertIn('INTEGRATIONSVAL.json',state['steg']['brief']['historik'][-1]['skal'])
 
 
 if __name__=='__main__':unittest.main()

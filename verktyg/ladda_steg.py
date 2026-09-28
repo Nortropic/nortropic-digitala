@@ -129,7 +129,7 @@ def git_lage(rot):
     return head.stdout.strip(), status.stdout.strip() == ''
 
 
-def skaparplan(kund, rot, pinnar):
+def skaparplan(kund, rot, pinnar, historiskt=False):
     """Validera ett litet kundvalt skaparpaket. Hash är bindning, aldrig bevis på användning."""
     path = utan_lankar(kund / SKAPARFIL, kund)
     try:
@@ -152,6 +152,10 @@ def skaparplan(kund, rot, pinnar):
             raise Vagrad('ogiltig filbindning i skaparpaket')
         source = utan_lankar(kund / item['fil'], kund)
         if not inuti(source, kund) or not source.is_file() or sha256_file(source) != item['sha256']:
+            if historiskt and inuti(source, kund):
+                return {'fil': item['fil'], 'klass': 'kund', 'obligatorisk': False,
+                        'delar': 'historiskt skaparpaket: omarbeta bindningen före användning',
+                        'sha256': item['sha256'], 'status': 'inaktuellt historiskt paketunderlag; inte laddat', 'plats': None}
             raise Vagrad('skaparpaketets fil saknas eller har ändrats: ' + item['fil'])
         if role == 'referensbild':
             raw = source.read_bytes()
@@ -204,7 +208,7 @@ def skaparplan(kund, rot, pinnar):
         if not inuti(source, rot) or not source.is_file() or pinnar.get(item['fil']) != sha256_file(source):
             raise Vagrad('resursen är inte en tillgänglig pinnad professionsfil: ' + item['fil'])
         resources[item['fil']] = item
-    return d, rows, resources
+    return d, rows, {} if historiskt else resources
 
 
 def skaparpaket_md(d):
@@ -251,7 +255,7 @@ def planera(rot, steg_namn, kund, bestallning):
             raise Vagrad('sammanblandning: kundmappen får inte ligga i repot (och repot inte i kundmappen)')
     skapar, bilagor, resurser = None, [], {}
     if kund_dir and any(i['fil'] == SKAPARFIL for i in step['underlag']) and (kund_dir / SKAPARFIL).exists():
-        skapar, bilagor, resurser = skaparplan(kund_dir, rot, pinnar)
+        skapar, bilagor, resurser = skaparplan(kund_dir, rot, pinnar, historiskt=steg_namn == 'brief')
     items = [dict(i) for i in step['underlag']]
     existing = {i['fil'] for i in items if i['klass'] == 'profession'}
     for name, item in resurser.items():
@@ -344,6 +348,14 @@ def planera(rot, steg_namn, kund, bestallning):
                              'byte': source.stat().st_size, 'status': 'laddad', 'plats': 'underlag/kund/' + excerpt['fil']})
         except (OSError, ValueError) as e:
             raise Vagrad('Kundstarts materialunderlag kan inte laddas: ' + str(e)) from e
+    if skapar and steg_namn == 'brief':
+        for row in bilagor:
+            if row['status'] != 'laddad':
+                rows.append(row)
+            elif not any(r['klass'] == 'kund' and r['fil'] == row['fil'] and r['status'] == 'laddad' for r in rows):
+                row['delar'] = 'historiskt val, hashgiltiga bytes för omarbetning; ' + row['delar']
+                rows.append(row)
+        # No SKAPARPAKET.md: previous choices are evidence to rework, never new approval.
     if skapar and steg_namn in ('koncept', 'bygge'):
         # Samma fil kan redan vara ett obligatoriskt kundunderlag. Behåll en enda kopia med samma hash.
         for row in bilagor:

@@ -115,3 +115,5 @@ Jämför ett avgränsat sammanhängande prov med en enklare direkt väg på samm
 Redovisa tillförd kvalitet och kvarstående brister; ingen kausal effekt påstås från ett enda modellutfall.
 Input/output/cache-token, pengar, modellkvot, väntetid, omtag och ägararbete är olika storheter. Använd befintliga
 kvitton, markera okänt och undvik nya tunga körningar bara för att fylla en tabell.
+
+Vid omarbetning får briefen föregående SKAPARUNDERLAG som historiskt råunderlag och de tidigare bilagor vars bytes fortfarande stämmer. Inaktuella bilagor markeras, kopieras inte och får inte bli en ny bindning automatiskt. Aktuell research läses alltid separat. Koncept/bygge kräver fortfarande ett helt giltigt nytt paket. Laddade sökvägar normaliseras till kundrelativa namn även i referensernas bevispekare; ingen kund/underlag-dubblett skapas. En brief utan nytt skaparpaket kan överföra endast PROJECT-BRIEF.md. Research kan även överföra VERKSAMHET.json och brief INTEGRATIONSVAL.json; båda prövas av sina vanliga validerare och bevaras med samma historik.

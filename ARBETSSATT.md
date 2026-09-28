@@ -221,3 +221,7 @@ En liten formrättning och separat innebördskontroll måste lyckas. Ändrad dom
 risk, bevisräckvidd eller semantisk domkod vägras. Historiska kodbytes används endast
 som hashunderlag; ingen äldre godtycklig kod importeras. Ny pinnversion gäller den
 ändrade konsumentkopplingen, inte en ändring av professionens v2-bedömningskriterier.
+
+Separat kundpaketgranskning B1–B3/O1–O7 preciserar överföringen: valfritt skaparpaket i brief, historisk omladdning utan förfalskad färskhet, kanoniska filnamn/bevispekare, dynamiskt skiftlägesoberoende skrivskydd, symlinkfri historik och validerade valfria research-/integrationsutdata. Oförändrade sak-/beviskrav kvarstår. Ny pinnversion binder denna rättning; ingen kundpreferens eller produktsida blir metodpraxis.
+
+Separat formgranskning skärper samma återhämtningsväg: konsumentens aktuella kodbindning skiljs från ursprunglig bedömningsbindning; råström, sessionsbevis och Runtime-proveniens jämförs. Kvalitetsbilden visar att ursprungssessionen saknade terminal och att innebördskontrollen är en modellbedömning. Pinnuppdateringen omfattar dessa konsumenträttningar och historikladdaren; gränser, sakdom och beviskrav ändras inte.

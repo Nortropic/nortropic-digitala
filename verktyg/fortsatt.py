@@ -150,11 +150,16 @@ def faktabindning(s, steg, vid_start=False):
 
 
 def giltighetskontroll(s, utforare):
+    def changed_files(old, new):
+        before = {r.get('fil'): r for r in old or [] if isinstance(r, dict)}
+        after = {r.get('fil'): r for r in new or [] if isinstance(r, dict)}
+        names = sorted(str(n) for n in set(before) | set(after) if before.get(n) != after.get(n))
+        return ': ' + ', '.join(names) if names else ''
     for n, st in s['steg'].items():
         if st['status'] == 'påbörjat':
             expected = faktabindning(s, n, vid_start=True)
             if expected and st.get('indata') != expected:
-                _ateroppna(s, n, utforare, 'kundunderlaget ändrat eller äldre laddning saknar indatabindning; ladda aktuell källa före fortsatt arbete')
+                _ateroppna(s, n, utforare, 'kundunderlaget ändrat eller äldre laddning saknar indatabindning' + changed_files(st.get('indata'), expected) + '; ladda aktuell källa före fortsatt arbete')
             else:
                 try:
                     for r in st.get('intagskallor', []):
@@ -166,8 +171,9 @@ def giltighetskontroll(s, utforare):
             continue
         try:
             stegbevis.giltigt(st.get('godkannande'), s['fall'], s['kund'], n, st.get('laddning'))
-            if st['godkannande'].get('fakta', []) != faktabindning(s, n):
-                raise stegbevis.Vagrad('kundunderlagets bindning är inte aktuell (inklusive intag och skapandeunderlag)')
+            before, after = st['godkannande'].get('fakta', []), faktabindning(s, n)
+            if before != after:
+                raise stegbevis.Vagrad('kundunderlagets bindning är inte aktuell' + changed_files(before, after))
         except (stegbevis.Vagrad, OSError, TypeError) as e:
             _ateroppna(s, n, utforare, 'bevisens giltighet upphörde: ' + str(e))
     for n in s['ordning']:
@@ -350,7 +356,8 @@ def nasta_md(s, namn, step, receipt):
     if namn in ('research', 'brief'):
         lines += ['', '## Överför arbetsresultatet',
                   'Skriv resultat i arbetsytan. Kör `python3 -B verktyg/fortsatt.py overfor --fall FALL --steg ' + namn + '` före beviskontroll och klart. Överföringen bevarar original/historik och ger ingen sakaccept.',
-                  'Brief: skriv PROJECT-BRIEF.md och SKAPARUNDERLAG.json med valda filer. Befintliga bilagor anges med exakt laddad sökväg under underlag/kund/; nya bilagor skrivs i arbetsytan. Null-hashar beräknas från lästa bytes; en felaktig angiven hash avvisas.']
+                  'Brief: skriv PROJECT-BRIEF.md; vid ny formgivning/större omarbetning också SKAPARUNDERLAG.json med valda filer. Befintliga bilagor anges med exakt laddad sökväg under underlag/kund/; nya bilagor skrivs i arbetsytan. Historiskt paket är underlag för omarbetning; inaktuella bilagor är markerade och måste bindas på nytt. Null-hashar beräknas från lästa bytes; en felaktig angiven hash avvisas.',
+                  'Valfria arbetsresultat i samma överföring: research kan skriva VERKSAMHET.json, brief INTEGRATIONSVAL.json. De valideras med respektive ordinarie kontroll före överföringen.']
     lines += ['', '## När steget är gjort', 'python3 -B verktyg/fortsatt.py --kund KUND --fall FALL klart --steg %s --utfall klar|underkand|inte-tillampligt|vantar --not "vad som gjordes" --bevis STEGBEVIS.json [--kvitto FIL] [--sidoeffekt "vad som verkställdes"] [--beroende "vad som saknas"]' % namn,
               '', 'Underkänt: diagnos → åtgärd → omprov av samma steg (KVALITET.md); ingen ägarfråga för sådant som ryms i uppdraget. Saknat externt beroende: --utfall vantar --beroende "vad" — oberoende steg kan fortsätta, nödvändiga efterföljare och slutleverans väntar. Läs kunskap/bevis-och-fortsattning.md; steget omprövas med `omprova` när beroendet finns.']
     return '\n'.join(lines) + '\n'
@@ -413,7 +420,11 @@ def overfor(fall, steg, utforare, rot=ROT):
         raise Vagrad('överföring kräver ett aktuellt påbörjat steg; kör fortsatt')
     try:
         result = overfor_steg.transfer(s, steg, rot)
+    except ladda_steg.Vagrad:
+        spara(fall, s)
+        raise
     except (OSError, ValueError, KeyError, TypeError) as e:
+        spara(fall, s)
         raise Vagrad('arbetsresultat kan inte överföras: ' + str(e)) from e
     st = s['steg'][steg]
     if result['kvitto'] not in st['kvitton']:
