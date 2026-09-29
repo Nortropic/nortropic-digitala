@@ -136,6 +136,27 @@ class Overforing(unittest.TestCase):
         fs.overfor(self.f,'brief','codex')
         self.assertEqual((self.k/'INTEGRATIONSVAL.json').read_bytes(),choice.read_bytes())
 
+    def test_kundens_tillval_maste_besvaras_i_integrationsval_fore_brief(self):
+        (self.k/'KUNDSTART-ARBETSUPPGIFT.json').write_text(json.dumps({'schema':'digitala-intagsarbete/1','tillval':[
+            {'id':'bokning','kundval':'onskat'},{'id':'search_console','kundval':'hjalp'},{'id':'nyhetsbrev','kundval':'inte_nu'}]}))
+        _,r=fs.fortsatt(self.f,self.k,None,'codex');self.work=Path(r['arbetsyta'])  # ändrat intag kräver ny laddning
+        self.brief()
+        with self.assertRaisesRegex(ls.Vagrad,'aktuella tillval.*bokning, search_console'):fs.overfor(self.f,'brief','codex')
+        self.assertFalse((self.k/'PROJECT-BRIEF.md').exists())
+        choice=self.work/'INTEGRATIONSVAL.json'
+        choice.write_text(json.dumps({'schema':'digitala-integrationsval/1','val':[],'kundtillval':[{'tillval':'bokning','disposition':'utreds','skal':'Tjänsteutbudet ska kartläggas'}]}))
+        with self.assertRaisesRegex(ls.Vagrad,'besvarar inte kundens tillval: search_console'):fs.overfor(self.f,'brief','codex')
+        choice.write_text(json.dumps({'schema':'digitala-integrationsval/1','val':[],'kundtillval':[
+            {'tillval':'bokning','disposition':'utreds','skal':'Tjänsteutbudet ska kartläggas'},
+            {'tillval':'search_console','disposition':'kanal','skal':'sokkonsol.py efter lansering'},
+            {'tillval':'nyhetsbrev','disposition':'val','skal':'Glömt val'}]}))
+        with self.assertRaisesRegex(ls.Vagrad,'tagit bort eller avböjt tillvalet nyhetsbrev'):fs.overfor(self.f,'brief','codex')
+        choice.write_text(json.dumps({'schema':'digitala-integrationsval/1','val':[],'kundtillval':[
+            {'tillval':'bokning','disposition':'utreds','skal':'Tjänsteutbudet ska kartläggas'},
+            {'tillval':'search_console','disposition':'kanal','skal':'sokkonsol.py efter lansering'}]}))
+        fs.overfor(self.f,'brief','codex')
+        self.assertEqual((self.k/'INTEGRATIONSVAL.json').read_bytes(),choice.read_bytes())
+
     def test_ogiltiga_valfria_utdata_vagras_fore_nagon_kundskrivning(self):
         (self.work/'research.md').write_text('Research')
         (self.work/'VERKSAMHET.json').write_text('{"schema":1}')
