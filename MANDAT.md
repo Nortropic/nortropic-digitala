@@ -14,16 +14,24 @@ har en källa. Där en gräns saknas står det som en namngiven behörighetsfrå
 | Separat granskning genom Runtimes läsare före integration och publicering | kontorets AGENTS.md; DIGITALA-1-ACCEPT-20260925 §7 |
 | Lärdomsposter, användningsnoter, förslagsrad; månadsbevakning enligt inventeringens del b från oktober 2026 | FORVALTNINGAR-LOPANDE-UTVECKLING-BESLUT-20260926; DIGITALA-1-AGARBESLUT-20260926 (C5) |
 | Registrering av resultat som kontorspost med planrad, efter separat granskning | kontorets AGENTS.md |
+| Underhåll av en lanserad sajt hos en riktig kund enligt underhållsformen: veckokontroll, hämtning av kundens poster, och de faktarättelser kunden själv lämnar — öppettider, telefonnummer och pris — kontrollerade genom ordinarie kedja, med besked efteråt till kunden och i veckobeskedet. Bara telefondelen av kontaktvägarna ryms här; en ändrad formulärsökväg eller e-postadress är ett förslag. En personaländring är ett förslag tills ägaren avgör den frågan | DIGITALA-UNDERHALL-20260929 |
+| Veckobesked till ägaren om gjorda rättelser, väntande förslag och förbrukning | DIGITALA-UNDERHALL-20260929 |
 
-Ram: ägaren har inte satt något tak för stående arbete. Varje fall anger sin egen ram (antal modellsessioner, tid) i
-kontorsposten och redovisar förbrukningen; abonnemangets kvot är den yttre gränsen (D030: kvotbrist är väntan, aldrig
-köp). "Ägaren deltar inte i prov" (DIGITALA-1-AGARBESLUT-20260926) gäller allt stående arbete.
+Ram: taket för stående arbete är 20 läsande modellsessioner per kalendermånad, redovisade i månadsomgången
+(DIGITALA-UNDERHALL-20260929). Talet är kedjedrivarens förslag i OMBYGGNAD-AGARSVAR-20260927, som ägaren godtog
+2026-09-29; det står inte i hans egna ord. Varje fall anger dessutom sin egen ram (antal modellsessioner,
+tid) i kontorsposten och redovisar förbrukningen; abonnemangets kvot är den yttre gränsen (D030: kvotbrist är väntan,
+aldrig köp). Taket räknas per kund i `UNDERHALL.json` av `verktyg/underhall.py sessioner`, som vägrar en bokföring över
+taket utan en beställning; veckokontrollen kostar inga modellsessioner.
+"Ägaren deltar inte i prov" (DIGITALA-1-AGARBESLUT-20260926) gäller allt stående arbete.
 
 ## 2. Kräver en beställning (beslutspost i kontoret)
 
 | Arbete | Källa |
 |---|---|
-| Ändring av kundens sajt: brief, koncept, bygge, redaktionell ändring, driftsättning och befordran | DIGITALA-1-RIKTNING-20260926 §1 ("ger inget mandat att bygga om den driftsatta sajten"); DIGITALA-1-AGARBESLUT-20260926 (etapp 4 som beställning) |
+| Ändring av kundens sajt: brief, koncept, bygge, redaktionell ändring, driftsättning och befordran — utom de faktarättelser underhållsformen namnger (§1) | DIGITALA-1-RIKTNING-20260926 §1 ("ger inget mandat att bygga om den driftsatta sajten"); DIGITALA-1-AGARBESLUT-20260926 (etapp 4 som beställning); DIGITALA-UNDERHALL-20260929 (undantaget) |
+| Allt kunden önskar utöver en faktarättelse: ny sida, ny tjänst, ändrad text eller design, personuppgifter (även en medarbetare som slutat, tills ägaren avgör frågan), annan kontaktväg än telefonnummer, allt som kostar. Digitala skriver ett förslag med omfattning och uppskattat antal sessioner; ägaren säger ja eller nej | DIGITALA-UNDERHALL-20260929 |
+| Underhåll av ett fiktivt testbygge efter leveransen (Norrglänta, Vikskär, testfall och kommande fiktiva fall) — underhållsformen gäller bara riktiga kunder med en lanserad sajt | DIGITALA-UNDERHALL-20260929 (ägarens ord: "det är till riktiga kunder, inte fiktiva test byggen") |
 | Ny kund eller nytt fiktivt fall | DIGITALA-1-ACCEPT-20260925 §7 ("inga fler företag väljs … innan den första leveransen har bedömts") |
 | Installation eller registrering av nya resurser, verktyg, skills eller versioner | DIGITALA-1-RIKTNING-20260926 §3 och §6; registrets regel 4 |
 | Allt som kostar utöver den inkluderade Pro-krediten; betalda tillägg; analys- eller fältmätning som debiteras | DIGITALA-1-AGARBESLUT-20260926 (C6, C10, kreditvalet) |
@@ -44,18 +52,27 @@ ett hashat utdrag ur beslutsposten i kundmappens `BESTALLNING.json` (post, käll
 ordagrant utdrag) och markerar steg utanför omfattningen som inte tillämpliga tills beställningen utvidgas. Ett beställnings-id är namnet på beslutsposten i kontorets
 `docs/decisions.md` som ger mandatet (till exempel `DIGITALA-1-AGARBESLUT-20260926`).
 
-## 3. Namngivna saknade gränser (behörighetsfrågor för ägaren, inte uppfunna regler)
+## 3. Namngivna gränser (två öppna behörighetsfrågor för ägaren, två besvarade; inte uppfunna regler)
 
-- **Underhåll av en levererad sajt mellan beställningar** (till exempel en trasig länk eller ett stavfel på
-  Norrglänta): inget beslut ger Digitala rätt att ändra sajten utan beställning. Tills ägaren beslutar är det en
-  beställning. Ägarens ombyggnadsbesked säger uttryckligen att inget nytt underhållsåtagande för Norrglänta ska
-  uppfinnas. Ägarens svar 2026-09-27 (kontorets OMBYGGNAD-AGARSVAR-20260927): ägaren arbetar fram en underhållsform;
-  tills den är beslutad är varje ändring av en levererad sajt en beställning.
-- **Tak för stående arbete per månad** (modellsessioner, tid): inget ägarbeslut; frågan står i ägarens tur sedan
-  OMBYGGNAD-RESULTAT-20260927 (2026-09-27) och är obesvarad, kedjedrivarens förslag står i OMBYGGNAD-AGARSVAR-20260927;
-  fallets ram gäller, förbrukning redovisas i kontorsposten och i månadsomgången.
-- **Nästa kund**: beslutet är ägarens efter bedömningen av Norrglänta (DIGITALA-1-ACCEPT-20260925 §7); ägaren tar
-  fram nästa fiktiva fall (2026-09-27).
+Två av de tre gränserna nedan är besvarade av ägaren 2026-09-29 och står kvar här bara som avslutad historik;
+underhållsformen och taket gäller enligt §1 och §2 och `kunskap/drift.md`. Underhållsformen lämnade i sin tur en ny
+öppen fråga, om en medarbetare som slutat, som står som egen punkt nedan och som egen rad i kontorets ÄGARENS TUR.
+
+- **Underhåll av en levererad sajt mellan beställningar** — BESVARAD 2026-09-29 (DIGITALA-UNDERHALL-20260929).
+  Underhållsformen gäller riktiga kunder med en lanserad sajt: veckokontroll, kundens poster i det öppna
+  Kundstart-ärendet, faktarättelser kunden själv lämnar inom stående mandat (öppettider, telefonnummer, pris),
+  allt annat som förslag till ägaren. Om en medarbetare som slutat hör till stående mandat är en egen öppen fråga.
+  Tidigare läge (2026-09-27, OMBYGGNAD-AGARSVAR-20260927): ägaren arbetade fram formen och varje ändring var en
+  beställning. Ägarens ombyggnadsbesked om att inget underhållsåtagande för Norrglänta ska uppfinnas gäller
+  oförändrat: fiktiva testbyggen förvaltas inte efter leveransen.
+- **Tak för stående arbete per månad** — BESVARAD 2026-09-29 (DIGITALA-UNDERHALL-20260929): 20 läsande
+  modellsessioner per kalendermånad, redovisade i månadsomgången. Se §1.
+- **En medarbetare som slutat**: ÖPPEN (DIGITALA-UNDERHALL-20260929). Den godtagna texten räknar upp den som
+  faktarättelse, men formens del 4 och §2 i detta dokument lägger personuppgifter i förslagsvägen, och en fri textrad
+  går inte att skilja mekaniskt från att en medarbetare tillkommit. Tills ägaren avgör frågan är en personaländring
+  ett förslag.
+- **Nästa kund**: ÖPPEN. Beslutet är ägarens efter bedömningen av Norrglänta (DIGITALA-1-ACCEPT-20260925 §7); ägaren tar
+  fram nästa fiktiva fall (2026-09-27). Underhållsformen ändrar inte detta och gäller inte fiktiva fall.
 
 ## 4. Gränser som alltid gäller
 

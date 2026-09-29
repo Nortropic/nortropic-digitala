@@ -44,8 +44,11 @@ kanalbehov); alla kunder får inte alla kanaler.
 | **Mellan** (ny sida eller ny sektion inom gällande riktning) | ny landningssida | uppstart → [beställning] → brief-avsnitt → bygge → redaktionellt-pass → matning → kritik (renderingsläsning) → granskning-d → provare (ett scenario) → leverans | koncept, om riktningen är beslutad |
 | **Stor** (ny riktning, ny informationsarkitektur, ny kund) | omformning, ny kund | alla steg, med koncept före bygge och kontorets beredning (behov, osäkerheter, metodval, beslutsunderlag) | — |
 
-Också en liten uppgift på en levererad sajt kräver en beställnings beslutspost: underhåll mellan beställningar är en
-namngiven saknad gräns i `MANDAT.md` §3, inte stående mandat.
+Också en liten uppgift på en levererad sajt kräver en beställnings beslutspost, med ett undantag: de faktarättelser
+kunden själv lämnar inom underhållsformen (öppettider, telefonnummer, pris) ryms i stående
+mandat för en riktig kund med en lanserad sajt (`MANDAT.md` §1, `kunskap/drift.md`, DIGITALA-UNDERHALL-20260929). Ett
+stavfel eller en trasig länk som kunden inte själv lämnat som faktarättelse är alltså fortfarande en beställning, och
+fiktiva testbyggen förvaltas inte efter leveransen.
 
 Kontoret bidrar vid mellan och stor uppgift med problemformulering, osäkerheter, proportionerligt metodval och
 beslutsunderlag genom sin beredning (AP-06, fältet `forvaltning`); Digitalas sakkunskap får påverka både
