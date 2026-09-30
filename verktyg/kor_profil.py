@@ -12,6 +12,9 @@ Kritikens och provarens modell är läsarnas val i arbetsplatsens Flöde, som ko
 (kontoret hittas genom NR_KONTOR_ROOT eller systerkatalogen "nortropic-projektkontor"). Finns ett val vägras ett annat
 --utforare eller --modell; finns inget anger sessionen båda, som förut. Går valet inte att läsa vägras körningen.
 Varifrån modellen kom bokförs i körposten (lasarval). En formåterhämtning behåller den ursprungliga körningens modell.
+Bär valet en nivå (anstrangning) skickas den som --anstrangning, men bara när den aktiva releasen tar emot en (Runtime
+D046, `web_common.reader_effort`), som kontorets granskning gör; annars kör profilen sin egen nivå. Körposten bokför den
+skickade nivån, den sparade och varifrån nivån kom. En formåterhämtning behåller också den ursprungliga körningens nivå.
 
 Runtime hittas genom NR_HOST_ROOT eller systerkatalogen "Nortropic Runtime"; den aktiva releasen läses ur
 .runtime/ap10/active.json, och profilen körs ur releasens egen kod. Mätningens vyer och axe-taggar kommer ur
@@ -53,6 +56,7 @@ KONTEXT = {'designkritik-komp': {'kund': True, 'profession': True, 'avskarmad': 
 AVSKARMAD_FORBJUDET = re.compile(r'(?i)(?<![a-zåäö])(brief|facit|kritik|svar|riktning|research)(en|et|er|erna|ens|ets|s)?(?![a-zåäö])|\.html?$|\.css$|\.jsx?$|\.tsx?$|\.md$|\.json$|\.txt$')
 STEG_FOR_PROFIL = {'matning': 'matning', 'kritik': 'kritik', 'provare': 'provare'}
 MODELLNAMN = re.compile(r'\A[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z')
+NIVANAMN = re.compile(r'\A[a-z]{1,16}\Z')
 
 
 class Vagrad(Exception):
@@ -74,7 +78,8 @@ def kontor_root():
 
 
 def lasarval(kontor):
-    """Läsarnas val i Flödet ur kontorets eget läskommando: {'modell', 'utforare'}, modell None utan val."""
+    """Läsarnas val i Flödet ur kontorets eget läskommando: {'modell', 'utforare', 'anstrangning'}, modell None utan val
+    och anstrangning None när valet inte bär någon nivå."""
     env = {k: v for k, v in os.environ.items() if k in ('PATH', 'HOME', 'USER', 'LOGNAME', 'TMPDIR')}
     env.update(LC_ALL='C', LANG='C', PYTHONDONTWRITEBYTECODE='1')
     try:
@@ -86,26 +91,38 @@ def lasarval(kontor):
     if not isinstance(rad, dict) or rad.get('schema') != 'lasarval/1' or done.returncode != 0 or 'fel' in rad:
         raise Vagrad('läsarnas val kan inte läsas ur kontoret: %s' % ((rad.get('fel') if isinstance(rad, dict) else None)
                                                                      or done.stderr.strip()[-300:] or 'okänt svar'))
-    modell, utforare = rad.get('modell'), rad.get('utforare')
-    if modell is None and utforare is None:
-        return {'modell': None, 'utforare': None}
-    if not isinstance(modell, str) or not MODELLNAMN.match(modell) or utforare not in ('claude', 'codex'):
+    modell, utforare, niva = rad.get('modell'), rad.get('utforare'), rad.get('anstrangning')
+    if modell is None and utforare is None and niva is None:
+        return {'modell': None, 'utforare': None, 'anstrangning': None}
+    if (not isinstance(modell, str) or not MODELLNAMN.match(modell) or utforare not in ('claude', 'codex')
+            or not (niva is None or (isinstance(niva, str) and NIVANAMN.match(niva)))):
         raise Vagrad('läsarnas val har fel form: %r' % (rad,))
-    return {'modell': modell, 'utforare': utforare}
+    return {'modell': modell, 'utforare': utforare, 'anstrangning': niva}
 
 
 def valj_lasare(args):
-    """Läsarnas val går före; ett avvikande --utforare eller --modell vägras, och utan val krävs båda."""
+    """Läsarnas val går före; ett avvikande --utforare eller --modell vägras, och utan val krävs båda. Valets sparade nivå
+    följer med (anstrangning_sparad); om den skickas avgör den aktiva releasen (anstrangning_i_korningen)."""
     val = lasarval(kontor_root())
     if val['modell']:
         if (args.modell and args.modell != val['modell']) or (args.utforare and args.utforare != val['utforare']):
             raise Vagrad('läsarnas val i Flödet är %s (%s); ett annat val i argumenten vägras'
                          % (val['modell'], val['utforare']))
         args.modell, args.utforare = val['modell'], val['utforare']
-        return {'kalla': 'flodet', 'modell': val['modell'], 'utforare': val['utforare']}
+        return {'kalla': 'flodet', 'modell': val['modell'], 'utforare': val['utforare'], 'anstrangning_sparad': val['anstrangning']}
     if not (args.modell and args.utforare):
         raise Vagrad('läsarna har inget val i Flödet: ange --utforare och --modell')
-    return {'kalla': 'argument', 'modell': args.modell, 'utforare': args.utforare}
+    return {'kalla': 'argument', 'modell': args.modell, 'utforare': args.utforare, 'anstrangning_sparad': None}
+
+
+def anstrangning_i_korningen(lasare, release):
+    """Nivån som skickas: den sparade, när den aktiva releasen tar emot en; annars ingen, och profilen kör sin egen.
+    Bokförs i lasarval med varifrån den kom."""
+    sparad = lasare['anstrangning_sparad']
+    niva = sparad if release.get('tar_niva') else None
+    lasare.update(anstrangning=niva, anstrangning_fran='lasarna' if niva else
+                  ('profilen: den aktiva releasen tar ingen nivå' if sparad else 'profilen'))
+    return niva
 
 
 def aktiv_release(root):
@@ -116,8 +133,12 @@ def aktiv_release(root):
     code = config.parent / 'runtime'
     if not (code / 'runtime/web_measure.py').is_file():
         raise Vagrad('den aktiva releasen saknar webbprofilerna: ' + str(code))
+    try:        # tar releasens kritik och provare en nivå (Runtime D046)? Läst ur releasens egen kod, som kontoret läser den
+        tar_niva = re.search(r'^def reader_effort\(', (code / 'runtime/web_common.py').read_text('utf-8'), re.M) is not None
+    except (OSError, UnicodeDecodeError):
+        tar_niva = False
     return {'config': str(config), 'config_sha256': active['sha256'], 'kod': str(code),
-            'python': str(root / '.runtime/temporal-venv/bin/python')}
+            'python': str(root / '.runtime/temporal-venv/bin/python'), 'tar_niva': tar_niva}
 
 
 def miljo(root):
@@ -359,6 +380,8 @@ def bygg_kritik(args, release, root, receipt, laddning_sha):
         manifest_path.write_text(json.dumps({'filer': files}, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
     argv = [release['python'], '-B', '-m', 'runtime.web_critique', '--underlag', str(manifest_path), '--fraga', str(fraga_path),
             '--schema', str(schema_path), '--utforare', args.utforare, '--modell', args.modell, '--etikett', args.etikett]
+    if getattr(args, 'anstrangning', None):
+        argv += ['--anstrangning', args.anstrangning]
     if args.tid:
         argv += ['--tid', str(args.tid)]
     return argv, {'mall': args.mall, 'parametrar': parametrar, 'antal_filer': len(files), 'kontext_policy': policy,
@@ -512,6 +535,9 @@ def bygg_aterhamtning(args, release, root, receipt, laddning_sha):
     if argv.count('runtime.web_critique') != 1:
         raise Vagrad('ursprunglig körning är inte Runtimes kritikprofil')
     args.utforare = argument('--utforare'); args.modell = argument('--modell'); args.mall = original['mall']
+    args.anstrangning = argument('--anstrangning') if '--anstrangning' in argv else None     # den ursprungliga nivån
+    if args.anstrangning and not release.get('tar_niva'):
+        raise Vagrad('den ursprungliga körningens nivå kan inte ges till den aktiva releasen, som inte tar någon nivå')
     paths = {flag: argument(flag) for flag in ('--underlag', '--fraga', '--schema')}
     run = Path((original.get('resultat') or {}).get('run') or '')
     runtime_receipt = run / 'KVITTO.json'
@@ -525,6 +551,8 @@ def bygg_aterhamtning(args, release, root, receipt, laddning_sha):
     for flag, value in paths.items(): cmd += [flag, value]
     cmd += ['--utforare', args.utforare, '--modell', args.modell, '--etikett', args.etikett,
             '--aterhamta', str(run), '--formfalt', 'summary', '--formtid', str(args.formtid)]
+    if args.anstrangning:
+        cmd += ['--anstrangning', args.anstrangning]
     # Run the exact Runtime eligibility check without auth/model startup. This
     # also refuses an active release that lacks the implementation.
     probe = ('import sys; from runtime.web_critique import parse; '
@@ -547,6 +575,8 @@ def bygg_provare(args, release, root, receipt, laddning_sha):
     argv = [release['python'], '-B', '-m', 'runtime.web_visitor', '--start', args.start, '--tillatna', args.tillatna,
             '--uppgift', str(Path(args.uppgift).resolve()), '--vy', args.vy, '--utforare', args.utforare, '--modell', args.modell,
             '--etikett', args.etikett]
+    if getattr(args, 'anstrangning', None):
+        argv += ['--anstrangning', args.anstrangning]
     if args.max_handlingar:
         argv += ['--max-handlingar', str(args.max_handlingar)]
     if args.tid:
@@ -622,6 +652,7 @@ def run(argv=None):
     lasare = valj_lasare(args) if args.profil == 'provare' or (args.profil == 'kritik' and not args.aterhamta) else None
     root = runtime_root()
     release = aktiv_release(root)
+    args.anstrangning = anstrangning_i_korningen(lasare, release) if lasare else None
     if args.profil == 'matning':
         cmd, extra = bygg_matning(args, release, root, receipt)
     elif args.profil == 'kritik':

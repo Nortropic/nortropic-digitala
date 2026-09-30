@@ -194,8 +194,8 @@ class Lasarval(Rig):
         self.uppgift = self.tmp / 'UPPGIFT.md'
         self.uppgift.write_text('Startadress: https://x.test/\nDitt handlingskommando är exakt: ./handling\n\nMål: titta.\n')
 
-    def val(self, modell, utforare):
-        fake_kontor(self.tmp, {'schema': 'lasarval/1', 'modell': modell, 'utforare': utforare})
+    def val(self, modell, utforare, anstrangning=None):
+        fake_kontor(self.tmp, {'schema': 'lasarval/1', 'modell': modell, 'utforare': utforare, 'anstrangning': anstrangning})
 
     def kritik(self, *extra):
         return self.run_cli(self.root, 'kritik', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'l-1',
@@ -217,7 +217,9 @@ class Lasarval(Rig):
                 code, out = kor()
                 self.assertEqual(code, 0, out)
                 self.assertEqual(self.modell_i(out['argv']), ('codex', 'gpt-6-astra'))
-                self.assertEqual(out['lasarval'], {'kalla': 'flodet', 'modell': 'gpt-6-astra', 'utforare': 'codex'})
+                self.assertEqual(out['lasarval'], {'kalla': 'flodet', 'modell': 'gpt-6-astra', 'utforare': 'codex',
+                                                   'anstrangning_sparad': None, 'anstrangning': None, 'anstrangning_fran': 'profilen'})
+                self.assertNotIn('--anstrangning', out['argv'])
                 self.assertEqual(out['bindning']['utforare'], 'codex')
 
     def test_ett_annat_val_i_argumenten_vagras_och_samma_godtas(self):
@@ -239,18 +241,49 @@ class Lasarval(Rig):
         code, out = self.kritik('--utforare', 'claude', '--modell', 'claude-sonnet-5')
         self.assertEqual(code, 0, out)
         self.assertEqual(self.modell_i(out['argv']), ('claude', 'claude-sonnet-5'))
-        self.assertEqual(out['lasarval'], {'kalla': 'argument', 'modell': 'claude-sonnet-5', 'utforare': 'claude'})
+        self.assertEqual(out['lasarval'], {'kalla': 'argument', 'modell': 'claude-sonnet-5', 'utforare': 'claude',
+                                           'anstrangning_sparad': None, 'anstrangning': None, 'anstrangning_fran': 'profilen'})
 
     def test_ett_val_som_inte_gar_att_lasa_vagras(self):
         for svar, kod in (({'schema': 'lasarval/1', 'fel': 'installningar.json går inte att läsa'}, 1),
                           ({'schema': 'annat/1', 'modell': None, 'utforare': None}, 0),
                           ({'schema': 'lasarval/1', 'modell': '--flagga', 'utforare': 'claude'}, 0),
-                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': None}, 0)):
+                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': None}, 0),
+                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': 'codex', 'anstrangning': '--max'}, 0),
+                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': 'codex', 'anstrangning': 'MAX'}, 0),
+                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': 'codex', 'anstrangning': 5}, 0),
+                          ({'schema': 'lasarval/1', 'modell': None, 'utforare': None, 'anstrangning': 'max'}, 0)):
             with self.subTest(svar=svar):
                 fake_kontor(self.tmp, svar, kod)
                 code, out = self.kritik('--utforare', 'claude', '--modell', 'claude-opus-5')
                 self.assertEqual(code, 2, out)
                 self.assertIn('läsarnas val', out['skal'])
+
+    def test_valets_niva_skickas_nar_den_aktiva_releasen_tar_en(self):
+        # releasens kritik och provare tar en nivå (Runtime D046)
+        (self.root / '.runtime/ap10/releases/x/runtime/runtime/web_common.py').write_text('def reader_effort(effort):\n    return effort\n')
+        self.val('claude-opus-5-5', 'claude', 'max')
+        for kor in (self.kritik, self.provare):
+            with self.subTest(profil=kor.__name__):
+                code, out = kor()
+                self.assertEqual(code, 0, out)
+                self.assertEqual(out['argv'][out['argv'].index('--anstrangning') + 1], 'max')
+                self.assertEqual(out['argv'].count('--anstrangning'), 1)
+                self.assertEqual(out['aktiv_release']['tar_niva'], True)
+                self.assertEqual(out['lasarval'], {'kalla': 'flodet', 'modell': 'claude-opus-5-5', 'utforare': 'claude',
+                                                   'anstrangning_sparad': 'max', 'anstrangning': 'max', 'anstrangning_fran': 'lasarna'})
+
+    def test_en_release_utan_niva_far_ingen_och_profilen_kor_sin_egen(self):
+        self.val('claude-opus-5-5', 'claude', 'max')
+        for kor in (self.kritik, self.provare):
+            with self.subTest(profil=kor.__name__):
+                code, out = kor()
+                self.assertEqual(code, 0, out)
+                self.assertNotIn('--anstrangning', out['argv'])
+                self.assertEqual(out['aktiv_release']['tar_niva'], False)
+                self.assertEqual(out['lasarval']['anstrangning'], None)
+                self.assertEqual(out['lasarval']['anstrangning_sparad'], 'max')
+                self.assertEqual(out['lasarval']['anstrangning_fran'], 'profilen: den aktiva releasen tar ingen nivå')
 
     def test_utan_kontor_vagras_kritik_och_provare_men_inte_matning(self):
         self.kontor = self.tmp / 'inget-kontor'

@@ -99,6 +99,26 @@ class Formaterhamtning(unittest.TestCase):
         self.assertEqual(len(probe), 1)
         self.assertIn('verified_source', probe[0].args[0][3])
 
+    def test_the_original_level_is_kept_and_refused_when_the_release_takes_none(self):
+        loaded, path = self.fixture()
+        post = json.loads(path.read_text())
+        post['argv'] = post['argv'] + ['--anstrangning', 'max']
+        path.write_text(json.dumps(post))
+        receipt = json.loads(loaded.read_text())
+        actual_run = subprocess.run
+        def run(cmd, **kwargs):
+            if cmd[0] == 'git': return actual_run(cmd, **kwargs)
+            return SimpleNamespace(returncode=0, stdout='form-preflight-ok\n', stderr='')
+        args = SimpleNamespace(aterhamta=str(path), laddning=str(loaded), etikett='new', formtid=180)
+        with patch.object(kp.subprocess, 'run', side_effect=run):
+            cmd, _ = kp.bygg_aterhamtning(args, {'python': 'python', 'kod': str(self.root), 'tar_niva': True}, self.root,
+                                          receipt, self.post['laddning']['sha256'])
+        self.assertEqual(cmd[cmd.index('--anstrangning') + 1], 'max')
+        args = SimpleNamespace(aterhamta=str(path), laddning=str(loaded), etikett='new', formtid=180)
+        with patch.object(kp.subprocess, 'run', side_effect=run), self.assertRaisesRegex(kp.Vagrad, 'nivå'):
+            kp.bygg_aterhamtning(args, {'python': 'python', 'kod': str(self.root), 'tar_niva': False}, self.root,
+                                 receipt, self.post['laddning']['sha256'])
+
     def test_changed_loading_and_original_metadata_refuse_before_runtime_model(self):
         loaded, path = self.fixture()
         args = SimpleNamespace(aterhamta=str(path), laddning=str(loaded), etikett='new', formtid=180)
