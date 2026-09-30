@@ -23,6 +23,8 @@ Regler:
   `matning/PROFIL.json` och binder körningen till laddningskvittot. Runtime prövar form och kör; innehållet är vårt.
   Kritikens och provarens modell är läsarnas val i arbetsplatsens Flöde, som kontoret ger med `tools/partner.py
   lasare`: finns ett val vägras ett annat `--utforare` eller `--modell`, och finns inget anger sessionen båda.
+  Bär valet en nivå skickas den som `--anstrangning` när den aktiva Runtime-releasen tar emot en (D046); annars kör
+  profilen sin egen nivå. Körposten bokför nivån och varifrån den kom.
 - Kundmappen ges med `--kund` och ligger utanför repot: kontorets privata `evidence/digitala/local/<kund>/` (se
   `kunder/README.md`); beställningen namnger kunden. Kundfiler och professionsfiler hålls i skilda klasser; en
   kundpreferens blir aldrig praxis, och ingen mängd tillämpningar gör något till praxis: ett gemensamt arbetssätt kräver
