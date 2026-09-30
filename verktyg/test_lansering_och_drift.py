@@ -410,5 +410,62 @@ class Lankkontroll(unittest.TestCase):
             self.assertEqual(len(result['omdirigeringar']), 4); self.assertFalse(result['klar_for_sokkonsol'])
 
 
+class EpostDNS(unittest.TestCase):
+    def resolver(self, spf=True, dkim=True, dmarc=True, error=False):
+        values = {'firma.test': ['"v=spf1 include:mail.test -all"'] if spf else [],
+                  's1._domainkey.firma.test': ['"v=DKIM1; p=" "SyntetiskNyckel"'] if dkim else [],
+                  '_dmarc.firma.test': ['"v=DMARC1; p=none"'] if dmarc else []}
+        def read(name, typ):
+            if error: raise TimeoutError()
+            return la.dns_las(name, typ, hamta_json=lambda n,t: {'Status':0,'Question':[{'name':n+'.','type':16}],
+                'Answer':[{'name':n+'.','type':16,'TTL':300,'data':x} for x in values[n]]})
+        return read
+
+    def test_epostens_fyra_bestallningsfall(self):
+        for options,findings,notes,unknown in [({},[],[],[]),
+                ({'spf':False,'dkim':False},['varken SPF eller DKIM hittades'],[],[]),
+                ({'dkim':False,'dmarc':False},[],['DMARC saknas'],[]),
+                ({'error':True},[],[],['SPF: kunde inte kontrolleras','DKIM: kunde inte kontrolleras','DMARC: kunde inte kontrolleras'])]:
+            with self.subTest(options=options):
+                r=la.epostkontroll({'fiktiv':False},'firma.test','s1',self.resolver(**options))
+                self.assertEqual((r['fynd'],r['anmarkningar'],r['okanda']),(findings,notes,unknown))
+                self.assertEqual(r['klar'],not findings and not unknown)
+
+    def test_dns_svar_valideras_och_ttl_bevaras(self):
+        r=self.resolver()('firma.test','TXT'); self.assertEqual(r['poster'][0]['ttl'],300)
+        for raw in ({'Status':2}, {'Status':0,'TC':True}, {'Status':0},
+                    {'Status':0,'Question':[{'name':'annan.test','type':16}]},
+                    {'Status':0,'Question':[{'name':'firma.test','type':16}],'Answer':[{'type':16,'TTL':-1,'data':'x','name':'firma.test'}]},
+                    {'Status':0,'Question':[{'name':'firma.test','type':16}],'Answer':[{'type':16,'TTL':300,'data':'x','name':'annan.test'}]}):
+            r=la.dns_las('firma.test','TXT',lambda n,t:raw)
+            self.assertEqual((r['lage'],r['skal']),('okant','kunde inte kontrolleras'))
+        r=la.dns_las('firma.test','TXT',lambda n,t:{'Status':3,'Question':[{'name':n,'type':16}]})
+        self.assertEqual((r['lage'],r['poster']),('ok',[]))
+        r=la.dns_las('firma.test','TXT',lambda n,t:{'Status':0,'Question':[{'name':n,'type':16}],
+            'Answer':[{'name':n,'type':5,'TTL':300,'data':'mail.test.'},{'name':'mail.test.','type':16,'TTL':300,'data':'"v=spf1 -all"'}]})
+        self.assertEqual((r['lage'],r['poster'][0]['namn']),('ok','mail.test'))
+        with self.assertRaises(ValueError): la.dns_las('https://firma.test/path','TXT')
+
+    def test_fiktiv_verksamhet_och_cli_gor_inga_dnsanrop(self):
+        from unittest.mock import Mock, patch
+        resolver=Mock(side_effect=AssertionError('network forbidden'))
+        r=la.epostkontroll({'fiktiv':True},'verklig.se','selector',resolver)
+        resolver.assert_not_called();self.assertFalse(r['klar']);self.assertEqual(r['lage'],'okant')
+        with tempfile.TemporaryDirectory() as td, patch.object(la.vu,'las',return_value={'fiktiv':True}), patch.object(dk,'hamta',side_effect=AssertionError('network forbidden')):
+            output=Path(td)/'EPOST.json'
+            code=la.main(['epostkontroll','--verksamhet','syntetisk.json','--avsandardoman','verklig.se','--dkim-selektor','s1','--mandat','syntetiskt','--ut',str(output)])
+            self.assertEqual(code,2);self.assertFalse(json.loads(output.read_text())['klar'])
+            self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+            original=output.read_bytes()
+            with self.assertRaises(FileExistsError): la.privat_json(output, {'overskrivning':True})
+            self.assertEqual(output.read_bytes(),original)
+
+    def test_planen_lagger_epost_och_arkiv_fore_migrering(self):
+        text=la.plan_md({'namn':'Syntetisk','fiktiv':True},'prov')
+        self.assertLess(text.index('epostkontroll'),text.index('Domänen kopplad'))
+        self.assertLess(text.index('arkivera.mjs'),text.index('Omdirigeringar från gammal sajt'))
+        self.assertIn('migrering_adresser',text)
+
+
 if __name__ == '__main__':
     unittest.main()

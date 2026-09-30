@@ -21,7 +21,7 @@ Payment Link låser ingen kalenderplats.
 | Personal/resurser, kund har SimplyBook.me | Befintlig widget och tjänstens hantering | Räkna både bokningar, personal och valda extrafunktioner. En gratis funktionsplats räcker inte automatiskt till alla kombinationer. |
 | Fristående engångsbetalning | Stripe Payment Link | Leverantören håller kassan. Checkout API först när egen referens/dynamik faktiskt behövs. Ingen egen hantering av kortuppgifter. |
 | Kontaktformulär | Befintlig formtjänst eller Tally | Form → ansvarig mottagning → uppföljning. Egen UI kan använda den lilla mottagningsadaptern bakom kundens befintliga host. |
-| Transaktionsnotis | Befintlig e-posttjänst, Resend som prövbar kandidat | API-acceptans, leveranshändelse och läsning av en människa hålls isär. Testmottagare betyder syntetisk leverans. |
+| Transaktionsnotis | Befintlig e-posttjänst, Resend som prövbar kandidat | Kontrollera avsändningsdomänens SPF, leverantörens DKIM-selektor och DMARC före lansering enligt `lansering.md` (OVL-20260930-dbbdd8-digitala M1). API-acceptans, leveranshändelse och läsning av en människa hålls isär. Testmottagare betyder syntetisk leverans. |
 
 Cal, kontrollerat 2026-09-30 enligt OVL-20260930-c58c91: [prislistan](https://cal.com/pricing)
 och [FAQ](https://cal.com/faq) stödjer

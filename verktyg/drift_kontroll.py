@@ -99,7 +99,7 @@ def _socket(response):
 
 def _hamta(url, timeout=20, *, max_hopp=0, omforsok=0, paus=time.sleep,
            klocka=time.monotonic, budget=None, eget_ursprung=None,
-           forvantad_slutadress=None, handlingslank=False, state):
+           forvantad_slutadress=None, handlingslank=False, accept=None, state):
     """En deadline delas av kropp, hopp, pauser och omförsök. Bara GET."""
     start = klocka(); deadline = start + timeout
     total_anrop = 0; first_error = None
@@ -118,7 +118,7 @@ def _hamta(url, timeout=20, *, max_hopp=0, omforsok=0, paus=time.sleep,
                     raise TimeoutError()
                 _ta_anrop(budget); total_anrop += 1
                 state['progress']['anrop'] = total_anrop
-                req = urllib.request.Request(current, method='GET', headers={'User-Agent': 'nortropic-digitala drift'})
+                req = urllib.request.Request(current, method='GET', headers={'User-Agent': 'nortropic-digitala drift', **({'Accept': accept} if accept else {})})
                 try:
                     response = _opener(state).open(req, timeout=remaining)
                 except urllib.error.HTTPError as error:

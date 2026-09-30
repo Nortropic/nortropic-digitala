@@ -151,6 +151,69 @@ try {
         finally:
             SIDOR.pop('/hitta-hit.html', None); SIDOR.pop('/hitta-hit.js', None)
 
+    def test_arkiv_sitemap_intervju_och_misslyckad_sida_med_filhashar(self):
+        import hashlib
+        SIDOR['/sitemap.xml']='<urlset><url><loc>'+self.bas+'/om/</loc></url><url><loc>'+self.bas+'/trasig/</loc></url></urlset>'
+        interview=self.d/'INTERVJU.json';interview.write_text(json.dumps({'svar':[{'nyckel':'migrering_adresser','text':'/kontakt/','status':'kunden uppger'}],'fakta':[]}))
+        output=self.d/'arkiv'
+        try:
+            code,out,err=kor('arkivera.mjs','--adress',self.bas,'--kund',str(self.d),'--ut',str(output),'--intervju',str(interview),'--tillat-http')
+            self.assertEqual(code,1,err)
+            manifest=json.loads((output/'MANIFEST.json').read_text());self.assertTrue(manifest['privat']);self.assertFalse(manifest['klar'])
+            self.assertEqual(len(manifest['sidor']),3)
+            good=[x for x in manifest['sidor'] if x['lage']=='ok'];bad=[x for x in manifest['sidor'] if x['lage']=='misslyckad']
+            self.assertEqual((len(good),len(bad)),(2,1),manifest)
+            self.assertEqual(bad[0]['status'],404);self.assertTrue(bad[0]['skal'])
+            self.assertEqual(manifest['insamlingsfel'],[]);self.assertEqual(manifest['kartor'][0]['lage'],'ok')
+            for row in manifest['sidor']:
+                if row['lage']=='ok':self.assertEqual({Path(f['fil']).suffix for f in row['filer']},{'.html','.har','.png'})
+                for f in row['filer']:
+                    path=output/f['fil'];raw=path.read_bytes()
+                    self.assertEqual(hashlib.sha256(raw).hexdigest(),f['sha256']);self.assertEqual(len(raw),f['byte'])
+                    self.assertEqual(path.stat().st_mode & 0o777,0o600)
+                    if path.suffix=='.har':self.assertTrue(json.loads(raw)['log']['entries'])
+            self.assertEqual(Handler.poster,[])
+            before=(output/'MANIFEST.json').read_bytes()
+            code,_,_=kor('arkivera.mjs','--adress',self.bas,'--kund',str(self.d),'--ut',str(output),'--intervju',str(interview),'--tillat-http')
+            self.assertEqual(code,2);self.assertEqual((output/'MANIFEST.json').read_bytes(),before)
+        finally:SIDOR.pop('/sitemap.xml',None)
+
+    def test_arkiv_vagrar_repot_och_bokfor_insamlingsfel(self):
+        interview=self.d/'INTERVJU.json';interview.write_text(json.dumps({'migrering_adresser':['/om/','http://annan.test/x']}))
+        code,_,err=kor('arkivera.mjs','--adress',self.bas,'--kund',str(ROT),'--ut',str(ROT/'arkiv-provet-ska-inte-skriva'),'--intervju',str(interview),'--tillat-http')
+        self.assertEqual(code,2);self.assertIn('inte ligga i Digitalas repo',err)
+        self.assertFalse((ROT/'arkiv-provet-ska-inte-skriva').exists())
+        code,_,err=kor('arkivera.mjs','--adress',self.bas,'--kund',str(self.d),'--ut',str(self.d/'okand'),'--intervju',str(interview),'--tillat-http')
+        self.assertEqual(code,1,err)
+        report=json.loads((self.d/'okand/MANIFEST.json').read_text())
+        self.assertFalse(report['klar']);self.assertTrue(report['insamlingsfel'])
+        self.assertEqual(report['kartor'][0]['lage'],'misslyckad')
+
+    def test_arkiv_vagrar_utdata_i_repo_aven_med_kundmapp_ovanfor(self):
+        interview=self.d/'INTERVJU.json';interview.write_text('{}')
+        output=ROT/'arkiv-provet-ska-inte-skriva'
+        self.assertFalse(output.exists())
+        code,_,err=kor('arkivera.mjs','--adress',self.bas,'--kund',str(ROT.parent),'--ut',str(output),'--intervju',str(interview),'--tillat-http')
+        self.assertEqual(code,2);self.assertIn('arkivet får inte ligga',err)
+        self.assertFalse(output.exists())
+
+    def test_arkiv_bevarar_url_parentes_och_apostrof_utan_tyst_bortfall(self):
+        paths=['/artikel(2024)',"/kund's-sida"]
+        SIDOR['/sitemap.xml']='<urlset/>'
+        for path in paths:SIDOR[path]='<!doctype html><title>Hela adressen</title><h1>Prov</h1>'
+        interview=self.d/'INTERVJU.json'
+        interview.write_text(json.dumps({'migrering_adresser':[self.bas+paths[0],paths[1],'Besök '+self.bas+'/om/']}))
+        try:
+            output=self.d/'intervjuarkiv'
+            code,_,err=kor('arkivera.mjs','--adress',self.bas,'--kund',str(self.d),'--ut',str(output),'--intervju',str(interview),'--tillat-http')
+            self.assertEqual(code,1,err)
+            report=json.loads((output/'MANIFEST.json').read_text())
+            self.assertEqual({r['adress'] for r in report['sidor']},{self.bas+p for p in paths})
+            self.assertTrue(all(r['lage']=='ok' for r in report['sidor']),report)
+            self.assertEqual(len(report['insamlingsfel']),1);self.assertFalse(report['klar'])
+        finally:
+            for path in [*paths,'/sitemap.xml']:SIDOR.pop(path,None)
+
     def test_inspektera_med_kontext_grans_tillstand_och_redigerat_undantag(self):
         brief = self.d / 'PROJECT-BRIEF.md'; brief.write_text('# Brief\n§7 riktning: lugn.\n')
         hem = Path.home() / '.nortropic-hemligheter' / 'test-webblasare'; hem.mkdir(parents=True, exist_ok=True)

@@ -199,3 +199,11 @@ scheman, bildkrav eller domlogik. Användningsnoter och avgränsat prov ska visa
 | A3 | [OFL 1.1](https://openfontlicense.org/open-font-license-official-text/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): licensfiler, reserverade namn, attribution och kundregister. | 2026-09-30 |
 | A4 | [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP): alla rutter, skriptdirektiv och avgränsad styrkekontroll. | 2026-09-30 |
 | A5 | [web.dev TBT](https://web.dev/articles/tbt): 200 ms som labbsignal; ingen ersättning för INP. | 2026-09-30 |
+
+## Primärkällor omlästa 2026-09-30 — dbbdd8-digitala M1–M2
+
+| Krav | Källa och användning | Läst |
+|---|---|---|
+| M1 | [Gmail Email sender guidelines](https://support.google.com/a/answer/81126?hl=en): SPF/DKIM för alla och DMARC för större avsändare; `lansering.md` och `integrationer-standardvagar.md`. DNS-förekomst är inte leveransbevis. | 2026-09-30 |
+| M1 | [Cloudflare DNS JSON](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/): fast resolver, frågebindning, DNS-felkoder och TTL i standardbibliotekets läsning. | 2026-09-30 |
+| M2 | [Playwright Browser.newContext](https://playwright.dev/docs/api/class-browser#browser-new-context), [BrowserContext.close](https://playwright.dev/docs/api/class-browsercontext#browser-context-close), [routeWebSocket](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket): befintlig Playwright, HAR-flush och läsande arkiv enligt `webblasare.md` och `lansering.md`. | 2026-09-30 |
