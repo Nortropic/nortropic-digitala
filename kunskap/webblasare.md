@@ -85,3 +85,36 @@ form blir FAIL. UTAN-JS.json redovisar avstängt JavaScript, sidor, formulär, f
 samt om inskick gjordes. Ett lyckat HTTP-svar bevisar inte leverans till en människa:
 ordinarie mottagarprov kvarstår. Använd alltid `--formular` för en viktig form som
 kan saknas helt när JavaScript är avstängt. Inget nytt beroende eller modell används.
+
+## Privat arkiv inför migrering
+
+`node verktyg/webblasare/arkivera.mjs --adress https://gammal-domän --kund KUNDMAPP
+--intervju INTERVJU.json --ut NY-ARKIVKATALOG` läser gamla sajtens `/sitemap.xml`
+(annan sökväg kan anges med `--sitemap`) och intervjuns `migrering_adresser` (MIG1).
+Icke ersatta uppgifter tas med; vid motstridiga uppgifter arkiveras deras förening.
+Okänt eller oläsbar adress blir insamlingsfel. En fristående lista med samma nyckel
+stöds också. Varje URL på samma ursprung får egen färsk kontext med inbäddad HAR,
+HTML och helsidesskärmbild. Kontexten stängs före browsern så att HAR skrivs färdigt.
+Manifestet binder filerna med SHA-256 och storlek och redovisar även misslyckade sidor.
+
+Ingen inloggning, ingen lagrad browserprofil och inget skyddsundantag används.
+GET/HEAD till samma ursprung är tillåtna; övriga metoder, externa resurser,
+service workers och WebSockets är blockerade. Blockerade nätförsök i sidkontexten
+redovisas och ger ofullständigt arkiv. Det kan därför saknas externa bilder,
+typsnitt eller innehåll som kräver POST. JavaScript får rendera sidan men inga
+knappar eller formulär aktiveras av verktyget. Arkiv betyder inte att kundens
+alla dynamiska lägen är bevarade. Varje navigation och bild har 30 sekunders
+tidsgräns; högst 500 adresser och 20 sitemapfiler med ett indexled behandlas.
+
+Utdata måste vara en ny katalog inom kundmappen och utanför Digitalas repo.
+Katalogen får 0700 och filerna 0600. Befintliga arkiv vägras. HTML, HAR och bilder
+kan innehålla kundmaterial och stannar privat. HTTP är bara möjligt för lokal
+fixtur via `--tillat-http`. Exit 0 betyder komplett inom den redovisade insamlingen,
+1 redovisade brister och 2 vägran eller avbruten körning. Inget DNS skrivs och
+inget mandat att migrera följer av ett grönt arkiv.
+
+Källor lästa 2026-09-30: [Playwright recordHar](https://playwright.dev/docs/api/class-browser#browser-new-context),
+[BrowserContext.close](https://playwright.dev/docs/api/class-browsercontext#browser-context-close),
+[routeWebSocket](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket).
+Omfattning och lokal tredelad fixtur: OVL-20260930-dbbdd8-digitala M2. Befintlig
+Playwright-version och låsfil används oförändrade.

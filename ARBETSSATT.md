@@ -304,3 +304,14 @@ Ny pinne gäller detta beslut i ARBETSSATT.md samt drift.md, lansering.md **och*
 LARDOMAR.md: den sistnämnda är redan pinnad i steg/PINNAR.sha256 och kan därför
 inte ändras med bibehållen gammal hash. Detta är en teknisk anpassning av L5:s
 tvåradsformulering för att också uppfylla beställningens klart-när, inte nya ägarord.
+
+## Beslut 2026-09-30 — e-postkontroll och migreringsarkiv (OVL-20260930-dbbdd8-digitala)
+
+Genomförandemandatet omfattar M1–M2, inklusive de tidigare uppskjutna punkterna inför första
+riktiga kund. Lanseringsplanen får läsande e-postkontroll och privat arkiv före migrering.
+DNS läses med standardbiblioteket och befintlig tidsbegränsad transport; Playwright används
+utan nya beroenden. Prov använder injicerad DNS och lokala syntetiska sidor. Kundens verkliga
+DNS, leverantörskonto och sajt lämnas till respektive kundbeställning. Ny läsning av Gmail,
+Cloudflare DNS JSON och Playwrights HAR-dokumentation 2026-09-30 ligger till grund för
+REGISTER.md, professionsfilerna och deras nya pinnar. DNS-förekomst och ett avgränsat arkiv
+är inga bevis för faktisk e-postleverans eller fullständig bevaring av hela webbplatsen.

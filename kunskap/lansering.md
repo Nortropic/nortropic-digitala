@@ -9,9 +9,48 @@ förhandsvisning och slutrapport levereras alltid först.
 ## Före lanseringsdagen
 
 Lanseringskonfiguration skild från förhandsvisningen (noindex och robots-blockering bara i förhandsvisningen);
-kanonisk domänvariant vald, den andra omdirigerar; omdirigeringar från gammal sajt prövade; sökkonsolens META-token
+kanonisk domänvariant vald, den andra omdirigerar; e-postdomänen kontrollerad och den gamla sajten arkiverad enligt
+stegen nedan **före DNS-omläggning och före omdirigeringar från gammal sajt prövas**; sökkonsolens META-token
 renderad; prelaunch-rapport redo; domän och certifikat hos värden; återgångsvägen känd (föregående driftsättning
 pekas tillbaka med värdplattformens CLI).
+
+### E-postdomän — läsande kontroll före lanseringen
+
+Kör `python3 -B verktyg/lansering.py epostkontroll --verksamhet VERKSAMHET.json
+--avsandardoman kundens-avsandningsdoman --dkim-selektor leverantorens-selektor
+--mandat POST-ID --ut EPOST-DNS.json` och spara det nya kvittot i kundmappen (0600; befintlig fil vägras). Domänen avser formulärnotiser eller kvitton,
+inte automatiskt webbdomänen. Verktyget läser TXT via den fasta resolvern
+`https://cloudflare-dns.com/dns-query`: SPF på domänen, DKIM under leverantörens selektor
+och `_dmarc`. Det skriver inget hos DNS- eller e-postleverantören. Fiktiv eller okänd verksamhet
+ger okänt före nätåtkomst. Uppslagsfel ger alltid »kunde inte kontrolleras« och aldrig klart.
+
+Saknas både SPF och DKIM blir det fynd; saknad DMARC blir anmärkning. Flera SPF-poster är
+ett fynd. Kontrollen avser förekomst av publicerade poster, inte fullständig syntaxvalidering,
+faktisk signering, alignment eller leverans till inkorgen. Kontrollera också leverantörens
+egna verifieringsbesked. Gmail kräver minst SPF eller DKIM av alla avsändare och SPF, DKIM
+och DMARC vid fler än 5 000 meddelanden per dygn till personliga Gmail-konton; Google
+rekommenderar alla tre även för övriga. Volymkravet bedöms för kundens faktiska utskick.
+
+### Arkiv av den gamla sajten
+
+Före omdirigeringar och DNS-omläggning: kör `node verktyg/webblasare/arkivera.mjs
+--adress https://gamla-domänen --kund KUNDMAPP --intervju INTERVJU.json --ut NY-ARKIVKATALOG`.
+Utdata måste vara en ny katalog i kundmappen utanför Digitalas repo. Verktyget förenar sitemapens
+adresser med intervjuns `migrering_adresser` (MIG1) och sparar HTML, inbäddad HAR och
+helsidesskärmbild per hämtad sida. `MANIFEST.json` anger varje adress, ursprung, status, fel,
+filstorlek och SHA-256; misslyckade adresser försvinner aldrig tyst. Läs alla fel och spara
+eventuellt kompletterande material innan den gamla sajten försvinner.
+
+Arkivet är privat kundmaterial, inklusive HAR och bilder. Bara samma ursprung, GET/HEAD och
+färska webbläsarkontexter tillåts; externa resurser och WebSockets blockeras och redovisas.
+Gränserna är 500 sidor och 20 sitemapfiler med ett indexled; överskridna gränser redovisas som
+ofullständighet. Arkivet ger inget lanseringsmandat och ingen garanti att allt innehåll har
+hittats. Inget WARC-verktyg eller nytt beroende ingår. Se `webblasare.md` för begränsningar.
+
+Källor, lästa 2026-09-30: [Gmail Email sender guidelines](https://support.google.com/a/answer/81126?hl=en),
+[Cloudflare DNS JSON](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/),
+[Playwright Browser.newContext, recordHar](https://playwright.dev/docs/api/class-browser#browser-new-context).
+Omfattning och prov: OVL-20260930-dbbdd8-digitala M1–M2.
 
 ## Lanseringsdagen
 

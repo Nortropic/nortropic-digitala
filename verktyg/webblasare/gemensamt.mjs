@@ -97,7 +97,13 @@ export async function oppna({ vy = '1440', tillat = [], undantag = null, hemliga
   });
   if (spar) await ctx.tracing.start({ screenshots: true, snapshots: true, sources: false });
   const page = await ctx.newPage();
-  return { browser, ctx, page, logg, vy: v, red, stang: async (sparFil) => { if (spar && sparFil) { await ctx.tracing.stop({ path: sparFil }); } else if (spar) { await ctx.tracing.stop(); } await browser.close(); } };
+  return { browser, ctx, page, logg, vy: v, red, stang: async (sparFil) => {
+    try {
+      if (spar && sparFil) await ctx.tracing.stop({ path: sparFil });
+      else if (spar) await ctx.tracing.stop();
+      await ctx.close(); // Flush context-owned HAR recordings before closing the browser.
+    } finally { await browser.close(); }
+  } };
 }
 
 export async function horisontellSpill(page) {
