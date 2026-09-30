@@ -26,12 +26,15 @@ taket för extra GET; kvittot redovisar `provade`, `over_taket`, `annat_ursprung
 `indexfiler_provade` och `indexfiler_oprovade`. Antalet sidor i en oläst indexfil
 är okänt. Oprövat på grund av taket blir okänt, aldrig ett helt godkänt resultat.
 Utöver taket görs startsidans och rotkartans GET samt deklarerade handlingslänkar;
-TLS-kontrollen är separat. Transporten följer inga omdirigeringar; en 3xx-adress
-rapporteras som incident och ska deklareras med rätt slutadress. Därmed ger varje
-planerad GET högst ett HTTP-anrop, utan att en redirect passerar ursprungsgränsen.
+TLS-kontrollen är separat. Sedan OVL-20260930-b17920-digitala följs högst fem hopp.
+Rotkartans första GET plus `sitemap_tak` är hela sitemapens HTTP-budget: även hopp
+och omförsök räknas. `anrop` visar förbrukningen, `ofullstandiga` avbrutna läsningar.
+Ett hopp till annat ursprung vägras före kontakt; resurstaket ger okänt för det
+som inte kunde slutföras. Andra adresser kan ha upp till tre försök med fem hopp
+per försök, men delar en total tidsgräns enligt nedan.
 
 Per sajt kan `handlingar` anges, exempelvis
-`[{"namn":"bokning","adress":"https://bokning.example/","forvantat":"Boka"}]`.
+`[{"namn":"bokning","adress":"https://bokning.example/tid","forvantad_slutadress":"https://bokning.example/tid","forvantat":"Boka"}]`.
 Namn och adress krävs, förväntad text är valfri. Hämta länkarna från briefens §4.
 Varje länk kontrolleras med GET; inga formulär, bokningar eller betalningar skapas.
 Fel svar eller saknad förväntad text namnger handlingen i fynden.
@@ -42,6 +45,32 @@ HTTP 200 med okänd funktion är inte ett bevis på affärsflödet. Exit 0 betyd
 inga incidenter, även när okända rader finns; exit 1 betyder incident. Läs alltid
 fältet `okanda`. Veckobeskedet visar dessa under **Okända driftlägen**.
 Schema 1, `sajter[].incident`, `sajter[].fynd` och antalet `incidenter` finns kvar.
+
+### Slutadress, felsida och tidsgräns (OVL-20260930-b17920-digitala)
+
+Sajt och handling kan ha `forvantad_slutadress`. För sitemapen anges motsvarande
+adresspar i sajtens `slutadresser`, exempel
+`{"https://egen.example/sitemap.xml":"https://egen.example/sitemap.xml","https://egen.example/gammal":"https://egen.example/ny"}`.
+Kvittot bokför faktiskt läst `slutadress`, förväntad adress och ren `titel` (högst
+80 tecken) för sajt, kartor och sidor samt handlingar. Värd/sökväg/frågesträng
+jämförs; avslutande snedstreck och tom frågesträng normaliseras. Annan slutadress
+är incident. En handling utan lanseringsdagens baslinje är okänd, aldrig ok;
+en konstaterad incident förblir incident även när baslinjen saknas. Verktyget
+skriver ingen baslinje och ändrar inte DRIFT.json.
+
+HTTP 200 med felsidetitel på svenska/engelska ger incident, liksom en handling
+som omdirigerar till startsidan. Hela titeln prövas även när kvittot kortar den.
+Omförsök sker bara vid 429, 500/502/503/504 eller timeout, högst två omförsök i
+samma körning. `Retry-After` följs upp till 30 sekunder, annars är pausen en
+sekund. `forsta_felet` och `forsok` bevarar ett återhämtat fel. 404/410, DNS/TLS,
+fel slutadress och felsida försöks inte igen; ingen regel över flera körningar.
+
+Varje HTTP-läsning har totalt 20 sekunder, gemensamt för hopp, omförsök och pauser;
+en paus kapas till återstående tid. Kroppen läses i bitar med återstående timeout.
+En yttre väggklocka stoppar även långsam DNS, TLS eller svarshuvuden och avbryter
+öppna sockets. Ett OS-anrop för DNS kan avslutas senare i en daemontråd; avbruten
+anslutning får inte skicka ett sent HTTP-anrop. Egna timeouter är incidenter.
+D1–D4:s tredjeparts-timeout/skydd/429 förblir okänt med skäl; okänt är aldrig ok.
 Schemaläggning, klassningen av kundrättelser och återgångsmandatet ändras inte.
 
 ## Underhållsformen (ägarens beslut DIGITALA-UNDERHALL-20260929)
@@ -131,3 +160,9 @@ fält i VERKSAMHET.json får ändras. Orelaterad ändring rapporteras med fil oc
 Nya/raderade filer, filtypsbyten och okända format går till manuell prövning.
 Detta kvitto kompletterar kedjans befintliga prov, separata granskning och skyddade
 publicering. Inget modellbesked ersätter diffkontrollen och kontrollen inför inget själv.
+
+Slutadressen är `null` när inget slutsvar har observerats, till exempel timeout före
+svarshuvuden eller efter ett omdirigeringshopp. En sådan timeout jämförs inte med
+lanseringsbaslinjen som om ett annat mål hade observerats. Certifikatets separata
+DNS/TCP/TLS-läsning har också en total väggtidsgräns (10 sekunder). Första felet
+bokförs före en eventuell Retry-After-paus, även om pausen når totalgränsen.

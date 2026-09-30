@@ -15,10 +15,11 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import verksamhetsuppgifter as vu  # noqa: E402
+import drift_kontroll as dk  # noqa: E402
 
 
 def plan_md(v, mandat):
@@ -57,7 +58,35 @@ def hamta(url, metod='GET', timeout=20):
         return {'status': None, 'url': url, 'headers': {}, 'body': '', 'fel': e.__class__.__name__, 'ms': int((time.time() - t0) * 1000)}
 
 
-def kontrollera(adress, token=None, tillat_http=False, hamta=hamta):
+def prova_omdirigeringar(adress, data, tillat_http=False, las=dk.hamta):
+    if not isinstance(data, dict) or not isinstance(data.get('gamla'), list):
+        raise ValueError('REDIRECTS.json kräver listan gamla')
+    rows = []
+    for row in data['gamla']:
+        if not isinstance(row, dict) or not all(isinstance(row.get(k), str) and row[k].strip() for k in ('fran', 'till')):
+            raise ValueError('omdirigering kräver fran och till')
+        source, target = (urljoin(adress, row[k]) for k in ('fran', 'till'))
+        for url in (source, target):
+            dk.ursprung(url)
+            if urlsplit(url).scheme != 'https' and not tillat_http:
+                raise ValueError('omdirigeringens adresser ska vara https')
+        r = las(source, max_hopp=5, omforsok=0)
+        findings = []
+        if r.get('forsta_status') not in (301, 308):
+            findings.append('första svaret är inte 301/308')
+        if r['status'] != 200 or r.get('fel'):
+            findings.append('målet svarar inte 200: %s' % (r.get('fel') or r['status']))
+        observed = r.get('slutadress_observerad', r.get('status') is not None)
+        if observed and r.get('url') != target:
+            findings.append('landar inte på exakt målet')
+        rows.append({'fran': source, 'till': target, 'status': r.get('forsta_status'),
+                     'slutstatus': r['status'] if observed else None,
+                     'slutadress': r.get('url') if observed else None,
+                     'hopp': r.get('hopp', []), 'fynd': findings, 'ok': not findings})
+    return rows
+
+
+def kontrollera(adress, token=None, tillat_http=False, hamta=hamta, omdirigeringar=None):
     u = urlsplit(adress)
     if u.scheme != 'https' and not tillat_http:
         raise ValueError('adressen ska vara https (--tillat-http bara för lokala prov)')
@@ -89,15 +118,19 @@ def kontrollera(adress, token=None, tillat_http=False, hamta=hamta):
     kanonisk = {'vald': host, 'andra_varianten': annan, 'andra_svarar': alt['status'], 'andra_landar_pa': alt.get('url')}
     if alt['status'] == 200 and alt.get('url') and urlsplit(alt['url']).netloc == annan:
         fynd.append('båda varianterna svarar 200: %s ska omdirigera 301 till %s' % (annan, host))
+    redirects = prova_omdirigeringar(adress, omdirigeringar, tillat_http) if omdirigeringar is not None else []
+    for row in redirects:
+        fynd.extend(row['fran'] + ': ' + f for f in row['fynd'])
     return {'schema': 1, 'adress': adress, 'tid': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'startsida': {'status': start['status'], 'ms': start['ms'], 'noindex': noindex, 'verifieringstagg': bool(verif)},
             'sitemap': sm['status'], 'robots': rb['status'], 'kanonisk': kanonisk, 'fynd': fynd, 'klar_for_sokkonsol': not fynd,
+            'omdirigeringar': redirects,
             'not': 'läsande kontroll; sökkonsolens skrivande steg körs med sokkonsol.py --live efter att fynden är noll'}
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog='lansering', description=__doc__.split('\n\n')[0])
     p.add_argument('kommando', choices=('plan', 'kontrollera'))
-    p.add_argument('--verksamhet'); p.add_argument('--mandat'); p.add_argument('--adress'); p.add_argument('--verifieringstoken'); p.add_argument('--tillat-http', action='store_true'); p.add_argument('--ut', required=True)
+    p.add_argument('--verksamhet'); p.add_argument('--mandat'); p.add_argument('--adress'); p.add_argument('--verifieringstoken'); p.add_argument('--tillat-http', action='store_true'); p.add_argument('--ut', required=True); p.add_argument('--omdirigeringar')
     a = p.parse_args(argv)
     try:
         if a.kommando == 'plan':
@@ -108,7 +141,8 @@ def main(argv=None):
         else:
             if not a.adress:
                 raise ValueError('kontrollera kräver --adress')
-            k = kontrollera(a.adress, a.verifieringstoken, a.tillat_http)
+            redirects = json.loads(Path(a.omdirigeringar).read_text(encoding='utf-8')) if a.omdirigeringar else None
+            k = kontrollera(a.adress, a.verifieringstoken, a.tillat_http, omdirigeringar=redirects)
             Path(a.ut).write_text(json.dumps(k, ensure_ascii=False, indent=1) + '\n', encoding='utf-8'); print(json.dumps({'fynd': len(k['fynd']), 'klar_for_sokkonsol': k['klar_for_sokkonsol'], 'ut': a.ut}, ensure_ascii=False))
     except (ValueError, vu.Vagrad) as e:
         print(json.dumps({'vagrad': e.args[0]}, ensure_ascii=False)); return 2
