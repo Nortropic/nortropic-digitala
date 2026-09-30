@@ -13,7 +13,7 @@ HERE = Path(__file__).resolve().parent
 ROT = HERE.parent
 sys.path.insert(0, str(HERE))
 import kvalitetsbild  # noqa: E402
-from test_kor_profil import fake_runtime, receipt_file, PROFIL  # noqa: E402
+from test_kor_profil import fake_kontor, fake_runtime, receipt_file, PROFIL  # noqa: E402
 
 
 class Rig(unittest.TestCase):
@@ -24,9 +24,10 @@ class Rig(unittest.TestCase):
         self.root = fake_runtime(self.tmp, PROFIL['vyer'], PROFIL['axe_taggar'], parametrar=True)
         self.filer = self.tmp / 'filer.json'
         self.filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': 'VYER/a.png', 'vad': 'bild'}]))
+        self.kontor = fake_kontor(self.tmp)
 
     def run_cli(self, *args):
-        env = dict(os.environ, NR_HOST_ROOT=str(self.root))
+        env = dict(os.environ, NR_HOST_ROOT=str(self.root), NR_KONTOR_ROOT=str(self.kontor))
         done = subprocess.run([sys.executable, '-B', str(HERE / 'kor_profil.py'), *args], capture_output=True, text=True, env=env, cwd=self.tmp)
         return done.returncode, json.loads(done.stdout.strip()) if done.stdout.strip() else {'stderr': done.stderr}
 
