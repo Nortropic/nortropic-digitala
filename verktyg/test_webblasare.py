@@ -78,6 +78,40 @@ class Webblasare(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_utan_js_skiljer_jsberoende_och_vanlig_post(self):
+        SIDOR['/js-krav/'] = '<html><body><h1>Kontakt</h1><form onsubmit="return false"><input name="namn"><button type="button">Skicka</button></form></body></html>'
+        try:
+            code, out, err = kor('utan-js.mjs', '--adress', self.bas + '/js-krav/', '--ut', str(self.d / 'js-krav'), '--formular', 'form')
+            self.assertEqual(code, 1, err)
+            r = json.loads((self.d / 'js-krav/UTAN-JS.json').read_text())
+            self.assertEqual(r['status'], 'FAIL'); self.assertFalse(r['javaScriptEnabled'])
+            code, out, err = kor('utan-js.mjs', '--adress', self.bas + '/kontakt/', '--ut', str(self.d / 'utan-skick'), '--formular', 'form')
+            self.assertEqual(code, 0, err); self.assertEqual(Handler.poster, [])
+            self.assertEqual(json.loads((self.d / 'utan-skick/UTAN-JS.json').read_text())['status'], 'EJ_MATT')
+            code, out, err = kor('utan-js.mjs', '--adress', self.bas + '/kontakt/', '--ut', str(self.d / 'html-post'), '--formular', 'form', '--formular-far-skickas', '--testmarkering', 'TEST nortropic utan JS')
+            self.assertEqual(code, 0, err)
+            r = json.loads((self.d / 'html-post/UTAN-JS.json').read_text())
+            self.assertEqual(r['status'], 'PASS', r)
+            self.assertTrue(r['sidor'][0]['formular'][0]['skickat'])
+            self.assertEqual(len(Handler.poster), 1)
+            self.assertIn('TEST', Handler.poster[0])
+            for action in ('', ' action=""'):
+                SIDOR['/utan-action/'] = '<html><body><h1>Kontakt</h1><form method="post"' + action + '><input name="namn" required><button>Skicka</button></form></body></html>'
+                before = len(Handler.poster)
+                code, out, err = kor('utan-js.mjs', '--adress', self.bas + '/utan-action/', '--ut', str(self.d / 'standardmal'), '--formular', 'form')
+                r = json.loads((self.d / 'standardmal/UTAN-JS.json').read_text())
+                self.assertEqual(code, 0, err); self.assertEqual(r['status'], 'EJ_MATT')
+                self.assertEqual(len(Handler.poster), before)
+                code, out, err = kor('utan-js.mjs', '--adress', self.bas + '/utan-action/', '--ut', str(self.d / 'standardmal'), '--formular', 'form', '--formular-far-skickas', '--testmarkering', 'TEST utan action')
+                r = json.loads((self.d / 'standardmal/UTAN-JS.json').read_text())
+                self.assertEqual(code, 0, err); self.assertEqual(r['status'], 'PASS', r)
+                self.assertEqual(r['sidor'][0]['formular'][0]['action'], self.bas + '/utan-action/')
+                self.assertEqual(len(Handler.poster), before + 1)
+                self.assertIn('TEST', Handler.poster[-1])
+        finally:
+            SIDOR.pop('/js-krav/', None)
+            SIDOR.pop('/utan-action/', None)
+
     def test_inspektera_med_kontext_grans_tillstand_och_redigerat_undantag(self):
         brief = self.d / 'PROJECT-BRIEF.md'; brief.write_text('# Brief\n§7 riktning: lugn.\n')
         hem = Path.home() / '.nortropic-hemligheter' / 'test-webblasare'; hem.mkdir(parents=True, exist_ok=True)

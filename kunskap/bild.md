@@ -66,3 +66,26 @@ som beskriver innehållet (tom alt bara för dekor).
   `rembg`/`vtracer` för rastervektorisering i `brand.mjs` (utan dem behålls rastern med rapportrad).
 
 Verktygen är körbara instrument, inte krav: en kund med färdig bildbank och egen bildbehandling behöver dem inte.
+
+## Typsnitt och ikonuppsättningar (2026-09-30, b35d4f-digitala)
+
+Kundbygget innehåller `bilder/TYPSNITT-IKONER.json`, bredvid `bilder/LICENSER.md`.
+Registret är kundspecifikt; inga kunduppgifter läggs i professionsrepot. Schema:
+
+```json
+{"schema":1,"poster":[{"typ":"typsnitt","filer":["fonts/exempel.woff2"],"licens":"OFL-1.1","kalla":"https://example.invalid/original","version":"1.0","datum":"2026-09-30","licensfil":"bilder/OFL.txt","andrad":false,"subset":false,"reserverade_namn":[],"anvandt_namn":"Exempel"}]}
+```
+
+Varje byggd woff2/woff/ttf/otf-fil ska finnas i registret. Ikonuppsättningar får
+`typ: "ikoner"`, `namn`, samma käll-/licensfält, berörda `filer` och eventuell
+`attribution`. Deklarera uppsättningens namn i HTML med `data-ikonuppsattning`;
+inline-SVG binds genom HTML-filens sökväg. SVG utan post rapporteras för klassning.
+Prelaunch grind 6 kontrollerar täckning och form. Registeruppgifternas sanningshalt
+och rätt att använda materialet prövas genom källan; verktyget avgör inte juridik.
+
+[OFL 1.1, villkor 2–3](https://openfontlicense.org/open-font-license-official-text/)
+kräver att licens och copyrightinformation följer typsnittet. En ändrad eller
+subsettad fil får inte behålla ett reserverat typsnittsnamn utan rättighetshavarens
+uttryckliga tillstånd. Registret flaggar det för prövning; det döper inte om filer.
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) kräver bland annat
+attribution och licenshänvisning. Båda primärkällorna omlästa 2026-09-30.

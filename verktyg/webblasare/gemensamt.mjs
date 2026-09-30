@@ -67,6 +67,7 @@ export function origin(url) { return new URL(url).origin; }
 /** Startar webbläsare + kontext för en vy med värdverkställd ursprungsgräns (route-nivå: allt utanför tillåtna ursprung
  *  avbryts och loggas som blockerat), skyddsundantag som header bara mot målets ursprung (`mal`; tillåtna tredje parter
  *  får det aldrig), logg och spår. */
+// utan-js.mjs använder extra: { javaScriptEnabled: false } i samma avgränsade browserkontext.
 export async function oppna({ vy = '1440', tillat = [], undantag = null, hemliga = [], spar = null, extra = {}, mal = null }) {
   const malUrsprung = mal ? origin(mal) : (tillat.length ? origin(tillat[0]) : null);
   const v = VYER[vy]; if (!v) throw new Error('okänd vy: ' + vy + ' (390, 768, 1440, 320)');

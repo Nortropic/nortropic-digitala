@@ -19,3 +19,27 @@ verktygsprov bevisar inte mänsklig användbarhet eller affärsresultat.
 Helheten är "redo" bara när grind 0–5 och 7 är PASS, JURIDIK.json är lämnad (människans genomgång av basen och
 flaggorna) och juridiken saknar ohanterade flaggor. Ett underkännande
 går till diagnos → åtgärd → omprov av den berörda grinden (KVALITET.md:s loop), inte till ett ägarstopp.
+
+## Kompletteringar 2026-09-30 (b35d4f-digitala)
+
+- Grind 2 visar `tbt_ms` per mätning, med sämsta vy och en anmärkning över 200 ms.
+  [web.dev](https://web.dev/articles/tbt), läst 2026-09-30, beskriver TBT som en
+  labbproxy som kan både missa och överindikera INP-problem. INP förblir EJ_MATT.
+  `STANDARDKRAV.tbt_faller` är `false`: signalen fäller inte ensam grinden.
+  En motiverad uppgift kan ange `true` i kravfilen; gränsen anges med `tbt_ms`.
+- Grind 6 visar LPTT vid e-handel mot konsument och modellfria fynd ur kundbyggets
+  `bilder/TYPSNITT-IKONER.json` (bild.md). Juridik avgörs fortfarande av människa.
+- Grind 7 kontrollerar varje rutt i byggets sitemap:
+  `urlset` med sidornas `url/loc`; bilders `loc` är inte sidrutter. Sitemapindex
+  stöds inte här och ger EJ_MATT tills sidrutterna lämnats som urlset.
+  Vid live-kontroll används måladressens ursprung och sitemapens sökvägar. Sparade huvuden för flera rutter
+  anges som `{"rutter":{"/":{"content-security-policy":"…"},"/kontakt/":{…}}}`.
+  En enda äldre textfil belägger endast en sajt med en sitemaprutt. Saknad mätning
+  är EJ_MATT; saknad CSP eller för svag policy är FAIL med ruttpekare.
+  [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP), omläst
+  2026-09-30, ligger bakom kontrollen av `object-src`, `base-uri` och `unsafe-inline`
+  i skriptdirektiv utan nonce/hash. Det är en avgränsad kontroll, ingen fullständig
+  säkerhetsrevision av en CSP.
+- HTML-prov utan JavaScript körs enligt webblasare.md; UTAN-JS.json bifogas
+  handlings-/QA-underlaget. EJ_MATT vid uteblivet formulärinskick får inte beskrivas
+  som ett fungerande formulär. Inget verkligt kundformulär skickas utan mandat.

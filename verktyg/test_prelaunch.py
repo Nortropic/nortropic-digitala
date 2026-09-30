@@ -32,6 +32,68 @@ class Grindar(unittest.TestCase):
             self.assertEqual(pl.main(args), 0)
         return json.loads(ut.read_text())
 
+    def test_lptt_och_licensregister(self):
+        j = self.d / 'J.json'
+        j.write_text(json.dumps({'flaggor': []}))
+        self.assertNotIn('LPTT', pl.g6_juridik(j)['belagg'])
+        j.write_text(json.dumps({'flaggor': [{'flagga': 'e-handel/distansavtal mot konsument', 'status': 'hanterad'}]}))
+        self.assertIn('LPTT', pl.g6_juridik(j)['belagg'])
+        self.assertIn('ohanterade: 1', pl.g6_juridik(j)['belagg'])
+        (self.b / 'font.woff2').write_bytes(b'font-fixtur')
+        self.assertIn('font.woff2', str(pl.licensfynd(self.b)))
+        (self.b / 'bilder').mkdir()
+        reg = self.b / 'bilder/TYPSNITT-IKONER.json'
+        row = {'typ': 'typsnitt', 'filer': ['font.woff2'], 'licens': 'MIT',
+               'kalla': 'https://example.test/font', 'version': '1.0', 'datum': '2026-09-30'}
+        reg.write_text(json.dumps({'schema': 1, 'poster': [row]}))
+        self.assertEqual(pl.licensfynd(self.b), [])
+        row.update(licens='OFL-1.1', subset=True, reserverade_namn=['Prov'], anvandt_namn='Prov', licensfil='bilder/OFL.txt')
+        (self.b / 'bilder/OFL.txt').write_text('SIL OPEN FONT LICENSE Version 1.1 (syntetisk fixtur)')
+        reg.write_text(json.dumps({'schema': 1, 'poster': [row]}))
+        self.assertIn('reserverat', str(pl.licensfynd(self.b)))
+        row.update(typ='ikoner', licens='CC BY 4.0')
+        reg.write_text(json.dumps({'schema': 1, 'poster': [row]}))
+        self.assertIn('attribution', str(pl.licensfynd(self.b)))
+
+    def test_csp_pa_varje_sitemaprutt_och_styrka(self):
+        (self.b / 'sitemap.xml').write_text('<urlset><url><loc>https://provfirma.se/</loc></url><url><loc>https://provfirma.se/kontakt/</loc></url></urlset>')
+        headers = {'content-security-policy': "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+                   'strict-transport-security': 'max-age=63072000', 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer'}
+        h = self.d / 'headers.json'; routes = {'/': headers, '/kontakt/': dict(headers)}
+        routes['/kontakt/'].pop('content-security-policy')
+        h.write_text(json.dumps({'rutter': routes}))
+        result = pl.g7_sakerhet(h, None, None, self.b)
+        self.assertEqual(result['status'], 'FAIL'); self.assertIn('/kontakt/', result['atgard'])
+        self.assertTrue(pl.csp_fynd("script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'"))
+        self.assertEqual(pl.csp_fynd("script-src 'unsafe-inline' 'nonce-YWJjMTIz'; object-src 'none'; base-uri 'none'"), [])
+        self.assertEqual(pl.csp_fynd("default-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'"), [])
+        self.assertTrue(pl.csp_fynd("script-src 'self'; script-src-elem 'unsafe-inline'; object-src 'none'; base-uri 'self'"))
+        self.assertIn('CSP saknar object-src', pl.csp_fynd("default-src 'self'"))
+        self.assertIn('CSP saknar base-uri', pl.csp_fynd("default-src 'self'"))
+        routes['/kontakt/'] = headers
+        h.write_text(json.dumps({'rutter': routes}))
+        self.assertEqual(pl.g7_sakerhet(h, None, None, self.b)['status'], 'PASS')
+        h.write_text(json.dumps({'rutter': {'/': headers}}))
+        self.assertEqual(pl.g7_sakerhet(h, None, None, self.b)['status'], 'EJ_MATT')
+        # Endast url/loc är sidrutter; bilders loc ska aldrig räknas som sidor.
+        (self.b / 'sitemap.xml').write_text('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"><url><loc>https://provfirma.se/</loc><image:image><image:loc>https://provfirma.se/foto.jpg</image:loc></image:image></url></urlset>')
+        self.assertEqual(pl.g7_sakerhet(h, None, None, self.b)['status'], 'PASS')
+        for xml in ('<sitemapindex><sitemap><loc>https://provfirma.se/sidor.xml</loc></sitemap></sitemapindex>',
+                    '<urlset><url><loc>https://provfirma.se/</loc></url><url/></urlset>',
+                    '<urlset xmlns="https://fel.test"><url><loc>https://provfirma.se/</loc></url></urlset>'):
+            (self.b / 'sitemap.xml').write_text(xml)
+            self.assertEqual(pl.g7_sakerhet(h, None, None, self.b)['status'], 'EJ_MATT')
+
+    def test_tbt_labbproxy_ar_inte_inp(self):
+        for value, warning in ((350, True), (150, False)):
+            m = {'lighthouse': {'mobil': {'scores': {'performance': 100}, 'tbt_ms': value}}}
+            r = pl.g2_prestanda(m, pl.STANDARDKRAV)
+            self.assertEqual(r['status'], 'PASS')
+            self.assertEqual('TBT över' in r['belagg'], warning)
+            self.assertIn('INP:', r['belagg']); self.assertIn('EJ_MATT', r['belagg'])
+            if warning:
+                self.assertEqual(pl.g2_prestanda(m, dict(pl.STANDARDKRAV, tbt_faller=True))['status'], 'FAIL')
+
     def test_utan_matning_ar_det_mesta_ej_matt_och_inte_redo(self):
         r = self.kor()
         st = {g['grind'][:1]: g['status'] for g in r['grindar']}
@@ -50,7 +112,7 @@ class Grindar(unittest.TestCase):
         kv = self.d / 'prov.json'; kv.write_text(json.dumps({'utfall': 'klar'}))
         h = self.d / 'H.json'; h.write_text(json.dumps({'handlingar': [{'namn': 'offert', 'typ': 'formulär', 'prov': 'provare', 'kvitto': str(kv)}, {'namn': 'ring', 'typ': 'tel', 'prov': 'manuell', 'utfall': 'godkänd 2026-09-27'}]}))
         j = self.d / 'J.json'; j.write_text(json.dumps({'flaggor': [{'flagga': 'hälsa/kropp/medicin', 'status': 'rapporterad', 'citat': 'x'}]}))
-        hv = self.d / 'huvud.txt'; hv.write_text('HTTP/2 200\ncontent-security-policy: default-src \'self\'; frame-ancestors \'none\'\nstrict-transport-security: max-age=63072000\nx-content-type-options: nosniff\nreferrer-policy: strict-origin-when-cross-origin\n')
+        hv = self.d / 'huvud.txt'; hv.write_text('HTTP/2 200\ncontent-security-policy: default-src \'self\'; frame-ancestors \'none\'; object-src \'none\'; base-uri \'self\'\nstrict-transport-security: max-age=63072000\nx-content-type-options: nosniff\nreferrer-policy: strict-origin-when-cross-origin\n')
         au = self.d / 'audit.json'; au.write_text(json.dumps({'metadata': {'vulnerabilities': {'high': 0, 'critical': 0}}}))
         (self.b / 'index.html').write_text((self.b / 'index.html').read_text().replace('<img src="/b.jpg">', '').replace('<a href="/tjanster/">Tjänster</a><a href="/tjanster/">x</a>', ''))
         from test_stegbevis import bevis

@@ -189,3 +189,13 @@ råd och faktisk browseråterkoppling före utbyggnad. Genererat SKAPARPAKET och
 bär tillämpningen. Ingen installation, ny källversion, generell stilspärr eller automatisk
 originalitetsbedömning införs. Kritikmallarnas helhetsfråga ändrar inte v2:s kriterier,
 scheman, bildkrav eller domlogik. Användningsnoter och avgränsat prov ska visa genomslaget.
+
+## Primärkällor omlästa 2026-09-30 — b35d4f-digitala A1–A5
+
+| Krav | Underlag och avgränsad användning | Läst |
+|---|---|---|
+| A1 | [Lag 2023:254](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/), [PTS e-handel](https://pts.se/digital-inkludering/lagkrav/introduktion-till-tillganglighetsdirektivet/branschspecifika-krav/), [PTS information om tillgänglighet](https://www.pts.se/digital-inkludering/lagkrav/introduktion-till-tillganglighetsdirektivet/administrativa-krav/): flagga för mänsklig prövning. | 2026-09-30 |
+| A2 | [LEK 9:28](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2022482-om-elektronisk-kommunikation_sfs-2022-482/), [EDPB 2/2023 v2.0](https://www.edpb.europa.eu/documents/guideline/guidelines-22023-on-technical-scope-of-art-53-of-eprivacy-directive_en); leverantörernas aktuella tekniska källor länkas i uppfoljning.md. Ingen generell slutsats om samtyckesfri analys. | 2026-09-30 |
+| A3 | [OFL 1.1](https://openfontlicense.org/open-font-license-official-text/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): licensfiler, reserverade namn, attribution och kundregister. | 2026-09-30 |
+| A4 | [MDN CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP): alla rutter, skriptdirektiv och avgränsad styrkekontroll. | 2026-09-30 |
+| A5 | [web.dev TBT](https://web.dev/articles/tbt): 200 ms som labbsignal; ingen ersättning för INP. | 2026-09-30 |

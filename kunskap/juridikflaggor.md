@@ -26,3 +26,17 @@ Regler:
    som förslag tills belägg finns, vilket är en redaktionell rättelse, inte en juridisk bedömning.
 4. Prelaunch-kontrollen (`verktyg/prelaunch.py`) listar basens punkter och varje satt flagga med fyndrad; den
    godkänner aldrig juridik på egen auktoritet.
+
+
+## LPTT vid e-handel mot konsument (läst 2026-09-30)
+
+Flagga **LPTT [OSÄKER]** sätts när research/JURIDIK.json anger e-handel eller distansavtal
+mot konsument (`e_handel_mot_konsument: true` eller befintlig e-handelsflagga). Människan
+bedömer tillämpning och undantag; en teknisk grön rapport avgör inte detta.
+[Lag (2023:254), 2, 4 och 10 §§](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2023254-om-vissa-produkters-och-tjansters_sfs-2023-254/)
+omfattar bland annat e-handelstjänster för konsumenter. Mikroföretag — färre än tio
+anställda och årsomsättning eller årlig balansomslutning högst två miljoner euro —
+är undantagna från tjänsternas tillgänglighetskrav. Undantaget beslutas inte av verktyget.
+[PTS har tillsyn över e-handel](https://pts.se/digital-inkludering/lagkrav/introduktion-till-tillganglighetsdirektivet/branschspecifika-krav/)
+och beskriver kravet på [information om tjänstens tillgänglighet](https://www.pts.se/digital-inkludering/lagkrav/introduktion-till-tillganglighetsdirektivet/administrativa-krav/).
+Prelaunch grind 6 visar flaggan även när den äldre e-handelsflaggan redan hanterats.

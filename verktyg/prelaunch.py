@@ -16,6 +16,8 @@ import json
 import re
 import sys
 import urllib.request
+from urllib.parse import urlsplit, urlunsplit
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -23,7 +25,8 @@ import seo_kontroll as sk  # noqa: E402
 import copy_kontroll as ck  # noqa: E402
 import stegbevis  # noqa: E402
 
-STANDARDKRAV = {'performance': 90, 'accessibility': 95, 'best_practices': 95, 'seo': 95, 'lcp_ms': 2500, 'cls': 0.1, 'inp_ms': 200, 'sidvikt_kb': 1000}
+STANDARDKRAV = {'performance': 90, 'accessibility': 95, 'best_practices': 95, 'seo': 95, 'lcp_ms': 2500, 'cls': 0.1, 'inp_ms': 200, 'sidvikt_kb': 1000,
+               'tbt_ms': 200, 'tbt_faller': False}  # web.dev/articles/tbt, läst 2026-09-30; labbsignal, inte INP
 HEMLIGHETER = re.compile(r'(re_[A-Za-z0-9]{20,}|sk_live_[A-Za-z0-9]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN (RSA |EC )?PRIVATE KEY-----)')
 RUBRIKER = {'content-security-policy': 'Content-Security-Policy', 'strict-transport-security': 'Strict-Transport-Security', 'x-content-type-options': 'X-Content-Type-Options', 'referrer-policy': 'Referrer-Policy'}
 
@@ -176,7 +179,7 @@ def g2_prestanda(m, krav, lage='lansering'):
         src = d.get('scores') if isinstance(d.get('scores'), dict) else d
         v = src.get(k) if k in src else src.get(k.replace('_', '-'))
         return v * 100 if isinstance(v, (int, float)) and v <= 1 else v
-    poang = {}; lcp = None; cls = None; brister = []
+    poang = {}; lcp = None; cls = None; tbt = None; brister = []; anmarkningar = []
     for vy, d in vyer.items():
         for k in ('performance', 'accessibility', 'best_practices', 'seo'):
             v = sc(d, k)
@@ -193,7 +196,19 @@ def g2_prestanda(m, krav, lage='lansering'):
             cls = max(cls or 0, c)
             if c > krav['cls']:
                 brister.append((vy + ' ' if vy else '') + 'cls')
+        t = hitta(d, 'tbt_ms', 'total-blocking-time')
+        if isinstance(t, (int, float)) and not isinstance(t, bool) and t >= 0:
+            tbt = max(tbt or 0, t)
+            if t > krav.get('tbt_ms', 200):
+                text = (vy + ' ' if vy else '') + 'TBT över %s ms' % krav.get('tbt_ms', 200)
+                anmarkningar.append(text)
+                if krav.get('tbt_faller', False):
+                    brister.append(text)
     belagg = 'Lighthouse %s; LCP (sämsta vy) %s ms; CLS (sämsta vy) %s; INP: mäts inte av navigations-Lighthouse (EJ_MATT, fältdata krävs)%s' % (poang, lcp, cls, '; SEO-poängen avgör inte i förhandsvisning (noindex)' if lage == 'forhandsvisning' else '')
+    belagg += '; TBT (sämsta vy, labbproxy för INP): %s; TBT fäller: %s' % (
+        '%s ms' % tbt if tbt is not None else 'EJ_MATT', krav.get('tbt_faller', False))
+    if anmarkningar:
+        belagg += '; anmärkning: ' + ', '.join(anmarkningar)
     if not poang:
         return grind('2 prestanda', 'EJ_MATT', belagg)
     return grind('2 prestanda', 'FAIL' if brister else 'PASS', belagg, ('under kravnivå: ' + ', '.join(brister)) if brister else None)
@@ -249,20 +264,117 @@ def g5_seo(bygge, lage, verksamhet):
     return grind('5 SEO-beredskap', 'PASS' if r['fynd_totalt'] == 0 else 'FAIL', '%d sidor, %d fynd (seo_kontroll, läge %s)' % (r['sidor'], r['fynd_totalt'], lage), None if r['fynd_totalt'] == 0 else 'se SEO-rapporten; inga rankningslöften')
 
 
-def g6_juridik(juridik):
+def licensfynd(bygge):
+    """Kontrollera byggda typsnitt/SVG och deklarerade ikonuppsättningar mot kundens register.
+
+    Licensvillkor är registrerade belägg, inte en automatisk rättighetsbedömning.
+    Inline-SVG binds via HTML-filen; namn på andra ikonuppsättningar deklareras
+    med data-ikonuppsattning. Vektorer utan bindning rapporteras för klassning.
+    """
+    root = Path(bygge).resolve()
+    fonts, vectors, names, scan_fynd = set(), set(), set(), []
+    for path in root.rglob('*'):
+        if not path.is_file() or set(path.relative_to(root).parts) & {'.git', 'node_modules'}:
+            continue
+        rel = str(path.relative_to(root))
+        if any(p.is_symlink() for p in (path, *path.parents)):
+            scan_fynd.append('länkad byggfil kan inte licenskontrolleras: ' + rel)
+            continue
+        if path.suffix.lower() in ('.woff2', '.woff', '.ttf', '.otf'):
+            fonts.add(rel)
+        if path.suffix.lower() == '.svg':
+            vectors.add(rel)
+        if path.suffix.lower() == '.html':
+            text = path.read_text(encoding='utf-8', errors='replace')
+            if re.search(r'<svg\b', text, re.I):
+                vectors.add(rel)
+            names.update(re.findall(r'data-ikonuppsattning=["\']([^"\']+)["\']', text))
+    path = root / 'bilder/TYPSNITT-IKONER.json'
+    if not path.exists():
+        return scan_fynd + ['saknar post för ' + n for n in sorted(fonts | vectors | names)]
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+        if path.is_symlink() or data.get('schema') != 1 or not isinstance(data.get('poster'), list):
+            raise ValueError('registerform')
+        fynd, covered, icon_names = list(scan_fynd), set(), set()
+        for i, row in enumerate(data['poster']):
+            label = 'post %d' % (i + 1)
+            if not isinstance(row, dict) or row.get('typ') not in ('typsnitt', 'ikoner'):
+                fynd.append(label + ': ogiltig typ'); continue
+            if not all(isinstance(row.get(k), str) and row[k].strip() for k in ('licens', 'kalla', 'version', 'datum')):
+                fynd.append(label + ': licens, källa, version eller datum saknas')
+            elif (urlsplit(row['kalla']).scheme != 'https' or not urlsplit(row['kalla']).netloc
+                  or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', row['datum'])):
+                fynd.append(label + ': ogiltig käll-URL eller datum')
+            files = row.get('filer')
+            if not isinstance(files, list) or not files or not all(isinstance(f, str) for f in files):
+                fynd.append(label + ': filer saknas'); continue
+            for name in files:
+                file = root / name
+                if (Path(name).is_absolute() or '..' in Path(name).parts or not file.is_file()
+                        or any(p.is_symlink() for p in (file, *file.parents)) or root not in file.resolve().parents):
+                    fynd.append(label + ': saknad/osäker fil ' + name); continue
+                if name in covered:
+                    fynd.append(label + ': dubblerad fil ' + name)
+                if name in fonts and row['typ'] != 'typsnitt':
+                    fynd.append(label + ': typsnittsfil registrerad som annan materialtyp')
+                covered.add(name)
+            if row['typ'] == 'ikoner' and isinstance(row.get('namn'), str):
+                icon_names.add(row['namn'])
+            licence = str(row.get('licens', '')).upper().replace(' ', '-')
+            if licence.startswith('OFL') or 'OPEN-FONT-LICENSE' in licence:
+                name = row.get('licensfil')
+                file = root / name if isinstance(name, str) else None
+                if (file is None or Path(name).is_absolute() or '..' in Path(name).parts or not file.is_file()
+                        or any(p.is_symlink() for p in (file, *file.parents))
+                        or 'OPEN FONT LICENSE' not in file.read_text(encoding='utf-8', errors='replace')):
+                    fynd.append(label + ': OFL-licensen måste följa filerna i bygget')
+                reserved = row.get('reserverade_namn', [])
+                if (row.get('andrad') or row.get('subset')) and reserved:
+                    if not row.get('anvandt_namn') or row['anvandt_namn'] in reserved:
+                        fynd.append(label + ': ändrad/subsettad OFL med reserverat typsnittsnamn')
+            if licence.startswith('CC-BY') and not row.get('attribution'):
+                fynd.append(label + ': CC BY-ikoner saknar attribution')
+        fynd += ['saknar post för ' + n for n in sorted((fonts | vectors) - covered)]
+        fynd += ['saknar ikonuppsättning ' + n for n in sorted(names - icon_names)]
+        return fynd
+    except (OSError, ValueError, TypeError, AttributeError):
+        return ['oläsbart typsnitts- och ikonregister']
+
+
+def g6_juridik(juridik, bygge=None):
     bas = ['integritetspolicy med ansvarig, ändamål, rättslig grund, lagring, rättigheter', 'samtyckesläge stämmer med det som laddas', 'företagsuppgifter (namn, organisationsnummer, adress eller ort, kontakt)', 'verifierbara påståenden (betyg med källa, certifieringar mot register)', 'priser inklusive moms mot konsumenter; ROT/RUT korrekt']
     if not juridik:
-        return grind('6 juridik', 'MANNISKA', 'ingen JURIDIK.json; basen gäller alltid: ' + '; '.join(bas), 'människa avgör; verktyget godkänner aldrig juridik')
+        licenser = licensfynd(bygge) if bygge else []
+        return grind('6 juridik', 'MANNISKA', 'ingen JURIDIK.json; basen gäller alltid: ' + '; '.join(bas)
+                     + ('; licensfynd: ' + '; '.join(licenser) if licenser else ''), 'människa avgör; verktyget godkänner aldrig juridik')
     data = json.loads(Path(juridik).read_text(encoding='utf-8'))
-    flaggor = data.get('flaggor', [])
+    flaggor = list(data.get('flaggor', []))
+    ehandel = data.get('e_handel_mot_konsument') is True or any(
+        str(f.get('flagga', '')).lower().startswith('e-handel/distansavtal') for f in flaggor)
+    if ehandel and not any(str(f.get('flagga', '')).startswith('LPTT') for f in flaggor):
+        flaggor.append({'flagga': 'LPTT [OSÄKER]: e-handel mot konsument, tillämpning och mikroföretagsundantag behöver bedömas',
+                        'status': 'rapporterad'})
+    if bygge:
+        flaggor.extend({'flagga': 'Licens: ' + f, 'status': 'rapporterad'} for f in licensfynd(bygge))
     ohant = [f for f in flaggor if f.get('status') not in ('hanterad', 'utanför uppdraget')]
     return grind('6 juridik', 'MANNISKA', 'flaggor: %s; ohanterade: %d; basen: %s' % ([f.get('flagga') for f in flaggor], len(ohant), '; '.join(bas)),
                  'människa avgör varje flagga; ohanterade: ' + ', '.join(f.get('flagga', '?') for f in ohant) if ohant else 'inga ohanterade flaggor; basen bekräftas av människa')
 
 
-def las_huvuden(huvuden, adress):
+def las_huvuden(huvuden, adress, rutt=None, ensam=False):
     if huvuden and Path(huvuden).is_file():
         text = Path(huvuden).read_text(encoding='utf-8', errors='replace')
+        if text.lstrip().startswith('{'):
+            try:
+                h = json.loads(text)['rutter'].get(rutt or '/')
+                if not isinstance(h, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in h.items()):
+                    return None, 'saknade eller ogiltiga svarshuvuden för ' + str(rutt or '/')
+                return {k.lower(): v for k, v in h.items()}, 'sparade svarshuvuden för ' + str(rutt or '/')
+            except (ValueError, KeyError, TypeError, AttributeError):
+                return None, 'oläsbar huvudkarta'
+        if rutt is not None and not ensam:
+            return None, 'en enda huvudfil belägger inte alla rutter; använd JSON med rutter'
         return {l.split(':', 1)[0].strip().lower(): l.split(':', 1)[1].strip() for l in text.splitlines() if ':' in l and not l.lower().startswith('http/')}, 'sparad huvudfil'
     if adress:
         req = urllib.request.Request(adress, method='HEAD', headers={'User-Agent': 'nortropic-digitala prelaunch'})
@@ -274,21 +386,63 @@ def las_huvuden(huvuden, adress):
     return None, 'inga svarshuvuden (--huvuden eller --adress)'
 
 
+def csp_fynd(policy):
+    direktiv = {}
+    for part in policy.split(';'):
+        bits = part.strip().split()
+        if bits:
+            direktiv.setdefault(bits[0].lower(), bits[1:])  # webbläsaren använder första förekomsten
+    fynd = ['CSP saknar ' + k for k in ('object-src', 'base-uri') if not direktiv.get(k)]
+    for k in ('script-src', 'script-src-elem'):
+        values = direktiv.get(k, direktiv.get('script-src', direktiv.get('default-src', [])))
+        if "'unsafe-inline'" in values and not any(re.fullmatch(r"'(?:nonce-|sha(?:256|384|512)-)[A-Za-z0-9+/_=-]+'", v) for v in values):
+            fynd.append('CSP ' + k + ' har unsafe-inline utan nonce/hash')
+    return fynd
+
+
 def g7_sakerhet(huvuden, adress, audit, bygge):
-    h, kalla = las_huvuden(huvuden, adress)
-    brister = []; belagg = [kalla]
-    if h is None:
-        status_h = 'EJ_MATT'
-    else:
+    brister, belagg, omatta = [], [], []
+    try:
+        raw = (Path(bygge) / 'sitemap.xml').read_bytes()
+        if b'<!DOCTYPE' in raw.upper() or b'<!ENTITY' in raw.upper():
+            raise ValueError('DTD stöds inte')
+        sitemap = ET.fromstring(raw)
+        ns = '{http://www.sitemaps.org/schemas/sitemap/0.9}' if sitemap.tag.startswith('{') else ''
+        if sitemap.tag != ns + 'urlset':
+            raise ValueError('endast urlset stöds; index måste först expanderas')
+        locs = []
+        for node in sitemap.findall(ns + 'url'):
+            addresses = node.findall(ns + 'loc')
+            if len(addresses) != 1 or not addresses[0].text:
+                raise ValueError('sidrutt utan entydig loc')
+            locs.append(addresses[0].text.strip())
+        if not locs:
+            raise ValueError('sitemap utan rutter')
+        if any(urlsplit(u).scheme not in ('https', 'http') or not urlsplit(u).netloc for u in locs):
+            raise ValueError('ogiltig sitemap-adress')
+        rutter = sorted(set(urlunsplit(('', '', urlsplit(u).path or '/', urlsplit(u).query, '')) for u in locs))
+    except (OSError, ValueError, ET.ParseError):
+        return grind('7 säkerhet', 'EJ_MATT', 'sitemap saknas, är ogiltig eller använder annat format än urlset (exempelvis sitemapindex); alla rutter måste kontrolleras')
+    for rutt in rutter:
+        u = urlsplit(adress) if adress else None
+        target = urlunsplit((u.scheme, u.netloc, urlsplit(rutt).path, urlsplit(rutt).query, '')) if u else None
+        h, kalla = las_huvuden(huvuden, target, rutt, ensam=len(rutter) == 1)
+        belagg.append(rutt + ': ' + kalla)
+        if h is None:
+            omatta.append(rutt)
+            continue
         saknas = [namn for k, namn in RUBRIKER.items() if k not in h]
         frame = ('frame-ancestors' in h.get('content-security-policy', '').lower()) or ('x-frame-options' in h)
         if not frame:
             saknas.append('frame-ancestors/X-Frame-Options')
         if h.get('x-content-type-options', '').lower() != 'nosniff' and 'x-content-type-options' in h:
             saknas.append('X-Content-Type-Options ≠ nosniff')
-        belagg.append('saknade rubriker: ' + (', '.join(saknas) or 'inga'))
-        status_h = 'PASS' if not saknas else 'FAIL'
-        brister += saknas
+        saknas += csp_fynd(h.get('content-security-policy', ''))
+        belagg.append(rutt + ': saknade/svaga rubriker: ' + (', '.join(saknas) or 'inga'))
+        brister += [rutt + ': ' + s for s in saknas]
+    status_h = 'EJ_MATT' if omatta else 'PASS'
+    if omatta:
+        belagg.append('omätta rutter: ' + ', '.join(omatta))
     if audit and Path(audit).is_file():
         try:
             a = json.loads(Path(audit).read_text(encoding='utf-8'))
@@ -310,7 +464,7 @@ def rapport(a):
     if a.krav:
         krav.update(json.loads(Path(a.krav).read_text(encoding='utf-8')))
     m = las_matning(a.matning)
-    grindar = [g0_bygg(a.bygge, a.repo), g1_handlingar(a.handlingar, a.bygge), g2_prestanda(m, krav, a.lage), g3_responsivitet(m, las_inspektion(a.inspektion)), g4_tillganglighet(m), g5_seo(a.bygge, a.lage, a.verksamhet), g6_juridik(a.juridik), g7_sakerhet(a.huvuden, a.adress, a.audit, a.bygge)]
+    grindar = [g0_bygg(a.bygge, a.repo), g1_handlingar(a.handlingar, a.bygge), g2_prestanda(m, krav, a.lage), g3_responsivitet(m, las_inspektion(a.inspektion)), g4_tillganglighet(m), g5_seo(a.bygge, a.lage, a.verksamhet), g6_juridik(a.juridik, a.bygge), g7_sakerhet(a.huvuden, a.adress, a.audit, a.bygge)]
     tekniska = [g for g in grindar if not g['grind'].startswith('6')]
     juridik_lamnad = bool(a.juridik and Path(a.juridik).is_file())
     ohanterade = (grindar[6]['atgard'] or '').startswith('människa avgör varje flagga; ohanterade:')
