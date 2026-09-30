@@ -315,3 +315,12 @@ DNS, leverantörskonto och sajt lämnas till respektive kundbeställning. Ny lä
 Cloudflare DNS JSON och Playwrights HAR-dokumentation 2026-09-30 ligger till grund för
 REGISTER.md, professionsfilerna och deras nya pinnar. DNS-förekomst och ett avgränsat arkiv
 är inga bevis för faktisk e-postleverans eller fullständig bevaring av hela webbplatsen.
+
+## Beslut 2026-09-30 — DNS före och efter byte (OVL-20260930-54c10b-digitala)
+
+N1–N3 följer M1–M2 och återanvänder samma DNS-läsare. Planen och lanseringssteget
+binder ordningen låg TTL, ögonblicksbild och arkiv, domänkoppling, jämförelse och TTL
+tillbaka. Ändringar i e-postposter och okända uppslag redovisas; ingen session
+ändrar DNS. Återgång av driftsättning och DNS hålls isär. RFC 1034 och Cloudflares
+TTL-dokumentation har lästs 2026-09-30; pinnarna för detta beslut och lansering.md
+räknas om. Inget nytt beroende, konto, kundarbete eller driftsättning ingår.

@@ -1056,7 +1056,7 @@
   "lansering": {
    "mandat": "bestallning",
    "syfte": "Lansering enligt gällande mandat: förkontroll, lanseringsdagens kontroll (noindex borta, verifieringstagg, sitemap, robots, kanonisk variant), sökkonsolens steg, oåterkalleligt och återgång; privat förhandsvisning och slutrapport levereras alltid först.",
-   "anvisning": "Följ lansering.md. Kör verktyg/lansering.py plan --verksamhet VERKSAMHET.json --mandat POST-ID --ut FALL/LANSERING.md (beställningen som namnger lansering och domän) och kontrollera --adress https://… --ut FALL/LANSERING-KONTROLL.json efter driftsättning; sökkonsolens skrivande steg med sokkonsol.py --live; ingen lansering för fiktiv verksamhet; återgångsvägen känd före driftsättning.",
+   "anvisning": "Följ lansering.md. Kör verktyg/lansering.py plan --verksamhet VERKSAMHET.json --mandat POST-ID --ut FALL/LANSERING.md (beställningen som namnger lansering och domän). Behörig människa sänker TTL minst en gammal TTL före bytet. Kör dns-bild --verksamhet VERKSAMHET.json --doman DOMÄN --mandat POST-ID --ut FALL/DNS-FORE.json före domänkoppling, och arkivera gamla sajten. Kör dns-jamfor --verksamhet VERKSAMHET.json --doman DOMÄN --mandat POST-ID --fore FALL/DNS-FORE.json --ut FALL/DNS-JAMFORELSE.json efter att den gamla TTL:en löpt ut; granska fynd, okänt och ändringar innan människan höjer TTL igen. Ingen session ändrar DNS. Kör kontrollera --adress https://… --ut FALL/LANSERING-KONTROLL.json efter driftsättning; sökkonsolens skrivande steg med sokkonsol.py --live; ingen lansering för fiktiv verksamhet; driftsättningens och DNS-bytets återgångsvägar kända före bytet.",
    "underlag": [
     {
      "fil": "kunskap/lansering.md",

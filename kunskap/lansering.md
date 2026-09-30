@@ -8,6 +8,38 @@ förhandsvisning och slutrapport levereras alltid först.
 
 ## Före lanseringsdagen
 
+Först sänker en behörig människa TTL för posterna som ska ändras, exempelvis till 300 s,
+minst en gammal TTL före bytet. TTL för delegeringens NS-poster i föräldrazonen sätts av
+registret och går inte att sänka i kundens zon. Har kunden e-post på domänen är
+standardvägen att bara ändra webbposterna hos nuvarande DNS-värd. Ett namnserverbyte
+kräver att hela zonen återskapas ur en zonexport, inklusive andra namn än kontrollens urval.
+Ingen session gör DNS-ändringar. Känd gammal TTL från den auktoritativa zonen används
+för tidsplanen; den rekursiva resolverns återstående TTL är inte hela den gamla TTL:en.
+
+Spara sedan ögonblicksbild **före domänkopplingen** med
+`python3 -B verktyg/lansering.py dns-bild --verksamhet VERKSAMHET.json --doman DOMÄN
+--mandat POST-ID --ut DNS-FORE.json`. E-postkontroll och arkiv nedan följer före bytet.
+Efter domänkopplingen och **efter att den gamla TTL:en löpt ut**:
+`python3 -B verktyg/lansering.py dns-jamfor --verksamhet VERKSAMHET.json --doman DOMÄN
+--mandat POST-ID --fore DNS-FORE.json --ut DNS-JAMFORELSE.json`.
+När bytet är bekräftat höjer den behöriga människan TTL igen.
+
+DNS-kommandona återanvänder M1:s fasta Cloudflare-resolver och standardbiblioteksläsare.
+De läser NS, MX, TXT, CAA, A och AAAA på domänen; A, AAAA och CNAME på www; TXT på
+_dmarc och CNAME på autodiscover. Tid, resolver och observerad TTL sparas per post.
+TXT jämförs exakt som resolvern presenterar texten, inklusive blanksteg,
+skiftläge och citering; även en ren presentationsändring kräver mänsklig kontroll.
+Ändrad eller saknad MX, TXT, _dmarc eller autodiscover är fynd. NS, webbposterna och
+CAA listas som ändringar att bekräfta; de ger inte klart före mänsklig bedömning.
+TTL-förändringar utan innehållsändring redovisas separat. DNS-felkod, timeout eller
+ofullständigt uppslag i någon bild ger okänt och aldrig klart. Jämförelsen innehåller
+den nya bilden och kontrollsumman för den gamla. Filerna skapas privata med 0600;
+befintliga filer vägras. Fiktiv eller okänd verksamhet gör inga verkliga uppslag.
+
+En läsning kan inte räkna upp alla namn i zonen. Detta är en jämförelse av urvalet,
+inte en fullständig zonexport eller prövning av e-postautentiseringens riktighet.
+Verklig domän läses bara inom beställning som namnger lansering och domän.
+
 Lanseringskonfiguration skild från förhandsvisningen (noindex och robots-blockering bara i förhandsvisningen);
 kanonisk domänvariant vald, den andra omdirigerar; e-postdomänen kontrollerad och den gamla sajten arkiverad enligt
 stegen nedan **före DNS-omläggning och före omdirigeringar från gammal sajt prövas**; sökkonsolens META-token
@@ -76,8 +108,18 @@ förhandsvisning.
 
 ## Återgång
 
-Peka produktionsdomänen till föregående driftsättning; återställ noindex om innehållet inte får indexeras; not i
-`ARBETSLOGG.md` med tid, orsak och vem som beslutade; ny prelaunch-runda före nytt försök.
+Driftsättning: peka tillbaka till föregående driftsättning med värdplattformens CLI;
+återställ noindex om innehållet inte får indexeras.
+
+DNS: en behörig människa återställer posterna till ögonblicksbilden eller zonexporten
+från före bytet. Ingen session ändrar DNS. Återgången kan ta upp till den TTL som
+gällde innan; vid namnserverbyte måste också delegeringens TTL räknas med. En återgång
+av driftsättningen återställer inte DNS. Bokför tid, orsak, vem som beslutade och vad
+som återställdes i `ARBETSLOGG.md`; ny prelaunch-runda före nytt försök.
+
+DNS-tillägget N1–N3: OVL-20260930-54c10b-digitala. Primärkällor lästa 2026-09-30:
+[RFC 1034 §3.6 och §4.2](https://datatracker.ietf.org/doc/html/rfc1034),
+[Cloudflare TTL](https://developers.cloudflare.com/dns/manage-dns-records/reference/ttl/).
 
 ## Efter lansering
 

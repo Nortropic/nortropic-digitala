@@ -467,5 +467,109 @@ class EpostDNS(unittest.TestCase):
         self.assertIn('migrering_adresser',text)
 
 
+class DNSByte(unittest.TestCase):
+    def bild(self):
+        def read(name, typ):
+            data = {'NS':'ns1.firma.test.','MX':'10 mail.firma.test.','TXT':'"v=spf1 -all"',
+                    'CAA':'0 issue "ca.test"','A':'192.0.2.1','AAAA':'2001:db8::1','CNAME':'mail.firma.test.'}[typ]
+            if name.startswith('_dmarc.'): data='"v=DMARC1; p=none"'
+            return la.dns_las(name,typ,lambda n,t:{'Status':0,'Question':[{'name':n,'type':la.DNS_TYPER[t]}],
+                'Answer':[{'name':n,'type':la.DNS_TYPER[t],'TTL':3600,'data':data}]})
+        return la.dns_bild({'fiktiv':False},'firma.test',read,tid='2026-09-30T00:00:00Z')
+
+    def test_bilden_har_bestallningens_elva_fragor_tid_resolver_ttl(self):
+        image=self.bild()
+        self.assertTrue(image['klar']);self.assertEqual(image['tid'],'2026-09-30T00:00:00Z')
+        self.assertEqual(image['resolver'],'https://cloudflare-dns.com/dns-query')
+        self.assertEqual([(r['namn'],r['typ']) for r in image['uppslag']],
+            [('firma.test',x) for x in ('NS','MX','TXT','CAA','A','AAAA')]+
+            [('www.firma.test',x) for x in ('A','AAAA','CNAME')]+[('_dmarc.firma.test','TXT'),('autodiscover.firma.test','CNAME')])
+        self.assertTrue(all(p['ttl']==3600 for r in image['uppslag'] for p in r['poster']))
+
+    def test_lika_mx_spf_dmarc_autodiscover_och_webb_andring(self):
+        import copy
+        base=self.bild();same=la.dns_jamfor(base,base)
+        self.assertEqual((same['fynd'],same['andringar'],same['okanda'],same['klar']),([],[],[],True))
+        for name,typ in [('firma.test','MX'),('firma.test','TXT'),('_dmarc.firma.test','TXT'),('autodiscover.firma.test','CNAME')]:
+            new=copy.deepcopy(base);row=next(r for r in new['uppslag'] if (r['namn'],r['typ'])==(name,typ))
+            if name=='firma.test' and typ=='TXT':row['poster'][0]['data']='"v=spf1 include:annan.test -all"'
+            else:row['poster']=[]
+            r=la.dns_jamfor(base,new)
+            self.assertEqual([(x['namn'],x['typ']) for x in r['fynd']],[(name,typ)]);self.assertFalse(r['klar'])
+        new=copy.deepcopy(base);next(r for r in new['uppslag'] if r['typ']=='A')['poster'][0]['data']='192.0.2.2'
+        r=la.dns_jamfor(base,new);self.assertEqual(r['fynd'],[])
+        self.assertEqual([(x['namn'],x['typ']) for x in r['andringar']],[('firma.test','A')]);self.assertFalse(r['klar'])
+        new=copy.deepcopy(base)
+        for row in new['uppslag']:
+            for p in row['poster']:p['ttl']=300
+        r=la.dns_jamfor(base,new)
+        self.assertTrue(r['klar']);self.assertEqual(len(r['ttl_andringar']),11)
+
+    def test_timeout_servfail_ofullstandig_bild_och_fiktiv_ar_aldrig_klara(self):
+        import copy
+        from unittest.mock import Mock
+        for mode in ('timeout','servfail'):
+            def read(name,typ):
+                if mode=='timeout':raise TimeoutError()
+                return la.dns_las(name,typ,lambda n,t:{'Status':2})
+            image=la.dns_bild({'fiktiv':False},'firma.test',read)
+            self.assertFalse(image['klar']);self.assertEqual(len(image['okanda']),11)
+            self.assertFalse(la.dns_jamfor(self.bild(),image)['klar'])
+        for mutation in ('missing','duplicate','bad-ttl','global-error'):
+            image=copy.deepcopy(self.bild())
+            if mutation=='missing':image['uppslag'].pop()
+            elif mutation=='duplicate':image['uppslag'].append(copy.deepcopy(image['uppslag'][0]))
+            elif mutation=='bad-ttl':image['uppslag'][0]['poster'][0]['ttl']=-1
+            else:image['okanda']=['ofullständig insamling']
+            r=la.dns_jamfor(self.bild(),image);self.assertFalse(r['klar']);self.assertTrue(r['okanda'])
+        resolver=Mock(side_effect=AssertionError('DNS forbidden'))
+        self.assertFalse(la.dns_bild({'fiktiv':True},'firma.test',resolver)['klar']);resolver.assert_not_called()
+
+    def test_txt_blanksteg_och_presentationsandringar_far_inte_doljas(self):
+        import copy
+        before = self.bild()
+        for value in ('" v=spf1 -all"', '"v=spf1 -all "', '"v=spf1 " "-all"',
+                      '"v=spf1\\032-all"', '"V=SPF1 -all"'):
+            with self.subTest(value=value):
+                after = copy.deepcopy(before)
+                next(row for row in after['uppslag'] if row['namn']=='firma.test' and row['typ']=='TXT')['poster'][0]['data'] = value
+                result = la.dns_jamfor(before, after)
+                self.assertFalse(result['klar'])
+                self.assertEqual([(r['namn'],r['typ']) for r in result['fynd']], [('firma.test','TXT')])
+
+    def test_planens_ttl_ordning_atergang_och_steganvisning(self):
+        text=la.plan_md({'namn':'Syntetisk','fiktiv':True},'prov')
+        for term in ('sänker TTL','gammal TTL','höjer TTL igen','namnserverbyte','zonexport','föräldrazonen'):
+            self.assertIn(term,text)
+        self.assertLess(text.index('sänker TTL'),text.index('dns-bild'))
+        self.assertLess(text.index('dns-bild'),text.index('arkivera.mjs'))
+        self.assertLess(text.index('arkivera.mjs'),text.index('Domänen kopplad'))
+        self.assertLess(text.index('Domänen kopplad'),text.index('dns-jamfor'))
+        self.assertLess(text.index('dns-jamfor'),text.index('höjer TTL igen'))
+        for source in (text,(HERE.parent/'kunskap/lansering.md').read_text()):
+            section=source.split('## Återgång',1)[1].split('\n## ',1)[0]
+            for required in ('DNS','människa','ögonblicksbild','TTL','Ingen session'):
+                self.assertIn(required,section)
+        instruction=json.loads((HERE.parent/'steg/steg.json').read_text())['steg']['lansering']['anvisning']
+        self.assertIn('dns-bild',instruction);self.assertIn('dns-jamfor',instruction);self.assertIn('gamla TTL',instruction)
+
+    def test_cli_ny_privat_bild_och_jamforelse_utan_nat(self):
+        from unittest.mock import patch
+        from urllib.parse import urlsplit,parse_qs
+        def fetch(url,**kwargs):
+            q=parse_qs(urlsplit(url).query);name=q['name'][0];typ=q['type'][0]
+            return {'status':200,'body':json.dumps({'Status':0,'Question':[{'name':name,'type':la.DNS_TYPER[typ]}]})}
+        with tempfile.TemporaryDirectory() as td, patch.object(la.vu,'las',return_value={'fiktiv':False}), patch.object(dk,'hamta',side_effect=fetch) as net:
+            root=Path(td);base=root/'FORE.json';diff=root/'EFTER.json'
+            args=['--verksamhet','syntetisk','--doman','firma.test','--mandat','PROV']
+            self.assertEqual(la.main(['dns-bild',*args,'--ut',str(base)]),0)
+            self.assertEqual(la.main(['dns-jamfor',*args,'--fore',str(base),'--ut',str(diff)]),0)
+            self.assertEqual(net.call_count,22)
+            import hashlib
+            report=json.loads(diff.read_text());self.assertEqual(report['fore_sha256'],hashlib.sha256(base.read_bytes()).hexdigest())
+            self.assertEqual(report['efter']['doman'],'firma.test');self.assertTrue(report['klar'])
+            self.assertEqual(diff.stat().st_mode & 0o777,0o600)
+
+
 if __name__ == '__main__':
     unittest.main()
