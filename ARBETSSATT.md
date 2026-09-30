@@ -290,3 +290,17 @@ handlingslänkar och okänt utan ändrade gamla incidentfält eller exit-koder. 
 har text/länk som bas och valstyrd extern karta eller licensbelagd statisk bild.
 Ändrade professionsfiler pinnas efter ny källäsning 2026-09-30. Inga nya konton,
 avgifter, villkor, kundändringar eller Runtime-aktiveringar omfattas.
+
+## Beslut 2026-09-30 — läsande länkkontroll (OVL-20260930-b17920-digitala)
+
+Genomförandemandatet omfattar L1–L6 efter D1–D4:s integration. Slutadress,
+felsidetitel, avgränsade omförsök och total HTTP-tidsgräns kompletterar kvittot;
+lanseringskontrollen prövar gamla adresser med GET. Tredjeparts osäkra lägen enligt
+D3 behålls som okända, medan egna tidsfel är incidenter. Sitemapens budget räknar
+också hopp/omförsök, med ursprungsgränsen kvar. Ingen kundkontakt, leverantörsskrivning,
+schemaläggning eller ändring i DRIFT.json ingår. Prov använder bara lokala fejkservrar.
+
+Ny pinne gäller detta beslut i ARBETSSATT.md samt drift.md, lansering.md **och** den obligatoriska lärdomsposten i
+LARDOMAR.md: den sistnämnda är redan pinnad i steg/PINNAR.sha256 och kan därför
+inte ändras med bibehållen gammal hash. Detta är en teknisk anpassning av L5:s
+tvåradsformulering för att också uppfylla beställningens klart-när, inte nya ägarord.

@@ -16,8 +16,14 @@ pekas tillbaka med värdplattformens CLI).
 ## Lanseringsdagen
 
 1. Driftsätt lanseringskonfigurationen; startsidan svarar 200 med rätt innehåll.
-2. `lansering.py kontrollera --adress https://<domän>/` : noindex borta (meta och X-Robots-Tag), verifieringstaggen
-   synlig, sitemap 200, robots tillåter, kanonisk variant.
+2. `lansering.py kontrollera --adress https://<domän>/ --omdirigeringar REDIRECTS.json --ut KONTROLL.json`:
+   noindex borta (meta och X-Robots-Tag), verifieringstaggen synlig, sitemap 200,
+   robots tillåter, kanonisk variant. Samma `gamla`-lista med `fran` och `till` som
+   SEO-kontrollens offlineprov prövas nu live med GET: första svaret ska vara
+   301/308 och högst fem hopp ska landa på exakt målet med 200. Status, slutadress,
+   hopp och fynd per gammal adress finns i kvittot (OVL-20260930-b17920-digitala).
+   Spara också bokningens, betalningens och formulärets verkliga slutadresser som
+   `forvantad_slutadress` i DRIFT.json; driftverktyget skriver dem inte åt dig.
 3. Sökkonsol: `sokkonsol.py verifiera --live`, sedan `inspektera --live` för start och de viktigaste sidorna
    (extern åtkomst krävs, sokkonsol.md).
 4. Bing Webmaster Tools: importera egenskapen (människa). IndexNow om värden stöder det (valfritt).

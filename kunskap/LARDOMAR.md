@@ -322,3 +322,10 @@ i briefen).
 - **Tillämpning:** beslut DIGITALA-KREATIV-ARBETSKEDJA-20260928 i ARBETSSATT: vanlig brief, skaparpaket, tidig rendering och separat helhetskritik. Externa original och kvalitetskriterier bevaras.
 - **Kvarvarande osäkerhet:** ett begränsat omprov kan visa att vägen används och att en riktning fungerar, inte kausal effekt, generell variation eller självständig yrkesförmåga i alla uppdrag. Alla tidigare indatavillkor är inte oförändrade.
 - **Förslag för nästa fall:** använd den integrerade vanliga vägen med verkliga kundfakta och tidig helhetskritik; gör inte det begränsade arbetsprovets form till ny startmall. Nästa fullständiga bygge kräver eget accepterat uppdrag.
+
+
+## L20260930 - Slutadress och felsida i driftkontrollen
+- **Klass:** observation. **Underlag:** F-84 och tråden t_1a0f2b8dbd94d9d5c4d enligt OVL-20260930-b17920-digitala.
+- **Observation:** lokala fejkserverprov visar att 200 kan komma från fel adress eller en felsida. Kvittot behöver förväntad slutadress och titel, inte bara status. Omförsök delar både tidsgräns och sitemapens anropsbudget.
+- **Tillämpning:** drift_kontroll.py bokför avvikelse eller okänt utan att rätta kundens DRIFT.json. lansering.py prövar gamla omdirigeringar med GET.
+- **Kvarvarande osäkerhet:** syntetiska HTTP-prov är inte bevis för kundens bokning, betalning eller formulär. Baslinjen från verklig lansering måste finnas; skyddad tredjepart kan fortfarande vara okänd. Ingen allmän garanti om leverantörens affärsflöde följer.
