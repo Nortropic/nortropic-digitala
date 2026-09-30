@@ -23,9 +23,17 @@ Payment Link låser ingen kalenderplats.
 | Kontaktformulär | Befintlig formtjänst eller Tally | Form → ansvarig mottagning → uppföljning. Egen UI kan använda den lilla mottagningsadaptern bakom kundens befintliga host. |
 | Transaktionsnotis | Befintlig e-posttjänst, Resend som prövbar kandidat | API-acceptans, leveranshändelse och läsning av en människa hålls isär. Testmottagare betyder syntetisk leverans. |
 
-Cal:s [prislista](https://cal.com/pricing) och [FAQ](https://cal.com/faq) stödjer
+Cal, kontrollerat 2026-09-30 enligt OVL-20260930-c58c91: [prislistan](https://cal.com/pricing)
+och [FAQ](https://cal.com/faq) stödjer
 individvägen; Teams anges till 12 USD/användare/mån vid årsbetalning. Hosted
-kommersiell tjänst skiljs från AGPL/kommersiella källlicenser vid egen drift.
+Cal.com är fortfarande standardvägen för en persons bokningar. Cal.coms produktionskod
+är stängd sedan [beskedet 2026-04-14](https://cal.com/blog/cal-com-goes-closed-source-why).
+Den öppna communityversionen [Cal.diy](https://github.com/calcom/cal.diy) har MIT-licens.
+Dess README rekommenderar enbart personligt bruk utan produktion; Teams, Organizations,
+Insights, Workflows och SSO/SAML saknas, och det finns ingen hostad version av Cal.diy.
+Digitala anger därför inte egen drift av Cal.diy som väg för en kommersiell kund.
+Det är en avgränsning utifrån driftrekommendationen, inte ett kommersiellt förbud i
+[MIT-licensen](https://github.com/calcom/cal.diy/blob/main/LICENSE).
 Att källkod finns innebär inte kostnadsfri hostning, kalenderkoppling eller drift.
 
 TidyCals [FAQ](https://help.tidycal.com/article/739-faq) anger Free 0 USD,
