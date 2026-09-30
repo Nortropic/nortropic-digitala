@@ -3,10 +3,15 @@
     python3 -B verktyg/kor_profil.py matning --laddning LADDNING.json --fall FALL --etikett NAMN (--mal URL | --fil PATH)
         [--sektioner N] [--handling-text TEXT] [--handling-selektor CSS] [--undantag-fil FIL] [--torr]
     python3 -B verktyg/kor_profil.py kritik --laddning LADDNING.json --fall FALL --etikett NAMN --mall NAMN
-        --filer FILER.json --utforare claude|codex --modell NAMN [--parameter NYCKEL=VÄRDE ...] [--tid SEK] [--torr]
+        --filer FILER.json [--utforare claude|codex --modell NAMN] [--parameter NYCKEL=VÄRDE ...] [--tid SEK] [--torr]
     python3 -B verktyg/kor_profil.py provare --laddning LADDNING.json --fall FALL --etikett NAMN --start URL
-        --tillatna ORIGIN[,ORIGIN] --uppgift FIL --vy mobil|desktop --utforare claude|codex --modell NAMN
+        --tillatna ORIGIN[,ORIGIN] --uppgift FIL --vy mobil|desktop [--utforare claude|codex --modell NAMN]
         [--max-handlingar N] [--tid SEK] [--undantag-fil FIL] [--bindning K=V ...] [--torr]
+
+Kritikens och provarens modell är läsarnas val i arbetsplatsens Flöde, som kontoret ger med `tools/partner.py lasare`
+(kontoret hittas genom NR_KONTOR_ROOT eller systerkatalogen "nortropic-projektkontor"). Finns ett val vägras ett annat
+--utforare eller --modell; finns inget anger sessionen båda, som förut. Går valet inte att läsa vägras körningen.
+Varifrån modellen kom bokförs i körposten (lasarval). En formåterhämtning behåller den ursprungliga körningens modell.
 
 Runtime hittas genom NR_HOST_ROOT eller systerkatalogen "Nortropic Runtime"; den aktiva releasen läses ur
 .runtime/ap10/active.json, och profilen körs ur releasens egen kod. Mätningens vyer och axe-taggar kommer ur
@@ -47,6 +52,7 @@ KONTEXT = {'designkritik-komp': {'kund': True, 'profession': True, 'avskarmad': 
            'femsekunderstest': {'kund': False, 'profession': False, 'avskarmad': True}}
 AVSKARMAD_FORBJUDET = re.compile(r'(?i)(?<![a-zåäö])(brief|facit|kritik|svar|riktning|research)(en|et|er|erna|ens|ets|s)?(?![a-zåäö])|\.html?$|\.css$|\.jsx?$|\.tsx?$|\.md$|\.json$|\.txt$')
 STEG_FOR_PROFIL = {'matning': 'matning', 'kritik': 'kritik', 'provare': 'provare'}
+MODELLNAMN = re.compile(r'\A[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z')
 
 
 class Vagrad(Exception):
@@ -58,6 +64,48 @@ def runtime_root():
     if not (root / '.runtime/ap10/active.json').is_file():
         raise Vagrad('Runtime hittas inte (sätt NR_HOST_ROOT): ' + str(root))
     return root
+
+
+def kontor_root():
+    root = Path(os.environ.get('NR_KONTOR_ROOT') or (ROT.parent / 'nortropic-projektkontor')).resolve()
+    if not (root / 'tools/partner.py').is_file():
+        raise Vagrad('kontoret hittas inte, så läsarnas val kan inte läsas (sätt NR_KONTOR_ROOT): ' + str(root))
+    return root
+
+
+def lasarval(kontor):
+    """Läsarnas val i Flödet ur kontorets eget läskommando: {'modell', 'utforare'}, modell None utan val."""
+    env = {k: v for k, v in os.environ.items() if k in ('PATH', 'HOME', 'USER', 'LOGNAME', 'TMPDIR')}
+    env.update(LC_ALL='C', LANG='C', PYTHONDONTWRITEBYTECODE='1')
+    try:
+        done = subprocess.run([sys.executable, '-B', str(kontor / 'tools/partner.py'), 'lasare'], cwd=str(kontor), env=env,
+                              capture_output=True, text=True, timeout=60)
+        rad = json.loads((done.stdout.strip().splitlines() or [''])[-1])
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise Vagrad('läsarnas val kan inte läsas ur kontoret: %s' % error) from error
+    if not isinstance(rad, dict) or rad.get('schema') != 'lasarval/1' or done.returncode != 0 or 'fel' in rad:
+        raise Vagrad('läsarnas val kan inte läsas ur kontoret: %s' % ((rad.get('fel') if isinstance(rad, dict) else None)
+                                                                     or done.stderr.strip()[-300:] or 'okänt svar'))
+    modell, utforare = rad.get('modell'), rad.get('utforare')
+    if modell is None and utforare is None:
+        return {'modell': None, 'utforare': None}
+    if not isinstance(modell, str) or not MODELLNAMN.match(modell) or utforare not in ('claude', 'codex'):
+        raise Vagrad('läsarnas val har fel form: %r' % (rad,))
+    return {'modell': modell, 'utforare': utforare}
+
+
+def valj_lasare(args):
+    """Läsarnas val går före; ett avvikande --utforare eller --modell vägras, och utan val krävs båda."""
+    val = lasarval(kontor_root())
+    if val['modell']:
+        if (args.modell and args.modell != val['modell']) or (args.utforare and args.utforare != val['utforare']):
+            raise Vagrad('läsarnas val i Flödet är %s (%s); ett annat val i argumenten vägras'
+                         % (val['modell'], val['utforare']))
+        args.modell, args.utforare = val['modell'], val['utforare']
+        return {'kalla': 'flodet', 'modell': val['modell'], 'utforare': val['utforare']}
+    if not (args.modell and args.utforare):
+        raise Vagrad('läsarna har inget val i Flödet: ange --utforare och --modell')
+    return {'kalla': 'argument', 'modell': args.modell, 'utforare': args.utforare}
 
 
 def aktiv_release(root):
@@ -542,8 +590,8 @@ def parse(argv):
     p.add_argument('--tillatna', required=True)
     p.add_argument('--uppgift', required=True)
     p.add_argument('--vy', choices=('mobil', 'desktop'), required=True)
-    p.add_argument('--utforare', choices=('claude', 'codex'), required=True)
-    p.add_argument('--modell', required=True)
+    p.add_argument('--utforare', choices=('claude', 'codex'), help='bara när läsarna inget val har i Flödet')
+    p.add_argument('--modell', help='bara när läsarna inget val har i Flödet')
     p.add_argument('--max-handlingar', type=int)
     p.add_argument('--tid', type=int)
     p.add_argument('--undantag-fil')
@@ -554,8 +602,8 @@ def parse(argv):
         if args.aterhamta:
             if args.mall or args.filer or args.utforare or args.modell or args.parameter or args.bindning or args.tid:
                 raise Vagrad('formåterhämtning hämtar mall, underlag, modell och bindning oförändrade ur KORNING')
-        elif not all((args.mall, args.filer, args.utforare, args.modell)):
-            raise Vagrad('kritik kräver --mall, --filer, --utforare och --modell')
+        elif not all((args.mall, args.filer)):
+            raise Vagrad('kritik kräver --mall och --filer')
     return args
 
 
@@ -571,6 +619,7 @@ def run(argv=None):
         raise Vagrad('fallmappen finns inte: ' + str(fall))
     receipt, laddning_sha = laddning(args.laddning)
     bind_laddning(receipt, args.profil)
+    lasare = valj_lasare(args) if args.profil == 'provare' or (args.profil == 'kritik' and not args.aterhamta) else None
     root = runtime_root()
     release = aktiv_release(root)
     if args.profil == 'matning':
@@ -582,6 +631,8 @@ def run(argv=None):
     post = {'schema': 1, 'profil': args.profil, 'etikett': args.etikett, 'laddning': {'fil': str(Path(args.laddning).resolve()),
             'sha256': laddning_sha, 'steg': receipt['steg'], 'sha256_over_underlag': receipt['sha256_over_underlag'],
             'rot_git_head': receipt.get('rot_git_head')}, 'aktiv_release': release, 'argv': utan_hemlig_vag(cmd), 'cwd': release['kod'], 'bindning': bindning_ur(args, receipt, release), **extra}
+    if lasare:
+        post['lasarval'] = lasare
     if extra.get('formaterhamtning'):
         original = json.loads(Path(args.aterhamta).read_text())
         aterhamtningsbindning(post, original)

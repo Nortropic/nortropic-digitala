@@ -32,6 +32,19 @@ def fake_runtime(tmp, viewports, axe_tags, parametrar):
     return root
 
 
+def fake_kontor(tmp, svar=None, kod=0):
+    """Ett låtsaskontor vars `tools/partner.py lasare` ger läsarnas val och bokför sin miljö; provet rör aldrig kontorets
+    riktiga val."""
+    kontor = tmp / 'kontor'
+    (kontor / 'tools').mkdir(parents=True, exist_ok=True)
+    svar = svar if svar is not None else {'schema': 'lasarval/1', 'modell': None, 'utforare': None}
+    (kontor / 'tools/partner.py').write_text(
+        'import json, os, sys\nfrom pathlib import Path\nassert sys.argv[1:] == ["lasare"], sys.argv\n'
+        'Path(__file__).with_name("miljo.json").write_text(json.dumps(sorted(os.environ)))\n'
+        'print(json.dumps(%r))\nsys.exit(%d)\n' % (svar, kod))
+    return kontor
+
+
 def receipt_file(tmp, steg='kritik', profil_text=None, name='LADDNING.json'):
     """Ett laddningskvitto med arbetsyta: kritik-steget bär repots tre mallar, matning-steget PROFIL.json; varje rad har sha256."""
     import hashlib
@@ -73,9 +86,10 @@ class Rig(unittest.TestCase):
         self.laddning = receipt_file(self.tmp, 'kritik')
         self.laddning_matning = receipt_file(self.tmp, 'matning', name='LADDNING-matning.json')
         self.laddning_provare = receipt_file(self.tmp, 'provare', name='LADDNING-provare.json')
+        self.kontor = fake_kontor(self.tmp)
 
     def run_cli(self, root, *args):
-        env = dict(os.environ, NR_HOST_ROOT=str(root))
+        env = dict(os.environ, NR_HOST_ROOT=str(root), NR_KONTOR_ROOT=str(self.kontor))
         done = subprocess.run([sys.executable, '-B', str(HERE / 'kor_profil.py'), *args], capture_output=True, text=True, env=env, cwd=self.tmp)
         return done.returncode, json.loads(done.stdout.strip()) if done.stdout.strip() else {'stderr': done.stderr}
 
@@ -167,6 +181,100 @@ class Provare(Rig):
         self.assertIn('commit=abc', bindningar)
         self.assertTrue(any(b.startswith('laddning=') for b in bindningar))
         self.assertIn('steg=provare', bindningar)
+
+
+class Lasarval(Rig):
+    """Läsarnas val i Flödet (kontorets `partner.py lasare`) avgör kritikens och provarens modell."""
+
+    def setUp(self):
+        super().setUp()
+        self.root = fake_runtime(self.tmp, PROFIL['vyer'], PROFIL['axe_taggar'], parametrar=False)
+        self.filer = self.tmp / 'filer.json'
+        self.filer.write_text(json.dumps([{'kalla': '/tmp/a.png', 'plats': 'VYER/a.png', 'vad': 'bild'}]))
+        self.uppgift = self.tmp / 'UPPGIFT.md'
+        self.uppgift.write_text('Startadress: https://x.test/\nDitt handlingskommando är exakt: ./handling\n\nMål: titta.\n')
+
+    def val(self, modell, utforare):
+        fake_kontor(self.tmp, {'schema': 'lasarval/1', 'modell': modell, 'utforare': utforare})
+
+    def kritik(self, *extra):
+        return self.run_cli(self.root, 'kritik', '--laddning', str(self.laddning), '--fall', str(self.fall), '--etikett', 'l-1',
+                            '--mall', 'femsekunderstest', '--filer', str(self.filer), *extra, '--torr')
+
+    def provare(self, *extra):
+        return self.run_cli(self.root, 'provare', '--laddning', str(self.laddning_provare), '--fall', str(self.fall), '--etikett',
+                            'l-2', '--start', 'https://x.test/', '--tillatna', 'https://x.test', '--uppgift', str(self.uppgift),
+                            '--vy', 'mobil', *extra, '--torr')
+
+    @staticmethod
+    def modell_i(argv):
+        return argv[argv.index('--utforare') + 1], argv[argv.index('--modell') + 1]
+
+    def test_valet_i_flodet_ger_kritikens_och_provarens_modell(self):
+        self.val('gpt-6-astra', 'codex')
+        for kor in (self.kritik, self.provare):
+            with self.subTest(profil=kor.__name__):
+                code, out = kor()
+                self.assertEqual(code, 0, out)
+                self.assertEqual(self.modell_i(out['argv']), ('codex', 'gpt-6-astra'))
+                self.assertEqual(out['lasarval'], {'kalla': 'flodet', 'modell': 'gpt-6-astra', 'utforare': 'codex'})
+                self.assertEqual(out['bindning']['utforare'], 'codex')
+
+    def test_ett_annat_val_i_argumenten_vagras_och_samma_godtas(self):
+        self.val('claude-opus-5', 'claude')
+        for extra in (('--modell', 'claude-sonnet-5'), ('--utforare', 'codex'), ('--utforare', 'codex', '--modell', 'gpt-6-astra')):
+            with self.subTest(extra=extra):
+                code, out = self.kritik(*extra)
+                self.assertEqual(code, 2, out)
+                self.assertIn('läsarnas val i Flödet är claude-opus-5 (claude)', out['skal'])
+        code, out = self.provare('--utforare', 'claude', '--modell', 'claude-opus-5')
+        self.assertEqual(code, 0, out)
+        self.assertEqual(out['lasarval']['kalla'], 'flodet')
+
+    def test_utan_val_anger_sessionen_bada_som_forut(self):
+        code, out = self.kritik()
+        self.assertEqual(code, 2, out); self.assertIn('ange --utforare och --modell', out['skal'])
+        code, out = self.provare('--modell', 'claude-opus-5')
+        self.assertEqual(code, 2, out)
+        code, out = self.kritik('--utforare', 'claude', '--modell', 'claude-sonnet-5')
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.modell_i(out['argv']), ('claude', 'claude-sonnet-5'))
+        self.assertEqual(out['lasarval'], {'kalla': 'argument', 'modell': 'claude-sonnet-5', 'utforare': 'claude'})
+
+    def test_ett_val_som_inte_gar_att_lasa_vagras(self):
+        for svar, kod in (({'schema': 'lasarval/1', 'fel': 'installningar.json går inte att läsa'}, 1),
+                          ({'schema': 'annat/1', 'modell': None, 'utforare': None}, 0),
+                          ({'schema': 'lasarval/1', 'modell': '--flagga', 'utforare': 'claude'}, 0),
+                          ({'schema': 'lasarval/1', 'modell': 'gpt-6-astra', 'utforare': None}, 0)):
+            with self.subTest(svar=svar):
+                fake_kontor(self.tmp, svar, kod)
+                code, out = self.kritik('--utforare', 'claude', '--modell', 'claude-opus-5')
+                self.assertEqual(code, 2, out)
+                self.assertIn('läsarnas val', out['skal'])
+
+    def test_utan_kontor_vagras_kritik_och_provare_men_inte_matning(self):
+        self.kontor = self.tmp / 'inget-kontor'
+        code, out = self.kritik('--utforare', 'claude', '--modell', 'claude-opus-5')
+        self.assertEqual(code, 2, out); self.assertIn('kontoret hittas inte', out['skal'])
+        code, out = self.run_cli(self.root, 'matning', '--laddning', str(self.laddning_matning), '--fall', str(self.fall),
+                                 '--etikett', 'l-3', '--mal', 'https://example.test/', '--torr')
+        self.assertEqual(code, 0, out)
+        self.assertNotIn('lasarval', out)
+
+    def test_kontorets_lasning_far_en_ren_miljo(self):
+        self.val('gpt-6-astra', 'codex')
+        env_fore = os.environ.get('PARTNER_DATA')
+        os.environ['PARTNER_DATA'] = str(self.tmp / 'annan-data')
+        try:
+            code, out = self.kritik()
+        finally:
+            if env_fore is None:
+                os.environ.pop('PARTNER_DATA', None)
+            else:
+                os.environ['PARTNER_DATA'] = env_fore
+        self.assertEqual(code, 0, out)
+        miljo = json.loads((self.kontor / 'tools/miljo.json').read_text())
+        self.assertNotIn('PARTNER_DATA', miljo); self.assertNotIn('NR_HOST_ROOT', miljo); self.assertNotIn('NR_KONTOR_ROOT', miljo)
 
 
 class HemligVag(unittest.TestCase):

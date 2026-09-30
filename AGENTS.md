@@ -21,6 +21,8 @@ Regler:
   Steg märkta `staende` ryms i det stående mandatet enligt `MANDAT.md`.
 - Runtimes profiler (mätning, kritik, provare) körs genom `verktyg/kor_profil.py`, som tar Digitalas val ur
   `matning/PROFIL.json` och binder körningen till laddningskvittot. Runtime prövar form och kör; innehållet är vårt.
+  Kritikens och provarens modell är läsarnas val i arbetsplatsens Flöde, som kontoret ger med `tools/partner.py
+  lasare`: finns ett val vägras ett annat `--utforare` eller `--modell`, och finns inget anger sessionen båda.
 - Kundmappen ges med `--kund` och ligger utanför repot: kontorets privata `evidence/digitala/local/<kund>/` (se
   `kunder/README.md`); beställningen namnger kunden. Kundfiler och professionsfiler hålls i skilda klasser; en
   kundpreferens blir aldrig praxis, och ingen mängd tillämpningar gör något till praxis: ett gemensamt arbetssätt kräver
