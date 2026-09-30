@@ -8,6 +8,7 @@ Sökkonsolens skrivande steg görs med verktyg/sokkonsol.py, driftsättning och 
     python3 -B verktyg/lansering.py kontrollera --adress https://domän.se [--verifieringstoken TOKEN] [--tillat-http] --ut KONTROLL.json
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -132,19 +133,103 @@ def epostkontroll(verksamhet, doman, selektor, resolver=dns_las):
     return result
 
 
+def dns_fragor(doman):
+    return ([(doman, typ) for typ in ('NS', 'MX', 'TXT', 'CAA', 'A', 'AAAA')]
+            + [('www.'+doman, typ) for typ in ('A', 'AAAA', 'CNAME')]
+            + [('_dmarc.'+doman, 'TXT'), ('autodiscover.'+doman, 'CNAME')])
+
+
+def _dns_rad(row, name, typ):
+    """Validate saved and freshly read rows by the same contract."""
+    if (not isinstance(row, dict) or row.get('namn') != name or row.get('typ') != typ
+            or row.get('lage') not in ('ok', 'okant') or not isinstance(row.get('poster'), list)):
+        raise ValueError('ofullständigt DNS-svar')
+    for p in row['poster']:
+        if (not isinstance(p, dict) or not isinstance(p.get('data'), str) or not p['data']
+                or type(p.get('ttl')) is not int or p['ttl'] < 0
+                or dns_namn(p['namn'], service=True) != p['namn']):
+            raise ValueError('ogiltig sparad DNS-post')
+    return row
+
+
+def dns_bild(verksamhet, doman, resolver=dns_las, tid=None):
+    doman = dns_namn(doman)
+    result = {'schema': 'digitala-dns-bild/1', 'doman': doman,
+              'tid': tid or time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+              'resolver': DNS_RESOLVER, 'uppslag': [], 'okanda': [], 'klar': False,
+              'not': 'En läsning kan inte räkna upp alla namn i zonen; vid namnserverbyte krävs full zonexport.'}
+    if verksamhet.get('fiktiv') is not False:
+        result['okanda'].append('fiktiv eller okänd verksamhet: ingen verklig DNS-kontroll'); return result
+    for name, typ in dns_fragor(doman):
+        try:
+            row = _dns_rad(resolver(name, typ), name, typ)
+        except (OSError, ValueError, KeyError, TypeError, UnicodeError):
+            row = {'namn': name, 'typ': typ, 'resolver': DNS_RESOLVER, 'lage': 'okant', 'poster': [], 'skal': 'kunde inte kontrolleras'}
+        result['uppslag'].append(row)
+        if row['lage'] != 'ok': result['okanda'].append(name+' '+typ+': kunde inte kontrolleras')
+    result['klar'] = not result['okanda']
+    return result
+
+
+def dns_jamfor(fore, efter):
+    for image in (fore, efter):
+        if (not isinstance(image, dict) or image.get('schema') != 'digitala-dns-bild/1'
+                or not isinstance(image.get('tid'), str) or not image['tid']
+                or not isinstance(image.get('doman'), str)
+                or image.get('resolver') != DNS_RESOLVER or not isinstance(image.get('uppslag'), list)
+                or not isinstance(image.get('okanda'), list) or any(not isinstance(x, str) for x in image['okanda'])):
+            raise ValueError('ogiltig DNS-ögonblicksbild')
+    doman = dns_namn(fore['doman'])
+    if dns_namn(efter['doman']) != doman: raise ValueError('ögonblicksbilderna gäller olika domäner')
+    result = {'schema': 'digitala-dns-jamforelse/1', 'doman': doman, 'fore_tid': fore['tid'],
+              'efter_tid': efter['tid'], 'resolver': DNS_RESOLVER, 'fynd': [], 'andringar': [],
+              'ttl_andringar': [], 'okanda': [], 'klar': False,
+              'not': 'En läsning kan inte räkna upp alla namn i zonen. Ändringar måste bekräftas av behörig människa; ingen session ändrar DNS.'}
+    result['okanda'].extend('före: '+x for x in fore['okanda'])
+    result['okanda'].extend('efter: '+x for x in efter['okanda'])
+    def get(image, name, typ):
+        rows = [r for r in image['uppslag'] if isinstance(r, dict) and (r.get('namn'), r.get('typ')) == (name, typ)]
+        if len(rows) != 1: raise ValueError('saknat eller dubbelt uppslag')
+        r = _dns_rad(rows[0], name, typ)
+        if r['lage'] != 'ok': raise ValueError('okänt uppslag')
+        return r['poster']
+    for name, typ in dns_fragor(doman):
+        try:
+            old, new = get(fore, name, typ), get(efter, name, typ)
+        except (ValueError, KeyError, TypeError, UnicodeError):
+            result['okanda'].append(name+' '+typ+': kunde inte kontrolleras före eller efter'); continue
+        # Preserve TXT presentation exactly: trimming or unescaping may hide a
+        # changed mail record. Even a representation-only change needs review.
+        values = lambda rows: sorted({(r['namn'], r['data'] if typ in ('TXT', 'CAA') else r['data'].lower().rstrip('.')) for r in rows})
+        if values(old) != values(new):
+            critical = typ in ('MX', 'TXT') or name.startswith('autodiscover.')
+            row = {'namn': name, 'typ': typ, 'fore': old, 'efter': new,
+                   'skal': 'e-postrelaterad post ändrad eller saknad' if critical else 'ändring att bekräfta'}
+            result['fynd' if critical else 'andringar'].append(row)
+        elif sorted(p['ttl'] for p in old) != sorted(p['ttl'] for p in new):
+            result['ttl_andringar'].append({'namn': name, 'typ': typ,
+                                           'fore': sorted(p['ttl'] for p in old), 'efter': sorted(p['ttl'] for p in new)})
+    result['klar'] = not any(result[k] for k in ('fynd', 'andringar', 'okanda'))
+    return result
+
+
 def plan_md(v, mandat):
     dom = (v.get('webb') or {}).get('doman') or '<domän>'
     lines = ['# Lansering — %s (%s)' % (v['namn'], dom), '', '**Mandat:** %s' % (mandat or 'INGET ANGIVET — lansering får inte utföras utan beställning som namnger lansering (MANDAT.md §2)'),
              '**Fiktiv verksamhet:** %s' % ('ja — ingen verklig lansering, ingen sökkonsol, ingen profil' if v['fiktiv'] else 'nej'), '',
              '## Före lanseringsdagen', '',
-             '1. Lanseringskonfiguration skild från förhandsvisning: canonical, sitemap och robots på %s; `noindex` bort BARA i lanseringskonfigurationen.' % dom,
-             '2. Kanonisk variant vald (www eller apex); den andra omdirigerar 301 till den valda; båda får inte svara 200.',
-             '3. Kontrollera avsändningsdomänens SPF, leverantörens DKIM-selektor och DMARC med lansering.py epostkontroll; spara kvittot privat. Fiktiv verksamhet gör ingen verklig DNS-läsning.',
-             '4. Arkivera den gamla sajtens sitemapadresser och intervjuns migrering_adresser med webblasare/arkivera.mjs i kundmappen FÖRE DNS-omläggning. Läs manifestet och varje misslyckad adress.',
-             '5. Omdirigeringar från gammal sajt (adresser med trafik eller länkar) i konfigurationen och prövade i förhandsvisning (seo_kontroll --omdirigeringar).',
-             '6. Sökkonsolens META-token hämtad (sokkonsol.py token) och renderad i <head>; taggen ligger kvar för alltid.',
-             '7. Prelaunch-rapport (prelaunch.py) med grind 0–5 och 7 PASS och juridiken avgjord av människa.',
-             '8. Domänen kopplad hos värden (DNS hos kundens registrar, certifikat utfärdat); återgångsväg känd (föregående driftsättning kan pekas tillbaka med värdplattformens CLI).', '',
+             '1. Behörig människa sänker TTL för posterna som ska ändras, exempelvis till 300 s, minst en gammal TTL före bytet. Delegeringens TTL (NS i föräldrazonen) sätts av registret och kan inte sänkas här. Med e-post på domänen ändras normalt bara webbposterna hos nuvarande DNS-värd; namnserverbyte kräver att hela zonen återskapas ur en zonexport. Ingen session ändrar DNS.',
+             '2. Spara ögonblicksbild med lansering.py dns-bild --verksamhet VERKSAMHET.json --doman DOMÄN --mandat POST-ID --ut DNS-FORE.json före domänkoppling. Läsningen räknar inte upp alla namn i zonen.',
+             '3. Lanseringskonfiguration skild från förhandsvisning: canonical, sitemap och robots på %s; `noindex` bort BARA i lanseringskonfigurationen.' % dom,
+             '4. Kanonisk variant vald (www eller apex); den andra omdirigerar 301 till den valda; båda får inte svara 200.',
+             '5. Kontrollera avsändningsdomänens SPF, leverantörens DKIM-selektor och DMARC med lansering.py epostkontroll; spara kvittot privat. Fiktiv verksamhet gör ingen verklig DNS-läsning.',
+             '6. Arkivera den gamla sajtens sitemapadresser och intervjuns migrering_adresser med webblasare/arkivera.mjs i kundmappen FÖRE DNS-omläggning. Läs manifestet och varje misslyckad adress.',
+             '7. Omdirigeringar från gammal sajt (adresser med trafik eller länkar) i konfigurationen och prövade i förhandsvisning (seo_kontroll --omdirigeringar).',
+             '8. Sökkonsolens META-token hämtad (sokkonsol.py token) och renderad i <head>; taggen ligger kvar för alltid.',
+             '9. Prelaunch-rapport (prelaunch.py) med grind 0–5 och 7 PASS och juridiken avgjord av människa.',
+             '10. Domänen kopplad hos värden av behörig människa (DNS hos kundens registrar, certifikat utfärdat); återgångsväg och DNS-ögonblicksbild/zonexport kända.',
+             '11. Efter att den gamla TTL:en löpt ut: lansering.py dns-jamfor --verksamhet VERKSAMHET.json --doman DOMÄN --mandat POST-ID --fore DNS-FORE.json --ut DNS-JAMFORELSE.json. Läs fynd, okända uppslag och ändringar att bekräfta. Okänt är aldrig klart.',
+             '12. Behörig människa höjer TTL igen när bytet är bekräftat.', '',
              '## Lanseringsdagen', '',
              '1. Driftsätt lanseringskonfigurationen till produktionsdomänen; kontrollera att https://%s/ svarar 200 med rätt innehåll.' % dom,
              '2. Kontrollera att noindex är borta (meta robots och X-Robots-Tag) på startsidan och de viktigaste sidorna: lansering.py kontrollera.',
@@ -152,7 +237,9 @@ def plan_md(v, mandat):
              '4. Bing Webmaster Tools: importera egenskapen från sökkonsolen (människa); IndexNow-nyckelfil om värden stöder det (valfritt).',
              '5. Mätverktyget: kontrollera att konverteringshändelserna syns i felsökningsläget på produktionsdomänen (uppfoljning.md).', '',
              '## Oåterkalleligt', '', '- Sökmotorernas första indexering av fel innehåll (därför noindex-kontrollen före sökkonsolen).', '- Ägarskap i sökkonsolen (tas bort manuellt vid avslut).', '- Omdirigeringar som ändrat inkommande länkars mål.', '',
-             '## Återgång', '', '- Peka produktionsdomänen till föregående driftsättning (värdplattformens CLI), återställ noindex om innehållet inte får indexeras, skriv en not i ARBETSLOGG.md med tid och orsak.', '',
+             '## Återgång', '', '- Driftsättning: peka tillbaka till föregående driftsättning med värdplattformens CLI; återställ noindex om innehållet inte får indexeras.',
+             '- DNS: behörig människa återställer posterna till ögonblicksbilden eller zonexporten från före bytet. Ingen session ändrar DNS. Återgången kan ta upp till den TTL som gällde innan; kontrollera även delegeringens TTL vid namnserverbyte.',
+             '- Skriv en not i ARBETSLOGG.md med tid, orsak, vem som beslutade och vilket återgångssteg som utfördes.', '',
              '## Veckorna efter', '', '- Dag 2–3 och därefter varannan dag i två veckor: sökkonsolens indexeringsrapport (uppfoljning.md, sokkonsol.md); månadsvis: frågor i position 5–20, visningar utan klick, Core Web Vitals-rapporten.']
     return '\n'.join(lines) + '\n'
 
@@ -241,9 +328,10 @@ def kontrollera(adress, token=None, tillat_http=False, hamta=hamta, omdirigering
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog='lansering', description=__doc__.split('\n\n')[0])
-    p.add_argument('kommando', choices=('plan', 'kontrollera', 'epostkontroll'))
+    p.add_argument('kommando', choices=('plan', 'kontrollera', 'epostkontroll', 'dns-bild', 'dns-jamfor'))
     p.add_argument('--verksamhet'); p.add_argument('--mandat'); p.add_argument('--adress'); p.add_argument('--verifieringstoken'); p.add_argument('--tillat-http', action='store_true'); p.add_argument('--ut', required=True); p.add_argument('--omdirigeringar')
     p.add_argument('--avsandardoman'); p.add_argument('--dkim-selektor')
+    p.add_argument('--doman'); p.add_argument('--fore')
     a = p.parse_args(argv)
     try:
         if a.kommando == 'plan':
@@ -251,6 +339,18 @@ def main(argv=None):
                 raise ValueError('plan kräver --verksamhet')
             v = vu.las(a.verksamhet)
             Path(a.ut).write_text(plan_md(v, a.mandat), encoding='utf-8'); print(json.dumps({'ut': a.ut, 'mandat': bool(a.mandat), 'fiktiv': v['fiktiv']}))
+        elif a.kommando in ('dns-bild', 'dns-jamfor'):
+            if not all((a.verksamhet, a.doman, a.mandat)):
+                raise ValueError('DNS-läsning kräver --verksamhet, --doman och --mandat som namnger lansering och domän')
+            fore = Path(a.fore).read_bytes() if a.kommando == 'dns-jamfor' and a.fore else None
+            if a.kommando == 'dns-jamfor' and fore is None: raise ValueError('dns-jamfor kräver --fore DNS-FORE.json')
+            fresh = dns_bild(vu.las(a.verksamhet), a.doman)
+            result = fresh if fore is None else dns_jamfor(json.loads(fore), fresh)
+            if fore is not None: result.update(fore_sha256=hashlib.sha256(fore).hexdigest(), efter=fresh)
+            result['mandat'] = a.mandat
+            privat_json(a.ut, result)
+            print(json.dumps({'klar': result['klar'], 'ut': a.ut}))
+            return 2 if result['okanda'] else 0 if result['klar'] else 1
         elif a.kommando == 'epostkontroll':
             if not all((a.verksamhet, a.avsandardoman, a.dkim_selektor, a.mandat)):
                 raise ValueError('epostkontroll kraver --verksamhet, --avsandardoman, --dkim-selektor och --mandat')
