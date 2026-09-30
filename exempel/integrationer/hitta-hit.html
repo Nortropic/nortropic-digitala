@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitta hit — tekniskt exempel</title>
+<main>
+  <h1>Hitta hit</h1>
+  <p>Exempelplats, ingen kund: <span id="adress">Norrmalmstorg, Stockholm</span></p>
+  <p><a id="vagbeskrivning" href="https://www.google.com/maps/dir/?api=1&amp;destination=Norrmalmstorg%2C%20Stockholm">Öppna vägbeskrivning</a></p>
+  <p id="kartinformation">När du visar kartan kontaktar din webbläsare OpenStreetMap. Adressen och vägbeskrivningslänken fungerar utan den.</p>
+  <button id="visa-karta" type="button" aria-describedby="kartinformation" aria-controls="karta" hidden
+    data-kart-url="https://www.openstreetmap.org/export/embed.html?bbox=18.071%2C59.331%2C18.075%2C59.334&amp;layer=mapnik">Visa extern karta</button>
+  <div id="karta"></div>
+  <p>Kartdata: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors (ODbL)</a>.</p>
+</main>
+<script src="hitta-hit.js" defer></script>
+</html>

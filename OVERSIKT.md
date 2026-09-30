@@ -129,3 +129,13 @@ underkända och rättade). Direkt push till main nekades av rulesetet (bevis i k
   (kontorets privata `RESURSSPAR-20260927.md`, sammanfattad i HELHET-ETAPP1-RESULTAT-20260927).
 - Vad som verkställs mekaniskt respektive bärs av sessionen: `KEDJA.md`.
 - Runtime: aktiv konfiguration `eb102e4e` (mät-, kritik-, provar- och läsarprofiler, D034–D037).
+
+## Driftkontrollens omfattning (2026-09-30, OVL-20260930-ac1914-digitala)
+
+`verktyg/drift_kontroll.py` läser sitemapens egna sidrutter, ett indexled och
+namngivna handlingslänkar. `sitemap_tak` är 50 som standard och delar budgeten
+mellan barnkartor och sidprov; antal provade, andra ursprung och oprövade redovisas.
+Tredjeparts skydd/utmaning, 429 och timeout blir **okänt**, skilt från ok och incident.
+Veckobeskedet visar okända rader separat. Schema 1 och äldre incidentfält är kvar,
+exit 0 betyder inga incidenter och kan innehålla okänt. Se `kunskap/drift.md`.
+Inga POST, nya scheman, bokningar, betalningar eller självläkning görs av kontrollen.

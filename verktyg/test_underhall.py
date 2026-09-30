@@ -388,6 +388,15 @@ class Underhall(unittest.TestCase):
         self.assertNotIn('b.test', ut, 'en sajt utan incident redovisas inte som incident')
         self.assertNotIn('UTEBLIVEN VECKA', ut, 'ett färskt kvitto är ingen utebliven vecka')
 
+    def test_besked_visar_okanda_driftlagen_separat(self):
+        self.kor('oppna', '--kund', str(self.k), '--bestallning', BEST)
+        kvitto = {'schema': 1, 'tid': uh.nu(), 'incidenter': 0, 'okanda': 1,
+                  'sajter': [{'adress': 'https://x/', 'incident': False, 'fynd': [], 'okanda': ['bokning: skydd/utmaning']}]}
+        (self.k / 'DRIFT-20260930T120000Z.json').write_text(json.dumps(kvitto))
+        code, ut, err = self.kor('besked', '--kund', str(self.k))
+        self.assertEqual(code, 0, err); self.assertIn('## Okända driftlägen', ut)
+        self.assertIn('https://x/: bokning: skydd/utmaning', ut); self.assertIn('incidenter: inga', ut)
+
     def test_samma_kundrad_bokfors_en_gang(self):
         self.importera([rattelse('oppettider', 'Mån–fre 08:00–17:00', 6)])
         self.kor('oppna', '--kund', str(self.k), '--bestallning', BEST)

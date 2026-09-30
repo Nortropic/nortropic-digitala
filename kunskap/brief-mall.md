@@ -42,6 +42,11 @@ varför; vilka som är viktigast för målet. Kontaktvägar typade. För varje v
 början till slut (formulär → leverans till mottagare; länk → samtal; bokning → extern tjänst nådd) och vad som
 händer vid fel (alternativ väg). Formulärfält motiverade; fel-, tom- och laddningslägen.
 
+Tillägg till §4 (OVL-20260930-ac1914-digitala): för **hitta hit**, följ
+`integrationer.md` → Hitta hit: adress i text och vägbeskrivningslänk; eventuell
+karta som självhostad licensbelagd bild eller först efter aktivt val. Deklarera
+viktiga handlingslänkar i DRIFT.json med namn, adress och eventuell förväntad text.
+
 ## §5 Sök och kanaler
 
 SEO-läge: `lokal`, `varumärke/portfölj`, `hybrid` eller `ingen`. Sökintention per sida (vilken sökning sidan svarar

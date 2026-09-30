@@ -68,3 +68,8 @@ Följ skapandeunderlag.md: bygg tidigt representativt riktigt innehåll och rele
 med öppnade referenser och utveckla sedan helheten. Olika kundbehov får ge olika visuella lösningar.
 Undersidor, språk, redaktörsytor och efterled håller samma hantverksnivå; tekniskt fungerande är inte
 ensamt professionellt tillräckligt. För varje viktigt val ska behov, resurs och faktisk påverkan gå att följa.
+
+Hitta hit (OVL-20260930-ac1914-digitala): använd basvägen i `integrationer.md`.
+Adress och vanlig länk fungerar utan JavaScript. Eventuell extern karta skapas
+först efter besökarens val; statisk bild självhostas med kontrollerad licens och
+attribution. CSP per sitemaprutt ska täcka den faktiskt valda kartlösningen.

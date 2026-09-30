@@ -280,3 +280,13 @@ juridikflaggor; licensregister, CSP per rutt, TBT och HTML-prov utan JavaScript
 kompletterar befintliga kontroller. Primärkällorna omlästa 2026-09-30 enligt
 REGISTER.md och respektive professionsfil. Pinnuppdateringen gäller dessa lästa
 ändringar. Ingen kundsajt, ny rättighet eller extern aktivering ingår.
+
+## Beslut 2026-09-30 — betalval, drift och hitta hit (OVL-20260930-ac1914-digitala)
+
+Backloggens genomförandemandat omfattar S1–S3, D1–D4 och H1. Daterade Stripe-villkor
+och Swish-kontraktsprov kompletterar standardvägen; ett saknat faktiskt sandboxprov
+redovisas EJ_MATT enligt beställningens uttryckliga undantag. Drift får sidrutter,
+handlingslänkar och okänt utan ändrade gamla incidentfält eller exit-koder. Hitta hit
+har text/länk som bas och valstyrd extern karta eller licensbelagd statisk bild.
+Ändrade professionsfiler pinnas efter ny källäsning 2026-09-30. Inga nya konton,
+avgifter, villkor, kundändringar eller Runtime-aktiveringar omfattas.

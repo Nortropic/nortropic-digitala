@@ -144,6 +144,50 @@ class Integrationer(unittest.TestCase):
         with self.assertRaisesRegex(Fel, 'testpris'):
             api.checkout('x', 'price_1', 'https://example.invalid/ok', 'https://example.invalid/cancel')
 
+    def test_swish_sek_fore_post_och_betalsatt_aterlast(self):
+        calls = []; currency = ['eur']; paid = [True]
+        def transport(method, url, headers, body):
+            calls.append((method, url, body))
+            if '/prices/' in url:
+                return 200, {'id': 'price_test1', 'livemode': False, 'active': True, 'type': 'one_time', 'unit_amount': 5000, 'currency': currency[0]}, {}
+            if method == 'POST':
+                return 200, {'id': 'cs_test_abc', 'livemode': False, 'url': 'https://checkout.stripe.com/c/pay/cs_test_abc'}, {}
+            if '/payment_intents/' in url:
+                return 200, {'id': 'pi_abc', 'livemode': False, 'status': 'succeeded', 'latest_charge': {
+                    'id': 'ch_abc', 'payment_intent': 'pi_abc', 'livemode': False, 'paid': True,
+                    'payment_method_details': {'type': 'swish'}}}, {}
+            return 200, {'id': 'cs_test_abc', 'livemode': False, 'mode': 'payment', 'client_reference_id': 'swish-test',
+                         'status': 'complete' if paid[0] else 'open', 'payment_status': 'paid' if paid[0] else 'unpaid',
+                         'payment_method_types': ['card', 'swish'], 'payment_intent': 'pi_abc'}, {}
+        api = StripeTest('sk_test_fixture', self.journal, 'synthetic', '2025-08-27.basil', transport)
+        with self.assertRaisesRegex(Fel, 'swish_kraver_sek'):
+            api.checkout('swish-test', 'price_test1', 'https://example.invalid/ok', 'https://example.invalid/cancel', payment_method='swish')
+        self.assertEqual([x[0] for x in calls], ['GET'])
+        currency[0] = 'sek'
+        receipt = api.checkout('swish-test', 'price_test1', 'https://example.invalid/ok', 'https://example.invalid/cancel', payment_method='swish')
+        self.assertIn(b'payment_method_types%5B0%5D=swish', calls[-1][2])
+        r = api.readback(receipt)
+        self.assertEqual(r['payment_method_types'], ['card', 'swish']); self.assertEqual(r['payment_method_used'], 'swish')
+        self.assertTrue(r['paid']); self.assertEqual(r['payment_method_observation'], 'MATT')
+        paid[0] = False; before = len(calls); r = api.readback(receipt)
+        self.assertFalse(r['paid']); self.assertIsNone(r['payment_method_used']); self.assertEqual(len(calls), before + 1)
+
+    def test_swish_belopp_och_fel_livemode_i_betalsattsbevis_vagras(self):
+        calls = []
+        def transport(method, url, headers, body):
+            calls.append(method)
+            if '/prices/' in url:
+                return 200, {'id': 'price_test1', 'livemode': False, 'active': True, 'type': 'one_time', 'unit_amount': 200, 'currency': 'sek'}, {}
+            if '/payment_intents/' in url:
+                return 200, {'id': 'pi_abc', 'livemode': True}, {}
+            return 200, {'id': 'cs_test_abc', 'livemode': False, 'mode': 'payment', 'client_reference_id': 'x', 'payment_status': 'paid', 'payment_intent': 'pi_abc'}, {}
+        api = StripeTest('sk_test_fixture', self.journal, 'synthetic', '2025-08-27.basil', transport)
+        with self.assertRaisesRegex(Fel, 'swish_belopp'):
+            api.checkout('x', 'price_test1', 'https://example.invalid/ok', 'https://example.invalid/cancel', payment_method='swish')
+        with self.assertRaisesRegex(Fel, 'fel_identitet'):
+            api.readback({'provider_id': 'cs_test_abc', 'reference': 'x'})
+        self.assertEqual(set(calls), {'GET'})
+
     def test_cal_readback_redacts_capability_uid(self):
         r = cal_readback('key', 'private-booking-uid', '2024-08-13', lambda *a: (200, {'status': 'success', 'data': {'uid': 'private-booking-uid', 'status': 'accepted', 'start': 'x', 'end': 'y'}}, {}))
         self.assertNotIn('private-booking-uid', json.dumps(r))

@@ -122,6 +122,7 @@ def main(argv=None):
     q = sub.add_parser('stripe-checkout-test')
     q.add_argument('--pris', required=True); q.add_argument('--version', required=True)
     q.add_argument('--success-url', required=True); q.add_argument('--cancel-url', required=True)
+    q.add_argument('--betalsatt', choices=('card', 'swish', 'klarna'))
     q = sub.add_parser('cal-aterlas')
     q.add_argument('--uid-fil', required=True); q.add_argument('--version', required=True)
     q = sub.add_parser('resend-aterlas'); q.add_argument('--kvitto', required=True)
@@ -194,7 +195,8 @@ def main(argv=None):
         else:
             api = StripeTest(key, Journal(a.journal), a.konto, a.version)
             result['niva'] = api.niva
-            receipt = api.checkout(a.idempotens, a.pris, a.success_url, a.cancel_url, a.retry_okant)
+            receipt = api.checkout(a.idempotens, a.pris, a.success_url, a.cancel_url, a.retry_okant,
+                                   payment_method=a.betalsatt)
             result['accepterat'] = receipt
             result['anrop_genomfort'] = True
             result['resultat'] = receipt

@@ -196,3 +196,31 @@ fortsatt `journal_eller_mottagning_otillganglig` utan leverantörsanrop.
 källkvittots faktiska bytes med SHA-256 och skriver aldrig om historiken.
 Kontoetikett, tjänst, provnivå och ny explicit API-version måste stämma;
 äldre kvitton utan versionsfält får ingen retroaktiv versionsgaranti.
+
+## Swish-prov (OVL-20260930-ac1914-digitala, 2026-09-30)
+
+Lägg `--betalsatt swish` till `stripe-checkout-test` ovan. Ett befintligt aktivt
+engångstestpris ska vara SEK och 3–150 000 kr; annat vägras efter prisets GET och
+före sessions-POST. Utan flaggan används kontots dynamiska betalval som tidigare.
+`stripe-aterlas-test` redovisar sessionens `payment_method_types` och, när betalt,
+`payment_method_used` från PaymentIntents senaste betalda Charge. Det senare får
+EJ_MATT om betalningen eller underlaget saknas; erbjudet Swish betyder inte använt Swish.
+
+[Stripes testanvisning](https://docs.stripe.com/payments/swish/accept-a-payment?payment-ui=checkout),
+läst 2026-09-30: testkassan leder till en testsida där betalningen kan godkännas
+eller avvisas. Gör ett av vardera, återläs samma sessioner och spara privata
+kvitton. Endast faktisk leverantörskörning får märkas **leverantörens sandbox faktiskt
+prövad**. Kontraktsproven använder injicerad transport och har inte den märkningen.
+Swish får bara aktiveras om befintlig åtkomst räcker utan nya villkor. Annars:
+EJ_MATT med namngiven orsak, ingen åtkomstbegäran; Johnny avgör kvarstående konto-
+eller rättighetsfråga. Inga live-nycklar eller verkliga transaktioner.
+
+## Hitta hit
+
+`hitta-hit.html` och `hitta-hit.js` är ett körbart tekniskt exempel med en offentlig
+exempelplats, ingen kund. Adress och vägbeskrivning finns i HTML även utan JavaScript.
+Extern iframe skapas först efter klick; det är inte samma sak som `loading=lazy`.
+Byt plats, karta och källangivelse efter briefen; kontrollera aktuell leverantörs
+villkor och rättighet enligt `kunskap/integrationer.md`. Exemplet är inte en
+allmän juridisk samtyckesbedömning. CSP ska tillåta det självhostade skriptet och
+endast vald frame-källa. Inget kartkonto eller kundbygge aktiveras av exemplet.
