@@ -15,6 +15,35 @@ Runtime och kunduppdrag, inte till månadsrubriker som kräver att någon minns 
   hos värdplattformen och påverkas inte. När en integration är otillgänglig (sökkonsol, plattform) skriver
   kontrollen incident med felklass; ingen automatisk åtgärd.
 
+## Läsande omfattning (OVL-20260930-ac1914-digitala, 2026-09-30)
+
+Med `sitemap: true` läses `/sitemap.xml` och ett led av sitemapindex. XML över
+300 000 byte, DTD/ENTITY och djupare index vägras med fynd. Bara `url/loc` i
+stödd sitemap-namnrymd används, inte bilders adresser. Eget ursprung prövas i
+sorterad ordning; andra ursprung räknas men hämtas inte genom sitemapen.
+`sitemap_tak` är 50 som standard (heltal 1–10000). Barnkartor och sidprov delar
+taket för extra GET; kvittot redovisar `provade`, `over_taket`, `annat_ursprung`,
+`indexfiler_provade` och `indexfiler_oprovade`. Antalet sidor i en oläst indexfil
+är okänt. Oprövat på grund av taket blir okänt, aldrig ett helt godkänt resultat.
+Utöver taket görs startsidans och rotkartans GET samt deklarerade handlingslänkar;
+TLS-kontrollen är separat. Transporten följer inga omdirigeringar; en 3xx-adress
+rapporteras som incident och ska deklareras med rätt slutadress. Därmed ger varje
+planerad GET högst ett HTTP-anrop, utan att en redirect passerar ursprungsgränsen.
+
+Per sajt kan `handlingar` anges, exempelvis
+`[{"namn":"bokning","adress":"https://bokning.example/","forvantat":"Boka"}]`.
+Namn och adress krävs, förväntad text är valfri. Hämta länkarna från briefens §4.
+Varje länk kontrolleras med GET; inga formulär, bokningar eller betalningar skapas.
+Fel svar eller saknad förväntad text namnger handlingen i fynden.
+
+Tre lägen finns: `ok`, `incident`, `okant`. Tredjeparts 403/skyddsutmaning, 429
+eller tidsgräns ger okänt med skäl. Samma fel på egna adresser ger incident.
+HTTP 200 med okänd funktion är inte ett bevis på affärsflödet. Exit 0 betyder
+inga incidenter, även när okända rader finns; exit 1 betyder incident. Läs alltid
+fältet `okanda`. Veckobeskedet visar dessa under **Okända driftlägen**.
+Schema 1, `sajter[].incident`, `sajter[].fynd` och antalet `incidenter` finns kvar.
+Schemaläggning, klassningen av kundrättelser och återgångsmandatet ändras inte.
+
 ## Underhållsformen (ägarens beslut DIGITALA-UNDERHALL-20260929)
 
 Ägarens beslut är att formen gäller; de sex delarnas formulering är kedjedrivarens och partnerns. De fyra exemplen

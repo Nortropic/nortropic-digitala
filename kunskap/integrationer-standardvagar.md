@@ -59,6 +59,43 @@ tvister och tillägg har andra avgifter. Betalning är alltså inte gratis även
 en Payment Link saknar abonnemangskostnad. Kontrollera land, valuta, skattekonfiguration
 och aktuellt pris vid varje kundval.
 
+### Svenska betalval — kontrollerat 2026-09-30 (OVL-20260930-ac1914-digitala)
+
+| Val | Passar | Passar inte / kräver prövning |
+|---|---|---|
+| Kort | Befintlig generell Checkout/Payment Link; fler kundländer och företagsköp | Avgifter, korttyp och kundens krav måste kvalificeras |
+| Swish genom Stripe | Engångsköp från svensk konsument i SEK, i samma Checkout eller Payment Link som kort | B2B, abonnemang och förbjuden bransch; begränsad bransch kräver särskild prövning |
+| Klarna genom Stripe | Konsument som behöver senare betalning eller finansiering, via Checkout/Payment Link | B2B och förbjudna verksamheter; kreditbeslut, produktens stöd och högre avgift måste passa behovet |
+
+[Stripes Swish-dokumentation](https://docs.stripe.com/payments/swish), läst 2026-09-30:
+kunden ska finnas i Sverige; valutan är SEK och beloppet 3–150 000 kr. Återkommande
+betalningar saknas liksom vanlig tvisteprocess. Hel eller partiell återbetalning
+kan begäras inom 365 dagar. Kunden godkänner med Swish och BankID inom tre minuter.
+Stripe är formell betalningsmottagare enligt
+[factoringtillägget](https://stripe.com/legal/swish), läst samma dag: Stripe visas
+som mottagare i Swish, verksamhetens namn i meddelandet. Dokumentationen listar
+förbjudna och begränsade MCC; exempelvis är advokatverksamhet (8111) förbjuden
+och apotek (5912) begränsat. Kontrollera hela listan och det verkliga kontots
+betalmetodsinställningar; dokumenterad produktförmåga bevisar inte kontots åtkomst.
+
+[Stripes Klarna-dokumentation](https://docs.stripe.com/payments/klarna), läst
+2026-09-30: svenska konton och SEK stöds. I Sverige anges direktbetalning och
+30-dagarsbetalning 1–100 000 SEK, finansiering 250–100 000 SEK; vilka val kunden
+får avgörs av Klarna. Vissa betalval stöder abonnemang, med olika intervallvillkor;
+finansiering gäller engångsköp. Återbetalning kan begäras inom 180 dagar och
+tvister stöds. Läs den aktuella produkttabellen för det konkreta köpet.
+[Klarnas regler hos Stripe](https://docs.stripe.com/payments/klarna/compliance),
+lästa samma dag, förbjuder bland annat B2B, välgörenhet och presentkort.
+Marknadsföring ska följa Klarnas regler; leverantören bestämmer kundens rätt att
+använda tjänsten. Ingen aktivering eller accept av villkor ingår i kunskapsläsningen.
+
+[Svenska lokalbetalningspriser](https://stripe.com/se/pricing/local-payment-methods),
+lästa 2026-09-30: Swish 1 % + 3,00 kr, högst 7,00 kr; Klarna för Sverige
+2,99 % + 4,00 kr och 200,00 kr vid förlorad tvist. Växling anges separat till
+2 %. Kontots egna avtal kan avvika. Kortpriset ovan har sitt tidigare läsdatum;
+en kundjämförelse kräver färsk kontroll av samtliga val. Kostnad och nya villkor
+är ägarfrågor enligt mandatet, inte något verktyget godtar.
+
 Tallys [planer](https://tally.so/help/plans-and-pricing) erbjuder gratis formulär
 inom fair use; Pro 29 USD/mån tar bort branding, Business 89 USD/mån ger bl.a.
 retentionsstyrning. [API](https://tally.so/help/api) och

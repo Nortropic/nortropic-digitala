@@ -174,6 +174,40 @@ class Aterhamtning(unittest.TestCase):
             self.assertEqual(cli.main(args), 1)
         self.assertEqual(self.calls, ['GET', 'POST', 'GET', 'GET'])
 
+    def test_cli_swish_nekad_valuta_och_betald_aterlasning_utan_nytt_post(self):
+        self.key.write_text('sk_test_synthetic'); currency = ['eur']
+        def transport(method, url, headers, body):
+            self.calls.append(method)
+            if '/prices/' in url:
+                return 200, {'id': 'price_test1', 'livemode': False, 'active': True, 'type': 'one_time', 'unit_amount': 5000, 'currency': currency[0]}, {}
+            if method == 'POST':
+                self.assertIn(b'payment_method_types%5B0%5D=swish', body)
+                return 200, {'id': 'cs_test_abc', 'livemode': False, 'url': 'https://checkout.stripe.com/c/pay/cs_test_abc'}, {}
+            if '/payment_intents/' in url:
+                return 200, {'id': 'pi_abc', 'livemode': False, 'status': 'succeeded', 'latest_charge': {
+                    'payment_intent': 'pi_abc', 'livemode': False, 'paid': True, 'payment_method_details': {'type': 'swish'}}}, {}
+            return 200, {'id': 'cs_test_abc', 'livemode': False, 'mode': 'payment', 'client_reference_id': 'synthetic-1',
+                         'status': 'complete', 'payment_status': 'paid', 'payment_intent': 'pi_abc', 'payment_method_types': ['swish']}, {}
+        factory = lambda key, journal, account, version: StripeTest(key, journal, account, version, transport)
+        args = self.args(); args[0] = 'stripe-checkout-test'; args.remove('--aterlas')
+        args += ['--pris', 'price_test1', '--version', '2025-08-27.basil', '--betalsatt', 'swish',
+                 '--success-url', 'https://example.invalid/ok', '--cancel-url', 'https://example.invalid/cancel']
+        with patch.object(cli, 'StripeTest', factory), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.main(args), 1)
+        self.assertEqual(self.calls, ['GET'])
+        currency[0] = 'sek'; args[args.index('--ut') + 1] = str(self.root / 'receipt-ok.json')
+        with patch.object(cli, 'StripeTest', factory), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.main(args), 0)
+        read = self.args('stripe-aterlas-test', 'read.json') + ['--version', '2025-08-27.basil']
+        read[read.index('--kvitto') + 1] = str(self.root / 'receipt-ok.json')
+        before = len(self.calls)
+        with patch.object(cli, 'StripeTest', factory), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.main(read), 0)
+        result = json.loads((self.root / 'read.json').read_text())['resultat']
+        self.assertEqual(self.calls[before:], ['GET', 'GET'])
+        self.assertEqual(result['payment_method_types'], ['swish']); self.assertEqual(result['payment_method_used'], 'swish')
+        self.assertEqual(result['payment_status'], 'paid')
+
 
 if __name__ == '__main__':
     unittest.main()

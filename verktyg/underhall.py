@@ -407,7 +407,7 @@ def besked(kund, vecka=None):
     gjorda = [p for p in d['poster'] if p['klass'] == 'faktarattelse']
     vantar = [p for p in d['poster'] if p['klass'] == 'forslag'
               and (p.get('atgard') or {}).get('agarens_svar') in (None,)]
-    kvitto, kvitto_tid = _senaste_driftkvitto(kund)
+    kvitto, kvitto_tid, okanda = _senaste_driftkvitto(kund, med_okanda=True)
     rader = ['# Veckobesked — %s, %s' % (d['kund'], vecka), '',
              'Underhållsform: DIGITALA-UNDERHALL-20260929. Ärendet hålls öppet efter leveransen.', '']
     rader += ['## Faktarättelser Digitala gjort', '']
@@ -430,6 +430,8 @@ def besked(kund, vecka=None):
     rader.append('- senaste kvitto: %s' % (kvitto_tid or 'inget kvitto funnet i kundmappen'))
     if kvitto is not None:
         rader.append('- incidenter: %s' % (', '.join(kvitto) if kvitto else 'inga'))
+    if okanda:
+        rader += ['', '## Okända driftlägen', ''] + ['- ' + rad for rad in okanda]
     if kvitto_tid:
         alder = (nu_dt - datetime.strptime(kvitto_tid[:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)).days
         if alder > 7:
@@ -448,7 +450,7 @@ def besked(kund, vecka=None):
     return d, text
 
 
-def _senaste_driftkvitto(kund):
+def _senaste_driftkvitto(kund, med_okanda=False):
     """Driftkontrollens senaste kvitto i kundmappen, om något finns. Läsning, ingen körning.
 
     Kvittot skrivs av drift_kontroll.py som DRIFT-<tid>.json: 'tid', 'sajter' (rad per sajt med 'incident' och
@@ -456,14 +458,18 @@ def _senaste_driftkvitto(kund):
     """
     kvitton = sorted(Path(kund).glob('**/DRIFT-*.json'))
     if not kvitton:
-        return None, None
+        return (None, None, []) if med_okanda else (None, None)
     try:
         k = json.loads(kvitton[-1].read_text(encoding='utf-8'))
     except (ValueError, OSError):
-        return None, None
+        return (None, None, []) if med_okanda else (None, None)
     inc = ['%s: %s' % (str(r.get('adress')), '; '.join(str(x) for x in (r.get('fynd') or [])) or 'incident')
            for r in (k.get('sajter') or []) if r.get('incident')]
-    return inc, str(k.get('tid') or '')[:20] or None
+    tid = str(k.get('tid') or '')[:20] or None
+    if med_okanda:
+        okanda = ['%s: %s' % (r.get('adress'), x) for r in k.get('sajter', []) for x in r.get('okanda', [])]
+        return inc, tid, okanda
+    return inc, tid
 
 
 def status(kund):

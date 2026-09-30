@@ -258,7 +258,9 @@ class StripeTest(API):
         super().__init__(key, journal, account, transport)
         self.headers = {'Stripe-Version': version}
 
-    def checkout(self, key, price, success_url, cancel_url, retry=False):
+    def checkout(self, key, price, success_url, cancel_url, retry=False, payment_method=None):
+        if payment_method not in (None, 'card', 'swish', 'klarna'):
+            raise Fel('okant_testbetalsatt')
         if not re.fullmatch(r'price_[a-zA-Z0-9]+', price):
             raise Fel('befintligt_testpris_kravs')
         for url in (success_url, cancel_url):
@@ -272,8 +274,14 @@ class StripeTest(API):
                 or price_object.get('active') is not True or price_object.get('type') != 'one_time'
                 or not isinstance(price_object.get('unit_amount'), int) or price_object['unit_amount'] <= 0):
             raise Fel('stripe_pris_ar_inte_aktivt_engangstestpris', 502)
+        if payment_method == 'swish' and price_object.get('currency') != 'sek':
+            raise Fel('swish_kraver_sek')
+        if payment_method == 'swish' and not 300 <= price_object['unit_amount'] <= 15000000:
+            raise Fel('swish_belopp_utanfor_3_till_150000_sek')
         payload = {'mode': 'payment', 'line_items[0][price]': price, 'line_items[0][quantity]': 1,
                    'success_url': success_url, 'cancel_url': cancel_url, 'client_reference_id': key}
+        if payment_method:
+            payload['payment_method_types[0]'] = payment_method
         def validate(body):
             if not isinstance(body, dict) or body.get('livemode') is not False or not re.fullmatch(r'cs_test_[a-zA-Z0-9]+', str(body.get('id', ''))):
                 raise Fel('stripe_svar_ar_inte_testsession', 502)
@@ -293,7 +301,25 @@ class StripeTest(API):
         body = self.get('https://api.stripe.com/v1/checkout/sessions/' + id_, self.headers)
         if body.get('id') != id_ or body.get('livemode') is not False or body.get('client_reference_id') != receipt['reference'] or body.get('mode') != 'payment':
             raise Fel('stripe_aterlasning_fel_identitet', 502)
+        offered = body.get('payment_method_types')
+        if not isinstance(offered, list) or not all(isinstance(x, str) for x in offered):
+            offered = None
+        used = None
+        if body.get('payment_status') == 'paid':
+            pi = body.get('payment_intent')
+            if isinstance(pi, str) and re.fullmatch(r'pi_[a-zA-Z0-9]+', pi):
+                intent = self.get('https://api.stripe.com/v1/payment_intents/' + pi + '?expand%5B%5D=latest_charge', self.headers)
+                charge = intent.get('latest_charge')
+                if (intent.get('id') != pi or intent.get('livemode') is not False or intent.get('status') != 'succeeded'
+                        or not isinstance(charge, dict) or charge.get('livemode') is not False
+                        or charge.get('payment_intent') != pi or charge.get('paid') is not True):
+                    raise Fel('stripe_betalsatt_aterlasning_fel_identitet', 502)
+                used = (charge.get('payment_method_details') or {}).get('type')
+                if not isinstance(used, str):
+                    used = None
         return dict(receipt, status=body.get('status'), payment_status=body.get('payment_status'),
+                    payment_method_types=offered, payment_method_used=used,
+                    payment_method_observation='MATT' if used else 'EJ_MATT',
                     paid=body.get('payment_status') == 'paid', funds_are_real=False)
 
 

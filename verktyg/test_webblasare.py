@@ -39,7 +39,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if self.path in SIDOR:
             body = SIDOR[self.path].encode('utf-8')
-            self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
+            self.send_response(200); self.send_header('Content-Type', 'text/javascript' if self.path.endswith('.js') else 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
         else:
             body = '<html lang="sv"><body><h1>Sidan finns inte</h1><a href="/">Till startsidan</a></body></html>'.encode()
             self.send_response(404); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body)
@@ -111,6 +111,45 @@ class Webblasare(unittest.TestCase):
         finally:
             SIDOR.pop('/js-krav/', None)
             SIDOR.pop('/utan-action/', None)
+
+    def test_hitta_hit_ingen_extern_begaran_fore_klick(self):
+        example = ROT / 'exempel/integrationer'
+        SIDOR['/hitta-hit.html'] = (example / 'hitta-hit.html').read_text()
+        SIDOR['/hitta-hit.js'] = (example / 'hitta-hit.js').read_text()
+        program = r'''
+import { chromium } from 'playwright';
+const browser = await chromium.launch({headless:true});
+try {
+  const ctx = await browser.newContext();
+  const external = [];
+  await ctx.route('**/*', route => {
+    if (new URL(route.request().url()).origin !== new URL(process.env.PROV_URL).origin) {
+      external.push(route.request().url());
+      return route.fulfill({status:200,contentType:'text/html',body:'<p>Syntetiskt kartsvar</p>'});
+    }
+    return route.continue();
+  });
+  const page = await ctx.newPage();
+  await page.goto(process.env.PROV_URL, {waitUntil:'networkidle'});
+  const before = [...external];
+  const destination = new URL(await page.locator('#vagbeskrivning').getAttribute('href')).searchParams.get('destination');
+  const address = await page.locator('#adress').textContent();
+  const attribution = await page.locator('a[href="https://www.openstreetmap.org/copyright"]').isVisible();
+  await Promise.all([page.waitForResponse(r => r.url().startsWith('https://www.openstreetmap.org/export/embed.html')),
+    page.locator('#visa-karta').click()]);
+  console.log(JSON.stringify({before,after:external,destination,address,attribution,frames:await page.locator('iframe').count()}));
+} finally { await browser.close(); }
+'''
+        try:
+            result = subprocess.run([NODE, '--input-type=module', '-e', program], cwd=WB,
+                env=dict(os.environ, PROV_URL=self.bas + '/hitta-hit.html'), capture_output=True, text=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            r = json.loads(result.stdout)
+            self.assertEqual(r['before'], []); self.assertEqual(len(r['after']), 1)
+            self.assertTrue(r['after'][0].startswith('https://www.openstreetmap.org/export/embed.html'))
+            self.assertEqual(r['destination'], r['address']); self.assertTrue(r['attribution']); self.assertEqual(r['frames'], 1)
+        finally:
+            SIDOR.pop('/hitta-hit.html', None); SIDOR.pop('/hitta-hit.js', None)
 
     def test_inspektera_med_kontext_grans_tillstand_och_redigerat_undantag(self):
         brief = self.d / 'PROJECT-BRIEF.md'; brief.write_text('# Brief\n§7 riktning: lugn.\n')

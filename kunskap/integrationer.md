@@ -62,3 +62,30 @@ Vikskärs särskilda femtonminutersreservation är ett historiskt kundfall, inge
 Exemplens lokala server är ett prov. Kunddrift kräver kundens host och beständig lagring;
 Johnnys Mac och en byggsession får inte vara kundens mottagnings-/bokningsdrift. Bevara
 redaktörsroller, preview/återgång, CRM-ansvar och faktiska kanalutfall från tidigare krav.
+
+## Hitta hit — basväg (OVL-20260930-ac1914-digitala, 2026-09-30)
+
+Adressen ska alltid finnas som text, tillsammans med en vanlig länk som öppnar
+vägbeskrivning. En leverantörslänk kan öppna kartappen när den finns, annars dess
+webbversion; ingen bestämd app garanteras.
+[Google Maps URL-format](https://developers.google.com/maps/documentation/urls/get-started),
+läst 2026-09-30, är ett exempel utan API-nyckel; leverantören är inget obligatoriskt val.
+
+Om brief §4 behöver karta på sidan: välj självhostad statisk bild med belagd
+användningsrätt och synlig attribution, eller skapa extern iframe först efter
+besökarens uttryckliga val. Inget iframe-src, skript från kartleverantören,
+preconnect eller prefetch före valet. `loading=lazy` är inte en sådan gräns.
+Informera vid knappen om vilken tjänst som kontaktas. Adress/länk ska fortfarande
+fungera utan JS och utan extern karta. Basen i `juridikflaggor.md` gäller; ett klick
+är ingen generell rättslig garanti för leverantörens fortsatta spårning.
+
+För en statisk bild: spara källa, licens, läsdatum, attribution och själva bilden
+i kundens bildregister enligt `bild.md`. OSM är ett möjligt val: dess
+[licenssida](https://www.openstreetmap.org/copyright), läst 2026-09-30, kräver
+källangivelse till OpenStreetMap och dess bidragsgivare samt tydlig ODbL-information.
+[Tile-policyn](https://operations.osmfoundation.org/policies/tiles/), läst samma dag,
+förbjuder bulk-/förhandshämtning; fri kartdata innebär inte fri obegränsad tile-tjänst.
+Kontrollera bildexportens egna villkor före användning, och hämta aldrig tile-arkiv
+som genväg. Exemplet `exempel/integrationer/hitta-hit.html` använder den andra vägen,
+klickladdad inbäddning med attribution intill. Browserprovet använder ett syntetiskt
+svar för leverantörsadressen och visar noll externa förfrågningar före klick.
