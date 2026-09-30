@@ -81,3 +81,24 @@ genom Runtimes releaseväg.
 Uppföljningens återkoppling (uppfoljning.md) ger hypoteser; varje ändring går genom samma kedja (brief-tillägg,
 bygge, kontroll, prelaunch-delgrind, driftsättning) i proportion till ändringen (ARBETSSATT.md); resultatet följs
 upp och skrivs som lärdom med klass (LARDOMAR.md). Fungerande arbete bevaras; återgångsvägen finns alltid.
+
+
+## Formkrav och diffkontroll (OVL-20260930-b35d4f-digitala, 2026-09-30)
+
+Instruktionsvakten är en signal; skyddet ligger i formkraven och den stängda listan.
+Telefon använder samma `verksamhetsuppgifter.e164()` som resten av kedjan. Betalserierna
+0900, 0939 och 0944 går till förslag ([PTS nummerplan](https://pts.se/internet-och-telefoni/telefonnummer-och-adressering/), läst 2026-09-30).
+Öppettider läses som en hel veckolista: exempel `Mån–fre 08:00–17:00; lör–sön stängt`,
+enskilda veckodagar eller den befintliga JSON-listan med dag/oppnar/stanger. Dagar utan
+öppetintervall utelämnas i den nya listan. Delad dag, över midnatt, helgdagar, säsong,
+datumintervall och all annan prosa blir förslag. Semantiskt samma veckolista är ingen rättelse.
+Den nya listan ska dessutom klara hela verksamhetsvalideringen. Prisets klassning ändras inte.
+
+Efter införande av telefon eller öppettider och före publicering körs
+`python3 -B verktyg/underhall.py kontrollera --kund KUND --post POST --repo SAJT --bas SHA40 --kandidat SHA40 --ut DIFFKONTROLL.json`.
+Kontrollen belägger kundraden på nytt och läser Git-bytes. Bara det belagda värdebytet
+(visning och E.164, respektive veckotext och strukturerade tider) godtas; motsvarande
+fält i VERKSAMHET.json får ändras. Orelaterad ändring rapporteras med fil och rad.
+Nya/raderade filer, filtypsbyten och okända format går till manuell prövning.
+Detta kvitto kompletterar kedjans befintliga prov, separata granskning och skyddade
+publicering. Inget modellbesked ersätter diffkontrollen och kontrollen inför inget själv.

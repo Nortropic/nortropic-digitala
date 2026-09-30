@@ -68,6 +68,54 @@ def e164(telefon):
     return None
 
 
+def tolka_oppettider(varde):
+    """Hela veckovärdet: dag/dagintervall och HH:MM–HH:MM, separerade med ; eller radbyte.
+
+    Även den befintliga JSON-listan godtas. Stängt ger ingen post; övriga dagar
+    utelämnas ur den nya listan. Delad dag, midnatt, dubbletter och prosa vägras.
+    Funktionen ändrar aldrig kunddata. Validera sedan hela VERKSAMHET.json.
+    """
+    dagar = ('man', 'tis', 'ons', 'tor', 'fre', 'lor', 'son')
+    namn = {'mån': 'man', 'måndag': 'man', 'man': 'man', 'tis': 'tis', 'tisdag': 'tis',
+            'ons': 'ons', 'onsdag': 'ons', 'tor': 'tor', 'tors': 'tor', 'torsdag': 'tor',
+            'fre': 'fre', 'fredag': 'fre', 'lör': 'lor', 'lördag': 'lor', 'lor': 'lor',
+            'sön': 'son', 'söndag': 'son', 'son': 'son'}
+    try:
+        text = str(varde).strip()
+        if text.startswith('['):
+            rows = json.loads(text)
+            if not isinstance(rows, list):
+                return None
+        else:
+            rows, sedda = [], set()
+            for bit in re.split(r'[;\n]', text):
+                m = re.fullmatch(r'([a-zåäö]+)(?:\s*[-–]\s*([a-zåäö]+))?\s+'
+                                 r'(stängt|\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2})', bit.strip().lower())
+                if not m or m[1] not in namn or (m[2] and m[2] not in namn):
+                    return None
+                first, last = dagar.index(namn[m[1]]), dagar.index(namn[m[2] or m[1]])
+                if last < first:
+                    return None
+                for dag in dagar[first:last + 1]:
+                    if dag in sedda:
+                        return None
+                    sedda.add(dag)
+                    if m[3] != 'stängt':
+                        tider = [t.strip().zfill(5) for t in re.split(r'[-–]', m[3])]
+                        rows.append({'dag': dag, 'oppnar': tider[0], 'stanger': tider[1]})
+        seen = set()
+        for row in rows:
+            if (not isinstance(row, dict) or set(row) != {'dag', 'oppnar', 'stanger'}
+                    or row['dag'] not in dagar or row['dag'] in seen
+                    or not all(isinstance(row[k], str) and KLOCKA.fullmatch(row[k]) for k in ('oppnar', 'stanger'))
+                    or row['oppnar'] >= row['stanger']):
+                return None
+            seen.add(row['dag'])
+        return sorted(rows, key=lambda r: dagar.index(r['dag']))
+    except (ValueError, TypeError, KeyError):
+        return None
+
+
 def validera(v):
     errors, varningar = [], []
     if not isinstance(v, dict):

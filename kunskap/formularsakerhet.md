@@ -33,3 +33,8 @@ Rate limiting: plattformsnivå som tillval för en verklig kund; ingen egen data
 Regeln om en klocka fanns två gånger (källans rad 75 och Norrgläntas brief §3) och koden bröt ändå mot den, eftersom inget
 steg läste koden mot regeln. En regel hjälper bara om ett steg läser mot den; därför är frågorna ovan bundna till
 granskning D, inte till en checklista som bara bockas av.
+
+HTML-vägen ska också prövas utan JavaScript med `verktyg/webblasare/utan-js.mjs`
+(se webblasare.md, UTAN-JS.json). En vanlig form-POST till en behörig testmottagare
+ska fungera; ett formulär som kräver JavaScript ska upptäckas. Inskick kräver
+uttrycklig tillåtelse och testmarkering; EJ_MATT är inte godkänt inskick.

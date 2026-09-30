@@ -6,11 +6,11 @@
   {
    "fil": "kunskap/REGISTER.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/REGISTER.md",
-   "sha256": "988873b8ab57697028649be1dd7455b0f0f461c12bb0abf6e0f60b371d792ca7",
-   "byte": 32015,
+   "sha256": "a0bdae50195967f225d688234fef2b5736358473754c18c3bd838fefad68b9bf",
+   "byte": 33561,
    "kallans_mtime_utc": "2026-09-27T06:31:23Z",
    "status": "GÄLLANDE",
-   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med); ändrad igen 2026-09-27 (tillägg 2: rader för kundintervju och integrationer i C och D); ändrad igen 2026-09-27 (etapp 4: rad för webbläsarvägen i C och D) 2026-09-27 (efterarbete 2): §E omskriven efter slutprovets användningsnoter.; ändrad 2026-09-27 (bedömningskontrakt v2: referensjämförelse och behovens företräde i konsumentanvisningarna).; ändrad 2026-09-28 (kriteriegranskning r1: laddningstabellens designhänvisning §7).; ändrad 2026-09-28 (kriteriegranskning r2: tillägg till §D för maskinell kvalitetskedja och fast täckning).; ändrad 2026-09-28 (DIGITALA-YRKESFORMAGA: resursval efter uppgift, överlappande källroller och borttaget metod-/rörelsetvång).; ändrad 2026-09-28 (KREATIV-ARBETSKEDJA: egen tillämpning och begränsad lärdom om faktisk provledning/källanvändning).",
+   "not": "byte för byte; bindningen steg→underlag är nu också maskinläsbar i steg/steg.json; huvudet ändrat 2026-09-27 (hemvist och ingång; §E och §F uppdaterade), i övrigt oförändrat; §D-rad för KEDJA.md och postnamnet i §F 2026-09-27; laddningsraden för uppstart kompletterad 2026-09-27; regel (6) och Taste-raden ändrade 2026-09-27 (HELHET etapp 2: ingen automatisk praxis); rad 8 och §C-raden ändrade i etapp 2:s andra runda 2026-09-27; ändrad 2026-09-27 (HELHET etapp 3: nya rader i C och D för beredning, research-underlag, juridikflaggor, brief-mall, bild, bygge-referens, copy-kontroll, referenser-professionella, seo, seo-lokal, sokkonsol, lokal-synlighet, annonser, uppfoljning, prelaunch, lansering, drift; C har kolumnerna Form och Följer inte med); ändrad igen 2026-09-27 (tillägg 2: rader för kundintervju och integrationer i C och D); ändrad igen 2026-09-27 (etapp 4: rad för webbläsarvägen i C och D) 2026-09-27 (efterarbete 2): §E omskriven efter slutprovets användningsnoter.; ändrad 2026-09-27 (bedömningskontrakt v2: referensjämförelse och behovens företräde i konsumentanvisningarna).; ändrad 2026-09-28 (kriteriegranskning r1: laddningstabellens designhänvisning §7).; ändrad 2026-09-28 (kriteriegranskning r2: tillägg till §D för maskinell kvalitetskedja och fast täckning).; ändrad 2026-09-28 (DIGITALA-YRKESFORMAGA: resursval efter uppgift, överlappande källroller och borttaget metod-/rörelsetvång).; ändrad 2026-09-28 (KREATIV-ARBETSKEDJA: egen tillämpning och begränsad lärdom om faktisk provledning/källanvändning).; ändrad 2026-09-30 (OVL-20260930-b35d4f-digitala: formkrav och primärkällor enligt ARBETSSATT.md).",
    "sha256_vid_flytt": "68eac8cc627932bd431d78a7198d13117ccb8c217ba567397fdd9f02fe753034"
   },
   {
@@ -45,11 +45,12 @@
   {
    "fil": "kunskap/formularsakerhet.md",
    "kalla": "nortropic-projektkontor/evidence/digitala/local/kunskap/formularsakerhet.md",
-   "sha256": "bdee22bf808983ff4e333d825d7312e56ad4d30675b17fa533721fb3ad7d9b9b",
-   "byte": 3481,
+   "sha256": "4e2672fa3ea74ecc67fcc60d02c07562a6b82c95c732056cb81e0eae91b44c12",
+   "byte": 3810,
    "kallans_mtime_utc": "2026-09-26T13:47:12Z",
    "status": "GÄLLANDE",
-   "not": "härledd text"
+   "not": "härledd text; ändrad 2026-09-30 (OVL-20260930-b35d4f-digitala: formkrav och primärkällor enligt ARBETSSATT.md).",
+   "sha256_vid_flytt": "bdee22bf808983ff4e333d825d7312e56ad4d30675b17fa533721fb3ad7d9b9b"
   },
   {
    "fil": "kunskap/MOTTAGARPROV.md",

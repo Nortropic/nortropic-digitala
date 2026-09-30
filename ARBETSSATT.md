@@ -270,3 +270,13 @@ få faktisk browseråterkoppling under konceptarbetet, själv eller genom uttryc
 riktade diagnosen av befintliga produktioners faktiska läs- och beslutsspår; detta är ingen
 allmän effektgaranti, stilregel eller ny Runtime-mekanism. Avgränsat arbetsprov och kvarstående
 osäkerhet redovisas privat i samma Digitala-uppdrags kreativ-rattning-r1.
+
+## Beslut 2026-09-30 — formkrav och primärkällor (OVL-20260930-b35d4f-digitala)
+
+Backloggens genomförandemandat omfattar K1–K5 och A1–A6: kundrättelser av telefon
+eller öppettider får gemensamma formkrav och modellfri diffkontroll. Den stängda
+listan vidgas inte och prisets klassning lämnas oförändrad. LPTT och samtycke är
+juridikflaggor; licensregister, CSP per rutt, TBT och HTML-prov utan JavaScript
+kompletterar befintliga kontroller. Primärkällorna omlästa 2026-09-30 enligt
+REGISTER.md och respektive professionsfil. Pinnuppdateringen gäller dessa lästa
+ändringar. Ingen kundsajt, ny rättighet eller extern aktivering ingår.

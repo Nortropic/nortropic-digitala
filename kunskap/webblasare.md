@@ -70,3 +70,18 @@ utförarens arbetskatalog läst av den verkliga MCP-servern, headern mottagen ba
 utföraren faktiskt vägras de förbjudna verktygen (ingen tur försökte), en verkligt skyddad Vercel-förhandsvisning, och
 raderingen av den privata initkatalogen efter körning (båda livekörningarna gjordes före den ändringen; torrläget
 lämnar filen avsiktligt).
+
+## Modellfritt HTML-prov utan JavaScript
+
+`node verktyg/webblasare/utan-js.mjs --adress URL --ut PROVMAPP --formular 'form#kontakt'`
+startar den befintliga Playwright-vägen med `javaScriptEnabled: false`.
+`--sidor '/om/;/kontakt/'` anger ytterligare sidor på samma ursprung. Verktyget
+kontrollerar HTTP-svar, synligt huvudinnehåll och angivna formulär. Formulärinskick
+är avstängt: ett synligt korrekt HTML-formulär får då EJ_MATT för själva inskicket.
+
+På en behörig testmottagare får provet även `--formular-far-skickas --testmarkering 'TEST …'`.
+Vanlig form-POST och dess HTTP-svar observeras; JS-beroende eller saknad viktig
+form blir FAIL. UTAN-JS.json redovisar avstängt JavaScript, sidor, formulär, fynd
+samt om inskick gjordes. Ett lyckat HTTP-svar bevisar inte leverans till en människa:
+ordinarie mottagarprov kvarstår. Använd alltid `--formular` för en viktig form som
+kan saknas helt när JavaScript är avstängt. Inget nytt beroende eller modell används.
