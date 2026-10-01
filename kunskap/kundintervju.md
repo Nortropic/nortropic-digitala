@@ -31,10 +31,13 @@ på webben med egna följdfrågor, där frågebanken i detta verktyg är internt
 rättar samma ärende i översikten "Ditt uppdrag" och tar ställning till tillval (alla integrationsområden, också egen domän
 med kontroll av domänens öppna DNS-uppgifter), och `verktyg/kundstart.py` skapar ärendet ur kundmappen (`skapa`, länken skrivs 0600 i `~/.nortropic-hemligheter/<kund>/` och
 lämnas genom beställningens kanal) och för in exporten i `INTERVJU.json` genom detta verktygs egna funktioner (`hamta`:
-svar ordagrant, AI-tolkningar som `tolkning`, rättelser som `kunden uppger`, material i kundmappens `KUNDSTART/`);
+svar ordagrant, AI-tolkningar som `tolkning`, rättelser som `kunden uppger`, material i kundmappens `KUNDSTART/`; i
+intervjuformatet (Kundstart 2026-10-01) även intervjuarens återkoppling och frågans roll på frågeraden, Kundstarts
+sammanställning som posten `kundstart_syntes` — en tolkning som aldrig blir en faktarad — och fasen som `kundstart_fas`);
 kundmappen är det auktoritativa hemmet. Tillvalen, domänkontrollen (observerat), kunduppgifter med ordagrant citat
-(verifierat mot samma export) och beställd research följer importen till `INTERVJU.json`, `research-intervju.md` och
-`KUNDSTART-ARBETSUPPGIFT.json`; brief besvarar varje aktuellt tillval i `INTEGRATIONSVAL.json` (`kundtillval`) och
+(verifierat mot samma export) och beställd research följer importen till `INTERVJU.json`, `research-intervju.md` (där sammanställningen och
+intervjuns förlopp står efter avsnitt 19, märkta som tolkning under kundens ord) och `KUNDSTART-ARBETSUPPGIFT.json`
+(`syntes`, `fas`); brief besvarar varje aktuellt tillval i `INTEGRATIONSVAL.json` (`kundtillval`) och
 överföringen vägrar annars. Agentens rekommendationer är hypoteser, aldrig kundens val, och ett tillval är inget köp.
 Digitalas status per tillval förs tillbaka till kundens översikt med `kundstart.py tillvalsstatus`. Ingen ny kundportal; ingen fråga om
 ramverk, API, skill, typografisk skala eller arkitektur. Kundens språk; otydliga svar följs upp med exempel; viktiga
