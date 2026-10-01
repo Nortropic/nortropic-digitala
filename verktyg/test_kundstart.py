@@ -478,5 +478,130 @@ class Kundstart(unittest.TestCase):
             tmp2.unlink()
 
 
+    def intervjupaket(self, revision=9, status='klar'):
+        """Exporten i intervjuformatet (Kundstart 2026-10-01): återkoppling och roll på frågorna, avslutsfråga, sammanställning, transkript, fas."""
+        p = paket(revision=revision)
+        p['fas'] = 'inlamnat'
+        p['omgangar'][0]['fragor'][0].update(roll='oppning', inledning='Tack för att ni tar er tid. Vi börjar med det viktigaste.')
+        p['omgangar'][1]['fragor'][0]['inledning'] = 'Ni vill att kunderna bokar själva på hemsidan i stället för att ringa.'
+        p['omgangar'].append({'nr': 3, 'skapad': '2026-09-27T14:05:00Z', 'fragor': [{'id': 'AG3', 'omrade': 'H', 'nyckel': 'avslut', 'text': 'Är det något mer ni vill ta upp innan vi går vidare?', 'paverkar': 'sista tankar', 'utlost_av': None, 'valjare': 'ai', 'roll': 'avslut', 'inledning': 'Det viktigaste ni sagt är att bokningen ska ske direkt på hemsidan.'}],
+                               'svar': [{'fraga_id': 'AG3', 'nyckel': 'avslut', 'omrade': 'H', 'text': 'Nej, det var allt.', 'typ': 'text', 'mottaget': '2026-09-27T14:06:00Z', 'revision': 7, 'idempotens': 'k4'}], 'svar_md': '### AG3\nNej, det var allt.\n'})
+        p['syntes'] = {'id': 'S8', 'status': status, 'bas_revision': 7, 'revision': 8, 'tid': '2026-09-27T14:07:00Z', 'valjare': 'ai', 'modell': 'claude-opus-5-5', 'anstrangning': 'max', 'ms': 57000, 'forsok': 1,
+                       'sammanfattning': 'Ni driver Testfirma och vill att kunder ska boka tid direkt på hemsidan i stället för att ringa.\n\nVilka tjänster som ska kunna bokas är ännu inte bestämt.',
+                       'nyckelinsikt': 'Bokningen ska ersätta telefonen.', 'oppet': [{'nyckel': 'bokning_tjanster', 'varfor': 'bokningens upplägg'}], 'avvisade': 0}
+        def rad(fid, roll, fraga, text, typ='text', inledning=None):
+            return {'fraga_id': fid, 'roll': roll, **({'inledning': inledning} if inledning else {}), 'fraga': fraga, 'stalld': '2026-09-27T14:01:00Z', 'valjare': 'ai', 'status': 'besvarad', 'svar': {'text': text, 'typ': typ, 'tid': '2026-09-27T14:02:00Z', 'andrad': 0}}
+        p['transkript'] = [rad('A1', 'oppning', 'Vad vill ni att webbplatsen ska förändra?', 'Vi vill att kunder ska boka tid direkt på hemsidan.', inledning='Tack för att ni tar er tid. Vi börjar med det viktigaste.'),
+                           rad('BOK1', 'fraga', 'Vilka tjänster ska kunna bokas?', 'Vet inte', 'vet_inte', 'Ni vill att kunderna bokar själva på hemsidan i stället för att ringa.'),
+                           rad('AG3', 'avslut', 'Är det något mer ni vill ta upp innan vi går vidare?', 'Nej, det var allt.', inledning='Det viktigaste ni sagt är att bokningen ska ske direkt på hemsidan.')]
+        p['arende']['inlamningar'][0]['samtycke'] = {'version': 'samtycke/1', 'text': 'Jag har läst igenom min intervju och vill lämna den vidare till Nortropic.', 'tid': '2026-09-27T14:50:00Z', 'revision': revision, 'syntes_id': 'S8', 'transkript_last': True, 'idempotens': 'IN1'}
+        return p
+
+    def test_sammanstallning_och_intervjuns_forlopp_foljer_med_till_intervju_json_och_intaget(self):
+        # Intervjuformatet (Kundstart 2026-10-01): återkopplingen och rollen står på frågan i INTERVJU.json, sammanställningen
+        # som egen tolkningspost (aldrig en faktarad), fasen bokförs, och intaget visar allt märkt som tolkning efter kundens ord.
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        p = self.intervjupaket(revision=9)
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+        code, r = self.kor('hamta', '--kund', str(self.k))
+        self.assertEqual(code, 0, r); self.assertIn('sammanställning S8 (klar, ai) bokförd i INTERVJU.json', r['meddelande'])
+        s = iv.las(str(self.k))
+        a1 = s['omgangar'][0]['fragor'][0]
+        self.assertEqual((a1['roll'], a1['inledning']), ('oppning', 'Tack för att ni tar er tid. Vi börjar med det viktigaste.'))
+        self.assertNotIn('roll', s['omgangar'][1]['fragor'][0], 'en vanlig fråga får ingen roll'); self.assertEqual(s['omgangar'][1]['fragor'][0]['inledning'], 'Ni vill att kunderna bokar själva på hemsidan i stället för att ringa.')
+        ag3 = next(q for o in s['omgangar'] for q in o['fragor'] if q['id'] == 'AG3')
+        self.assertEqual((ag3['roll'], ag3['status'], ag3['nyckel']), ('avslut', 'besvarad', 'avslut'))
+        self.assertEqual(next(x for x in s['svar'] if x['fraga_id'] == 'AG3')['text'], 'Nej, det var allt.', 'sista tankar ordagrant')
+        sy = s['kundstart_syntes']
+        self.assertEqual((sy['id'], sy['status'], sy['valjare'], sy['modell'], sy['bas_revision'], sy['export_revision']), ('S8', 'klar', 'ai', 'claude-opus-5-5', 7, 9))
+        self.assertTrue(sy['sammanfattning'].startswith('Ni driver Testfirma')); self.assertIn('\n\n', sy['sammanfattning'], 'styckena bevaras')
+        self.assertEqual(sy['oppet'], [{'nyckel': 'bokning_tjanster', 'varfor': 'bokningens upplägg'}]); self.assertIn('står över', sy['roll'])
+        self.assertEqual(s['kundstart_fas'], {'fas': 'inlamnat', 'export_revision': 9})
+        self.assertFalse(any('Testfirma och vill' in str(f.get('varde')) for f in s['fakta']), 'sammanställningen blir aldrig en faktarad')
+        ut = ks.intagsutdrag(s, p)
+        self.assertIn('### Sammanställning från Kundstart (tolkning; kundens ord och rättelser i avsnitt 19 står över)', ut)
+        self.assertIn('Status: aktuell vid exporten · skriven av AI-stödet (claude-opus-5-5) · bygger på kundens revision 7 · export rev 9.', ut)
+        self.assertIn('> Ni driver Testfirma och vill att kunder ska boka tid direkt på hemsidan i stället för att ringa.\n> \n> Vilka tjänster', ut)
+        self.assertIn('Nyckelinsikt (tolkning): Bokningen ska ersätta telefonen.', ut); self.assertIn('\n- bokning_tjanster: bokningens upplägg', ut)
+        self.assertIn('### Intervjuns förlopp (Kundstart, i ordning; återkopplingen är intervjuarens tolkning, svaren står ordagrant i avsnitt 19)', ut)
+        self.assertIn('- A1 (öppning, omgång 1): återkoppling: ”Tack för att ni tar er tid. Vi börjar med det viktigaste.” · fråga: ”Vad vill ni att webbplatsen ska förändra?” · besvarad', ut)
+        self.assertIn('- BOK1 (fråga, omgång 2): återkoppling: ”Ni vill att kunderna bokar själva på hemsidan i stället för att ringa.” · fråga: ”Vilka tjänster ska kunna bokas?” · besvarad (kunden vet inte)', ut)
+        self.assertIn('- AG3 (avslut, omgång 3): återkoppling: ”Det viktigaste ni sagt är att bokningen ska ske direkt på hemsidan.” · fråga: ”Är det något mer ni vill ta upp innan vi går vidare?” · besvarad', ut)
+        self.assertLess(ut.index('## 19. Intervju'), ut.index('### Sammanställning från Kundstart'), 'kundens ord först, tolkningen efter')
+        self.assertNotIn('Sammanställning från Kundstart', ks.intagsutdrag({'schema': 1, 'kund': 'k', 'kanal': 'k', 'startad': '2026-09-27T14:00:00Z', 'omgangar': [], 'svar': [], 'fakta': [], 'motsagelser': [], 'foljdregler_utlosta': []}, paket()), 'den äldre formen får inget tomt avsnitt')
+        # kunden ändrade efteråt: nästa export bär samma sammanställning som inaktuell; omhämtningen dubblerar inget
+        p2 = self.intervjupaket(revision=11, status='inaktuell')
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p2
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k)); ut = ks.intagsutdrag(s, p2)
+        self.assertEqual((s['kundstart_syntes']['status'], s['kundstart_syntes']['export_revision']), ('inaktuell', 11))
+        self.assertIn('Status: INAKTUELL: kunden ändrade eller lade till efter att den skrevs; avsnitt 19 gäller · skriven av AI-stödet', ut)
+        self.assertEqual([q['id'] for o in s['omgangar'] for q in o['fragor']], ['A1', 'BOK1', 'AG3'], 'omhämtning dubblerar inga frågor')
+        self.assertEqual(len(s['svar']), 3)
+        # en ny sammanställning (nytt id) ersätter den gamla
+        p4 = self.intervjupaket(revision=13); p4['syntes'].update(id='S12', revision=12, bas_revision=11, sammanfattning='Ni vill nu också ta betalt vid bokningen.')
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p4
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k)); self.assertEqual((s['kundstart_syntes']['id'], s['kundstart_syntes']['status'], s['kundstart_syntes']['export_revision']), ('S12', 'klar', 13))
+        # en export i den äldre formen (utan sammanställning och fas) rör inte det bokförda, men intaget säger varifrån det kom
+        p5 = paket(revision=14)
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p5
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k))
+        self.assertEqual((s['kundstart_syntes']['export_revision'], s['kundstart_fas']['export_revision']), (13, 13))
+        ut = ks.intagsutdrag(s, p5)
+        self.assertIn('Status: FRÅN ÄLDRE EXPORT: exporten rev 14 saknar klar sammanställning; avsnitt 19 gäller · skriven av AI-stödet (claude-opus-5-5) · bygger på kundens revision 11 · export rev 13.', ut)
+        self.assertIn('> Ni vill nu också ta betalt vid bokningen.', ut)
+
+    def test_misslyckad_eller_saknad_sammanstallning_och_tomma_sidofalt_blockerar_inte_kundens_svar(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        p = self.intervjupaket(revision=9)
+        p['syntes'].update(status='misslyckad', sammanfattning='', nyckelinsikt=None, fel='timeout', modell=None, anstrangning=None)
+        p['transkript'][1]['svar'] = None; p['transkript'][0]['inledning'] = None; p['transkript'][2]['stalld'] = None
+        p['omgangar'][1]['fragor'][0]['inledning'] = None; p['omgangar'][0]['fragor'][0]['roll'] = None
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        s = iv.las(str(self.k))
+        self.assertNotIn('kundstart_syntes', s, 'en misslyckad sammanställning utan text bokförs inte')
+        self.assertEqual(sorted(x['fraga_id'] for x in s['svar']), ['A1', 'AG3', 'BOK1'], 'kundens svar är registrerade')
+        self.assertNotIn('inledning', s['omgangar'][1]['fragor'][0]); self.assertNotIn('roll', s['omgangar'][0]['fragor'][0])
+        ut = ks.intagsutdrag(s, p)
+        self.assertIn('- ingen sammanställning i exporten', ut); self.assertIn('- AG3 (avslut, omgång 3)', ut)
+        p2 = self.intervjupaket(revision=11); p2['syntes'] = None
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p2
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        self.assertNotIn('kundstart_syntes', iv.las(str(self.k)))
+
+    def test_felformad_sammanstallning_eller_transkript_vagras_fore_skrivning(self):
+        self.svar_pa[('POST', '/api/intern/arenden')] = {'ok': True, 'arende_id': 'ar_test12345678', 'lank': 'http://kundstart.test/start#HEMLIG', 'lank_hash': 'a' * 64, 'utgar': '2026-10-27T00:00:00Z', 'ai': 'claude-cli'}
+        self.kor('skapa', '--kund', str(self.k), '--namn', 'Testfirma', '--testdialog')
+        def syntes_lista(p): p['syntes'] = ['x']
+        def syntes_status(p): p['syntes']['status'] = 'hemlig'
+        def syntes_revision(p): p['syntes']['revision'] = 99
+        def oppet_strang(p): p['syntes']['oppet'] = 'bokning'
+        def oppet_utan_varfor(p): p['syntes']['oppet'] = [{'nyckel': 'besokare'}]
+        def sammanfattning_tal(p): p['syntes']['sammanfattning'] = 7
+        def modell_tal(p): p['syntes']['modell'] = 5
+        def transkript_strang(p): p['transkript'] = 'allt'
+        def transkript_utan_id(p): del p['transkript'][0]['fraga_id']
+        def transkript_svar_strang(p): p['transkript'][1]['svar'] = 'Vet inte'
+        def inledning_tal(p): p['omgangar'][0]['fragor'][0]['inledning'] = 3
+        def roll_lista(p): p['omgangar'][2]['fragor'][0]['roll'] = ['avslut']
+        def fas_lista(p): p['fas'] = ['inlamnat']
+        for andra in (syntes_lista, syntes_status, syntes_revision, oppet_strang, oppet_utan_varfor, sammanfattning_tal, modell_tal, transkript_strang, transkript_utan_id, transkript_svar_strang, inledning_tal, roll_lista, fas_lista):
+            p = self.intervjupaket(revision=9); andra(p)
+            self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+            code, r = self.kor('hamta', '--kund', str(self.k))
+            self.assertEqual(code, 2, andra.__name__); self.assertIn('fel form', r['vagrad'], andra.__name__)
+            self.assertFalse(iv.stig(str(self.k)).is_file(), andra.__name__ + ': inget skrivet i kundmappen')
+        # ett okänt roll-värde är en sträng och vägras inte, men bokförs inte heller som roll
+        p = self.intervjupaket(revision=9); p['omgangar'][2]['fragor'][0]['roll'] = 'fraga'
+        self.svar_pa[('GET', '/api/intern/arenden/ar_test12345678/export')] = p
+        code, r = self.kor('hamta', '--kund', str(self.k)); self.assertEqual(code, 0, r)
+        self.assertNotIn('roll', next(q for o in iv.las(str(self.k))['omgangar'] for q in o['fragor'] if q['id'] == 'AG3'))
+
+
 if __name__ == '__main__':
     unittest.main()

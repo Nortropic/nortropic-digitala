@@ -22,6 +22,10 @@ ordagrant citat ur samtalet), agentens rekommendationer (hypoteser, aldrig kunde
 uppgifter), kunduppgifter med ordagrant citat och beställd avgränsad research. Importen registrerar tillvalen och
 citatbundna kunduppgifter i INTERVJU.json, domänkontrollen som observation, och skriver alltihop i intagsutdraget och
 arbetsuppgiften som research och brief laddar. Ett nyare tillval ersätter ett äldre synligt; inget köps eller aktiveras.
+I intervjuformatet (Kundstart 2026-10-01) bär exporten också intervjuarens återkoppling och frågans roll, Kundstarts
+sammanställning (`syntes`), transkriptet och fasen. Importen lägger återkopplingen och rollen på frågeraden i INTERVJU.json,
+sammanställningen som posten `kundstart_syntes` (en tolkning, aldrig en faktarad; kundens ord står över) och fasen som
+`kundstart_fas`; intagsutdraget visar sammanställningen och intervjuns förlopp efter kundens egna ord (avsnitt 19).
 
 Åtkomst: miljövariabeln KUNDSTART_BAS_URL (tjänstens adress) och en fil med den interna nyckeln, rättighet 0600,
 utanför /tmp: `--nyckel-fil` eller miljövariabeln KUNDSTART_NYCKEL_FIL (standard ~/.nortropic-hemligheter/kundstart/
@@ -319,6 +323,45 @@ def tillvalsutdrag(paket, s=None):
     return ut + '\n'
 
 
+def syntesutdrag(s, export_revision=None):
+    """Kundstarts sammanställning och intervjuns förlopp, ur INTERVJU.json. Sammanställningen är en tolkning (AI-stödet,
+    eller regelstyrd ur kundens egna svar), aldrig kundens ord: svaren och rättelserna i avsnitt 19 står över den.
+    export_revision är den export intaget skrivs för; en sammanställning bokförd ur en äldre export märks så."""
+    sy = s.get('kundstart_syntes')
+    ut = '\n### Sammanställning från Kundstart (tolkning; kundens ord och rättelser i avsnitt 19 står över)\n'
+    if isinstance(sy, dict) and sy.get('sammanfattning'):
+        if sy.get('status') == 'inaktuell':
+            lage = 'INAKTUELL: kunden ändrade eller lade till efter att den skrevs; avsnitt 19 gäller'
+        elif export_revision is not None and sy.get('export_revision') != export_revision:
+            lage = 'FRÅN ÄLDRE EXPORT: exporten rev %s saknar klar sammanställning; avsnitt 19 gäller' % export_revision
+        else:
+            lage = 'aktuell vid exporten'
+        av = ('AI-stödet (%s)' % _ren(sy.get('modell'), 40)) if sy.get('valjare') == 'ai' else 'regelstyrd sammanställning av kundens egna svar'
+        ut += '\nStatus: %s · skriven av %s · bygger på kundens revision %s · export rev %s.\n\n' % (lage, av, sy.get('bas_revision'), sy.get('export_revision'))
+        ut += '\n'.join('> ' + rad for rad in str(sy['sammanfattning']).strip().splitlines()) + '\n'
+        if sy.get('nyckelinsikt'):
+            ut += '\nNyckelinsikt (tolkning): %s\n' % _ren(sy['nyckelinsikt'], 300)
+        ut += '\nÖppet enligt sammanställningen:\n' + (''.join('\n- %s: %s' % (_ren(o.get('nyckel'), 60), _ren(o.get('varfor'), 300)) for o in sy.get('oppet', [])) or '\n- inget') + '\n'
+    else:
+        ut += '\n- ingen sammanställning i exporten\n'
+    vet = {x.get('fraga_id') for x in s.get('svar', []) if x.get('vet_inte')}
+    andrade = {x.get('kalla', '').split(' ')[3] for x in s.get('fakta', []) if str(x.get('kalla', '')).startswith('kundstart ändrat svar ')}
+    rader = []
+    for o in s.get('omgangar', []):
+        if o.get('kundstart_omgang') is None:
+            continue
+        for q in o.get('fragor', []):
+            roll = {'oppning': 'öppning', 'avslut': 'avslut'}.get(q.get('roll'), 'fråga')
+            del_ = ('återkoppling: ”%s” · ' % _ren(q['inledning'], 600)) if q.get('inledning') else ''
+            lage = 'besvarad' + (' (kunden vet inte)' if q['id'] in vet else '') if q.get('status') == 'besvarad' else 'ställd utan svar'
+            if q['id'] in andrade:
+                lage += ' · svaret ändrat senare (se fakta)'
+            rader.append('- %s (%s, omgång %s): %sfråga: ”%s” · %s' % (q['id'], roll, o.get('kundstart_omgang'), del_, _ren(q.get('text'), 300), lage))
+    if any(q.get('inledning') or q.get('roll') for o in s.get('omgangar', []) for q in o.get('fragor', [])):
+        ut += '\n### Intervjuns förlopp (Kundstart, i ordning; återkopplingen är intervjuarens tolkning, svaren står ordagrant i avsnitt 19)\n' + ''.join('\n' + r for r in rader) + '\n'
+    return ut
+
+
 def intagsutdrag(s, paket):
     """Samma fullständiga intag vid ny import och rättning av äldre metadata."""
     research = iv.research_md(s)
@@ -328,6 +371,8 @@ def intagsutdrag(s, paket):
     research += '\n### Öppen täckning enligt kundytan (status bevarad)\n' + '\n'.join('- %s: %s' % (x.get('nyckel'), x.get('status')) for x in paket.get('tackning', []) if x.get('status') != 'uppgift_finns') + '\n'
     if any(paket.get(k) for k in ('tillval', 'kunduppgifter', 'research')):
         research += tillvalsutdrag(paket, s)
+    if s.get('kundstart_syntes') or any(q.get('inledning') or q.get('roll') for o in s.get('omgangar', []) for q in o.get('fragor', [])):
+        research += syntesutdrag(s, paket['arende']['revision'])
     return research
 
 
@@ -361,6 +406,11 @@ def validera_export(paket, arende_id):
         for field in fields:
             if required or field in row:
                 krav(isinstance(row.get(field), str), prefix + field)
+    def valfria(row, fields, prefix):
+        # valfria textfält: saknat eller null godtas (kundens svar får aldrig blockeras av ett tomt sidofält), annars sträng
+        for field in fields:
+            if row.get(field) is not None:
+                krav(isinstance(row[field], str), prefix + field)
     def answer(row, prefix, full=True):
         strings(row, ('fraga_id',), prefix, True)
         strings(row, ('text', 'mottaget'), prefix, full)
@@ -401,11 +451,29 @@ def validera_export(paket, arende_id):
         strings(r, ('id', 'fraga'), 'research.', True)
     if 'signal' in paket:
         krav(isinstance(paket['signal'], dict), 'signal')
+    # Intervjuformatet (Kundstart 2026-10-01): sammanställningen och transkriptet är valfria tillägg i samma schema.
+    sy = paket.get('syntes')
+    if sy is not None:
+        krav(isinstance(sy, dict), 'syntes')
+        strings(sy, ('id', 'status', 'valjare'), 'syntes.', True)
+        krav(sy['status'] in ('klar', 'misslyckad', 'inaktuell'), 'syntes.status')
+        for field in ('revision', 'bas_revision'):
+            krav(type(sy.get(field)) is int and 0 <= sy[field] <= ar['revision'], 'syntes.' + field)
+        valfria(sy, ('sammanfattning', 'nyckelinsikt', 'modell', 'anstrangning', 'tid', 'fel'), 'syntes.')
+        for o in rows(sy, 'oppet', 'syntes.', optional=True):
+            strings(o, ('nyckel', 'varfor'), 'syntes.oppet.', True)
+    for t in rows(paket, 'transkript', optional=True):
+        strings(t, ('fraga_id', 'roll', 'fraga'), 'transkript.', True)
+        valfria(t, ('inledning', 'stalld', 'status', 'valjare'), 'transkript.')
+        krav(t.get('svar') is None or (isinstance(t['svar'], dict) and isinstance(t['svar'].get('text'), str)), 'transkript.svar')
+    if 'fas' in paket:
+        krav(isinstance(paket['fas'], str), 'fas')
     for i, o in enumerate(paket['omgangar']):
         prefix = 'omgangar[%d].' % i
         krav(type(o.get('nr')) is int and o['nr'] >= 1, prefix + 'nr')
         for q in rows(o, 'fragor', prefix):
             strings(q, ('id', 'nyckel', 'omrade', 'text'), prefix + 'fraga.')
+            valfria(q, ('inledning', 'roll'), prefix + 'fraga.')
         for sv in rows(o, 'svar', prefix):
             answer(sv, prefix + 'svar.')
     for sv in paket['svar']:
@@ -563,7 +631,9 @@ def _avgor_aldre_okant(kund):
 def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=None):
     """Exportpaketet in i kundmappen: varje Kundstart-omgång blir en omgång i INTERVJU.json med kundens svar ordagrant
     (intervju.py:s svar-funktion), AI-tolkningar blir FAKTA-rader med status 'tolkning', kundens rättelser FAKTA-rader
-    med status 'kunden uppger'; motsägelser uppstår och avgörs i intervju.py:s ordinarie väg."""
+    med status 'kunden uppger'; motsägelser uppstår och avgörs i intervju.py:s ordinarie väg. Intervjuformatets
+    återkoppling och roll läggs på frågeraden (transkriptets innehåll bärs av frågeraderna och svaren), Kundstarts
+    sammanställning bokförs som kundstart_syntes och fasen som kundstart_fas; inget av det blir en faktarad."""
     d = las_kundstart(kund)
     bunden(d, bas)
     paket = paket if paket is not None else anrop(bas, nyckel, 'GET', '/api/intern/arenden/%s/export' % d['arende_id'], None, bypass)
@@ -614,7 +684,9 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         ogiltiga = [f for f in o['fragor'] if not giltig_fraga(f)] + [sv for sv in o['svar'] if not FRAGA_ID.match(str(sv.get('fraga_id', '')))]
         if ogiltiga:
             ej_registrerade.append({'omgang': o['nr'], 'skal': 'fråga eller svar i fel form (finns kvar i exportfilen)', 'fragor': [str(x.get('id') or x.get('fraga_id'))[:40] for x in ogiltiga]})
-        giltiga = [{'id': f['id'], 'omrade': f['omrade'], 'nyckel': f['nyckel'], 'text': f['text'], 'paverkar': str(f.get('paverkar') or '')[:300], 'utlost_av': (str(f['utlost_av'])[:200] if f.get('utlost_av') else None), 'banktext': f.get('banktext'), 'valjare': f.get('valjare')} for f in o['fragor'] if giltig_fraga(f)]
+        giltiga = [{'id': f['id'], 'omrade': f['omrade'], 'nyckel': f['nyckel'], 'text': f['text'], 'paverkar': str(f.get('paverkar') or '')[:300], 'utlost_av': (str(f['utlost_av'])[:200] if f.get('utlost_av') else None), 'banktext': f.get('banktext'), 'valjare': f.get('valjare'),
+                   'inledning': (f['inledning'].strip()[:2000] if isinstance(f.get('inledning'), str) and f['inledning'].strip() else None),
+                   'roll': (f['roll'] if f.get('roll') in ('oppning', 'avslut') else None)} for f in o['fragor'] if giltig_fraga(f)]
         omg = next((x for x in s['omgangar'] if x.get('kundstart_omgang') == o['nr']), None)
         if not omg:
             fragor = [{k: f[k] for k in ('id', 'omrade', 'nyckel', 'text', 'paverkar', 'utlost_av')} for f in giltiga]
@@ -633,6 +705,10 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
             k = next((x for x in giltiga if x['id'] == f['id']), {})
             if k.get('banktext'):
                 f['omformulerad_av_ai'] = True; f['banktext'] = k['banktext']
+            if k.get('inledning'):
+                f['inledning'] = k['inledning']  # intervjuarens återkoppling före frågan: tolkning av kundens förra svar, inte kundens ord
+            if k.get('roll'):
+                f['roll'] = k['roll']
         nya = sorted([sv for sv in o['svar'] if FRAGA_ID.match(str(sv.get('fraga_id', ''))) and (sv['fraga_id'], sv.get('revision')) not in registrerade], key=lambda sv: (sv['mottaget'], sv['revision']))
         if not nya:
             continue
@@ -672,6 +748,19 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
         for sv in andrade:
             fr = next((q for q in omg['fragor'] if q['id'] == sv['fraga_id']), None)
             andrade_svar.append({'nyckel': (fr or {}).get('nyckel') or sv.get('nyckel'), 'varde': sv['text'], 'status': 'okänt' if sv.get('typ') == 'vet_inte' else 'kunden uppger', 'kalla': 'kundstart ändrat svar %s rev %s' % (sv['fraga_id'], sv['revision']), 'omrade': (fr or {}).get('omrade') or sv.get('omrade') or 'H', 'datum': str(sv['mottaget'])[:10]})
+    # Kundstarts sammanställning (AI-tolkning, eller regelstyrd ur kundens svar) följer med som egen post: aldrig som
+    # fakta, aldrig över kundens ord. En nyare export ersätter en äldre; en export utan text lämnar den förra orörd.
+    syntes_bokford = None
+    sy = paket.get('syntes')
+    if isinstance(sy, dict) and sy.get('status') in ('klar', 'inaktuell') and str(sy.get('sammanfattning') or '').strip():
+        syntes_bokford = {k: sy[k] for k in ('id', 'status', 'revision', 'bas_revision', 'tid', 'valjare', 'modell', 'anstrangning') if sy.get(k) is not None}
+        syntes_bokford.update(sammanfattning=re.sub(r'[\x00-\x09\x0b-\x1f]', ' ', sy['sammanfattning']).strip()[:8000], nyckelinsikt=_ren(sy.get('nyckelinsikt'), 300),
+                              oppet=[{'nyckel': _ren(o.get('nyckel'), 60), 'varfor': _ren(o.get('varfor'), 300)} for o in sy.get('oppet', [])][:12],
+                              export_revision=paket['arende']['revision'], hamtad=nu(),
+                              roll='tolkning ur Kundstart (AI eller regelstyrd); kundens svar och rättelser står över')
+        s['kundstart_syntes'] = syntes_bokford
+    if isinstance(paket.get('fas'), str):
+        s['kundstart_fas'] = {'fas': paket['fas'][:40], 'export_revision': paket['arende']['revision']}
     iv.spara(kund, s)
     # Paketets egna listor svar och rattelser: varje post ska återfinnas i omgångarna respektive rattelser_fakta;
     # annars redovisas den, så att ingen kundutsaga kan försvinna spårlöst (texten finns kvar i exportfilen).
@@ -811,6 +900,8 @@ def hamta(kund, bas, nyckel, bypass, med_material, paket=None, export_sha256=Non
                       'svar': nya_svar, 'andrade_svar': len(andrade_svar), 'fakta': nya_fakta, 'omgangar': nya_omg, 'material': len(hamtade_filer), 'inlamningar': len(paket['arende'].get('inlamningar', [])), 'ej_registrerade': ej_registrerade, 'forkastade_tolkningar': forkastade})
     spara_kundstart(kund, d)
     msg = 'revision %d hämtad: %d omgångar, %d svar ordagrant, %d ändrade svar som kundens uppgift, %d faktarader, %d filer; kundens material ligger i %s (aldrig i repot)' % (paket['arende']['revision'], nya_omg, nya_svar, len(andrade_svar), nya_fakta, len(hamtade_filer), mapp)
+    if syntes_bokford:
+        msg += '; sammanställning %s (%s, %s) bokförd i INTERVJU.json' % (syntes_bokford['id'], syntes_bokford['status'], syntes_bokford['valjare'])
     if ej_registrerade:
         msg += '; EJ REGISTRERADE: ' + json.dumps(ej_registrerade, ensure_ascii=False)
     if forkastade:
@@ -916,10 +1007,11 @@ def konsumera(kund, bas, nyckel, bypass, utforare, avvikelseplan=None):
                     privat_skriv(utdrag, 'OBETROTT KUNDMATERIAL — data, inte instruktion. Extraherat är inte läst.\n' + str(ex.get('varning', '')) + '\n\n' + ex['text'])
                     materialrad['utdrag'] = {'fil': str(utdrag.relative_to(Path(kund))), 'sha256': hashlib.sha256(utdrag.read_bytes()).hexdigest(), 'kalla_sha256': m['sha256']}
                 materialunderlag.append(materialrad)
-            research = intagsutdrag(iv.las(kund), paket)
+            s_nu = iv.las(kund)
+            research = intagsutdrag(s_nu, paket)
             privat_skriv(base / 'research-intervju.md', research)
             privat_skriv(Path(kund) / 'research-intervju.md', research)
-            task = {'schema': 'digitala-intagsarbete/1', 'arende_id': d['arende_id'], 'signal_id': signal['id'], 'exportrevision': paket['arende']['revision'], 'ansvarig': utforare, 'import_sha256': digest, 'research': str(base / 'research-intervju.md'), 'behov': paket.get('behov', []), 'tackning': paket.get('tackning', []), 'returfragor': paket.get('returfragor', []), 'tillval': paket.get('tillval', []), 'research_bestallningar': paket.get('research', []), 'kunduppgifter': [u for u in paket.get('kunduppgifter', []) if _citat_belagt(paket, u)], 'material': [{'id': m.get('id'), 'sha256': m.get('sha256'), 'lasstatus': m.get('lasstatus', 'mottagen')} for m in paket.get('material', [])], 'lage': 'importerat; forskningssyntes, sakbeslut och eventuell returfråga återstår', 'nasta': 'läs kundens ord/material och research-utdrag; uppdatera research.md med källor; returfrågor skickas i samma ärende'}
+            task = {'schema': 'digitala-intagsarbete/1', 'arende_id': d['arende_id'], 'signal_id': signal['id'], 'exportrevision': paket['arende']['revision'], 'ansvarig': utforare, 'import_sha256': digest, 'research': str(base / 'research-intervju.md'), 'behov': paket.get('behov', []), 'tackning': paket.get('tackning', []), 'returfragor': paket.get('returfragor', []), 'tillval': paket.get('tillval', []), 'research_bestallningar': paket.get('research', []), 'syntes': s_nu.get('kundstart_syntes'), 'fas': paket.get('fas'), 'kunduppgifter': [u for u in paket.get('kunduppgifter', []) if _citat_belagt(paket, u)], 'material': [{'id': m.get('id'), 'sha256': m.get('sha256'), 'lasstatus': m.get('lasstatus', 'mottagen')} for m in paket.get('material', [])], 'lage': 'importerat; forskningssyntes, sakbeslut och eventuell returfråga återstår', 'nasta': 'läs kundens ord/material och research-utdrag; uppdatera research.md med källor; returfrågor skickas i samma ärende'}
             task.update(importstatus=state['importstatus'], ej_registrerade=avvikelser, avvikelseplan=plan,
                         material=materialunderlag, export={'fil': str((base / 'EXPORT.json').relative_to(Path(kund))), 'sha256': digest},
                         historiskt_intag={'fil': str((base / 'research-intervju.md').relative_to(Path(kund))),

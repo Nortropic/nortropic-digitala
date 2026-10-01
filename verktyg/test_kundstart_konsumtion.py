@@ -149,4 +149,21 @@ class Konsumtion(unittest.TestCase):
         self.assertEqual(json.loads(progress.read_text())['avvikelseplan'], plan)
         self.assertEqual(len(iv.las(self.k)['svar']), 3)
 
+    def test_sammanstallningen_foljer_med_i_research_och_arbetsuppgiften(self):
+        self.p['fas']='inlamnat'
+        self.p['syntes']={'id':'S8','status':'klar','bas_revision':7,'revision':7,'tid':'2026-09-27T14:07:00Z','valjare':'regelstyrd','forsok':1,'sammanfattning':'Det ni berättat, i era egna ord:\n\nVad webbplatsen ska förändra: ”Vi vill att kunder ska boka tid direkt på hemsidan.”','nyckelinsikt':'','oppet':[{'nyckel':'besokare','varfor':'målgrupper'}]}
+        self.p['omgangar'][0]['fragor'][0].update(roll='oppning',inledning='Tack för att ni tar er tid.')
+        with patch.object(ks,'anrop',self.api):
+            d,r=ks.konsumera(self.k,self.base,'ingen-hemlighet',None,'forsta')
+            self.assertEqual(r['lage'],'kvitterad')
+            research=(self.k/'research-intervju.md').read_text()
+            self.assertIn('Sammanställning från Kundstart',research);self.assertIn('skriven av regelstyrd sammanställning av kundens egna svar',research)
+            self.assertIn('> Det ni berättat, i era egna ord:\n> \n> Vad webbplatsen ska förändra',research);self.assertNotIn('Nyckelinsikt',research)
+            self.assertIn('Intervjuns förlopp',research);self.assertIn('- A1 (öppning, omgång 1): återkoppling: ”Tack för att ni tar er tid.”',research)
+            task=json.loads((self.k/'KUNDSTART-ARBETSUPPGIFT.json').read_text())
+            self.assertEqual((task['syntes']['id'],task['syntes']['export_revision'],task['fas']),('S8',7,'inlamnat'),'arbetsuppgiften bär den sanerade posten ur INTERVJU.json')
+            self.assertEqual(iv.las(self.k)['kundstart_syntes']['id'],'S8')
+            fryst=(self.k/'KUNDSTART/signal-7/research-intervju.md').read_text();self.assertEqual(fryst,research)
+
+
 if __name__=='__main__':unittest.main()
